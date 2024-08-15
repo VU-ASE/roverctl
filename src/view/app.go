@@ -40,15 +40,7 @@ func InitialApp() AppState {
 
 // Implementation of the Bubbletea model interface
 func (a AppState) Init() tea.Cmd {
-	if a.selectedAction != "" {
-		switch a.selectedAction {
-		case "Connect":
-			// Connect to a Rover
-			return a.ConnectInit()
-		}
-	}
-
-	return nil
+	return a.ConnectInit()
 }
 
 // Define the root controls for the app (so that you can quit)
