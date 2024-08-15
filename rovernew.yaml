@@ -1,0 +1,25 @@
+# Template for the rover configuration file, as parsed by the ASE roverlib and rovertui tools.
+# it allows you to define the services you use in your pipeline and keep track of all downloaded services so far
+
+# Downloaded and available services
+available:
+  - name: imaging
+    source: https://github.com/vu-ase/imaging
+  - name: controller
+    source: https://github.com/vu-ase/imaging
+  - name: actuator
+    source: https://github.com/vu-ase/actuator
+  - name: custom-imaging
+    source: local
+    inject-roverlib: false
+  - name: custom-controller
+    source: local
+    inject-roverlib: true
+
+# Services in use to form the pipeline
+enabled:
+  - imaging@1.0.0
+  - controller@1.0.0
+  - actuator@1.0.0
+  - custom-imaging
+  - custom-controller

@@ -1,0 +1,110 @@
+package configuration
+
+import (
+	"os"
+	"slices"
+
+	"gopkg.in/yaml.v3"
+)
+
+//
+// Get, create and set all the available rover connections
+//
+
+// The file name in the configuration directory where the connections are stored
+const connectionsFileName = LocalConfigDir + "/connections.yaml"
+
+type RoverConnection struct {
+	Name     string `yaml:"name"`
+	Host     string `yaml:"host"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+}
+
+// An overview of all the available connections, as is written to the configuration file
+type RoverConnections struct {
+	Available []RoverConnection `yaml:"available"`
+	Active    string            `yaml:"active"`
+}
+
+// To read state from disk
+func ReadConnections() (RoverConnections, error) {
+	connections := RoverConnections{
+		Available: []RoverConnection{
+			// {
+			// 	Name:     "localhost",
+			// 	Host:     "localhost",
+			// 	Username: "root",
+			// 	Password: "root",
+			// },
+		},
+		Active: "rover1",
+	}
+
+	// Check if the file exists
+	if _, err := os.Stat(connectionsFileName); os.IsNotExist(err) {
+		// If the file does not exist, return an empty array
+		return connections, nil
+	}
+
+	// Read the file
+	content, err := os.ReadFile(connectionsFileName)
+	if err != nil {
+		return connections, err
+	}
+
+	// Parse the YAML content
+	err = yaml.Unmarshal(content, &connections)
+	return connections, err
+}
+
+func (c RoverConnections) GetActive() RoverConnection {
+	for _, connection := range c.Available {
+		if connection.Name == c.Active {
+			return connection
+		}
+	}
+	return RoverConnection{}
+}
+
+func (c RoverConnections) Save() error {
+	// Marshal the connections to YAML
+	content, err := yaml.Marshal(c)
+	if err != nil {
+		return err
+	}
+
+	// Write the file
+	return os.WriteFile(connectionsFileName, content, 0644)
+}
+
+func (c RoverConnections) Add(new RoverConnection) RoverConnections {
+	c.Available = append(c.Available, new)
+	return c
+}
+
+func (c RoverConnections) Remove(name string) RoverConnections {
+	// Find the connection to remove
+	c.Available = slices.DeleteFunc(c.Available, func(c RoverConnection) bool {
+		return c.Name == name
+	})
+	return c
+}
+
+func (c RoverConnections) SetActive(name string) RoverConnections {
+
+	// Check if the connection exists
+	found := false
+	for _, c := range c.Available {
+		if c.Name == name {
+			found = true
+			break
+		}
+	}
+
+	if found {
+		c.Active = name
+	}
+
+	return c
+}

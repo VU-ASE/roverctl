@@ -1,0 +1,14 @@
+# A list of rover connections, which are used to connect to the Rover and start ssh sessions.
+# This list is stored on the local machine and supports multiple Rover connections.
+
+available:
+  - name: rover1
+    host: 192.168.0.101
+    username: debix
+    password: debix
+  - name: rover2
+    host: 192.168.0.102
+    username: debix
+    password: debix
+
+active: rover1

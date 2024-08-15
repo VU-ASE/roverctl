@@ -1,0 +1,11 @@
+metadata:
+  name: rover-preset-1
+  description: a preset used for the Rover CLI
+
+services:
+  - path: /path/to/your/service/working-directory
+    command: npm run start
+    config: service.yaml # used to override the service.yaml configuration if needed
+    wrap-roverlib: false # used to indicate if this service should be executed (wrapped by) the roverlib binary
+    custom: false # used to indicate that the service is an official ASE service
+    version: 12.1 # used for updating the service to a specific version. Only valid for official ASE services
