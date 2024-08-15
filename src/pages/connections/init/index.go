@@ -6,6 +6,7 @@ import (
 
 	"github.com/VU-ASE/rover/src/style"
 	"github.com/VU-ASE/rover/src/tui"
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
@@ -13,11 +14,16 @@ import (
 )
 
 type model struct {
-	form *huh.Form
+	form    *huh.Form
+	spinner spinner.Model
 }
 
 func InitialModel() model {
+	s := spinner.New()
+	s.Spinner = spinner.Line
+
 	return model{
+		spinner: s,
 		form: huh.NewForm(
 			huh.NewGroup(
 				huh.NewInput().
@@ -65,9 +71,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if f, ok := form.(*huh.Form); ok {
 		m.form = f
 	}
+	if cmd != nil {
+		return m, cmd
+	}
 
+	m.spinner, cmd = m.spinner.Update(msg)
 	return m, cmd
-
 }
 
 // the update view with the view method
@@ -91,12 +100,14 @@ func (m model) enterDetailsView() string {
 func (m model) testConnectionView() string {
 	s := lipgloss.NewStyle().Foreground(style.AsePrimary).Render("Connecting to " + m.form.GetString("name"))
 
-	// s += "\n\n" + spin.View()
+	s += "\n\n" + m.spinner.View() + " checking if a route to Rover exists"
+	s += "\n" + m.spinner.View() + " checking if a route to Rover exists"
+
 	return style.Docstyle.Render(s)
 }
 
 func (m model) Init() tea.Cmd {
-	return m.form.Init()
+	return tea.Batch(m.form.Init(), m.spinner.Tick)
 }
 
 func (m model) View() string {
