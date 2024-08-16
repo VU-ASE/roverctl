@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"syscall"
 
 	"github.com/VU-ASE/rover/src/configuration"
@@ -17,9 +18,9 @@ import (
 )
 
 func selectPage(s *state.AppState) tea.Model {
-	switch s.CurrentView {
+	switch strings.ToLower(s.CurrentView) {
 	// SSH is different, it replaces the current process
-	case "SSH":
+	case "ssh":
 		{
 			// Get the active connection
 			activeConnection := s.RoverConnections.GetActive()
@@ -37,7 +38,7 @@ func selectPage(s *state.AppState) tea.Model {
 			syscall.Exec(ssh, []string{"ssh", connectionString, "-p", "22"}, os.Environ())
 			return nil
 		}
-	case "Connect":
+	case "connect":
 		return initconnectionpage.InitialModel(nil)
 	default:
 		{
@@ -61,7 +62,7 @@ func run() error {
 
 	// Create the app state
 	appState := state.Get()
-	defer appState.RoverConnections.Save()
+	// defer appState.RoverConnections.Save()
 
 	// We start the app in a separate (full) screen
 	firsttime := true
@@ -73,6 +74,8 @@ func run() error {
 			return err
 		}
 	}
+
+	appState.RoverConnections.Save()
 	return nil
 }
 

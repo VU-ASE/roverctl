@@ -30,15 +30,8 @@ type RoverConnections struct {
 // To read state from disk
 func ReadConnections() (RoverConnections, error) {
 	connections := RoverConnections{
-		Available: []RoverConnection{
-			// {
-			// 	Name:     "localhost",
-			// 	Host:     "localhost",
-			// 	Username: "root",
-			// 	Password: "root",
-			// },
-		},
-		Active: "",
+		Available: []RoverConnection{},
+		Active:    "",
 	}
 
 	// Check if the file exists
@@ -75,7 +68,7 @@ func (c RoverConnections) Save() error {
 	}
 
 	// Write the file
-	return os.WriteFile(connectionsFileName+"hh", content, 0644)
+	return os.WriteFile(connectionsFileName, content, 0644)
 }
 
 func (c RoverConnections) Add(new RoverConnection) RoverConnections {

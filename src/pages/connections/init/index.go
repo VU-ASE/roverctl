@@ -139,6 +139,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						Username: m.formValues.username,
 						Password: m.formValues.password,
 					})
+					m = InitialModel(nil)
+					return m, tea.Batch(m.form.Init(), m.spinner.Tick)
 				}
 			case "b":
 				// Restore to the initial form, but recover the form values
