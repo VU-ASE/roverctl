@@ -22,11 +22,12 @@ type model struct {
 
 func InitialModel() model {
 	l := list.New([]list.Item{
-		components.ActionItem{Name: "SSH", Desc: "Start an SSH shell into your Rover"},
-		components.ActionItem{Name: "Configure", Desc: "Configure your pipeline"},
-		components.ActionItem{Name: "Debug", Desc: "Enable remote debugging for your pipeline"}, // Should not be available when no pipeline is running or disable when enabled
-		components.ActionItem{Name: "Status", Desc: "Watcdh module outputs and status logs"},    // Should not be available when no pipeline is running
-		components.ActionItem{Name: "Update", Desc: "Fetch the latest versions of all modules and install them"},
+		components.ActionItem{Name: "Connections", Desc: "Manage your Rover connections"},
+		components.ActionItem{Name: "Utilities", Desc: "Various utilities to interact with your Rover"},
+		// components.ActionItem{Name: "Configure", Desc: "Configure your pipeline"},
+		// components.ActionItem{Name: "Debug", Desc: "Enable remote debugging for your pipeline"}, // Should not be available when no pipeline is running or disable when enabled
+		// components.ActionItem{Name: "Status", Desc: "Watcdh module outputs and status logs"},    // Should not be available when no pipeline is running
+		// components.ActionItem{Name: "Update", Desc: "Fetch the latest versions of all modules and install them"},
 	}, list.NewDefaultDelegate(), 0, 0)
 	// If there are connections available, add the connected actions
 	l.Title = lipgloss.NewStyle().Background(style.AsePrimary).Bold(true).Padding(0, 0).Render("VU ASE") + lipgloss.NewStyle().Foreground(lipgloss.Color("#3C3C3C")).Render(" - racing Rovers since 2024")
@@ -76,10 +77,5 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return m.actions.View()
+	return style.Docstyle.Render(m.actions.View())
 }
-
-// // A user can choose from these actions if they are not yet connected to a Rover
-// var onDisconnectedActions = []list.Item{
-// 	actionItem{title: "Connect", desc: "Initialize a connection to a Rover"}, // Should be "stop" when a pipeline is running
-// }

@@ -9,7 +9,9 @@ import (
 
 	"github.com/VU-ASE/rover/src/configuration"
 	initconnectionpage "github.com/VU-ASE/rover/src/pages/connections/init"
+	manageconnectionspage "github.com/VU-ASE/rover/src/pages/connections/manage"
 	startpageconnected "github.com/VU-ASE/rover/src/pages/start/connected"
+	utilitiespage "github.com/VU-ASE/rover/src/pages/start/connected/utilities"
 	startpagedisconnected "github.com/VU-ASE/rover/src/pages/start/disconnected"
 	"github.com/VU-ASE/rover/src/state"
 	tea "github.com/charmbracelet/bubbletea"
@@ -38,6 +40,10 @@ func selectPage(s *state.AppState) tea.Model {
 			syscall.Exec(ssh, []string{"ssh", connectionString, "-p", "22"}, os.Environ())
 			return nil
 		}
+	case "connections":
+		return manageconnectionspage.InitialModel()
+	case "utilities":
+		return utilitiespage.InitialModel()
 	case "connect":
 		return initconnectionpage.InitialModel(nil)
 	default:
@@ -62,7 +68,6 @@ func run() error {
 
 	// Create the app state
 	appState := state.Get()
-	// defer appState.RoverConnections.Save()
 
 	// We start the app in a separate (full) screen
 	firsttime := true
@@ -75,8 +80,8 @@ func run() error {
 		}
 	}
 
-	appState.RoverConnections.Save()
-	return nil
+	// Save the connections
+	return state.Get().RoverConnections.Save()
 }
 
 func main() {

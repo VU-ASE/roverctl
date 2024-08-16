@@ -1,4 +1,4 @@
-package startpagedisconnected
+package utilitiespage
 
 import (
 	"github.com/VU-ASE/rover/src/components"
@@ -18,7 +18,7 @@ type model struct {
 
 func InitialModel() model {
 	l := list.New([]list.Item{
-		components.ActionItem{Name: "Connect", Desc: "Initialize a connection to a Rover"}, // Should be "stop" when a pipeline is running
+		components.ActionItem{Name: "SSH", Desc: "Open an SSH terminal to your Rover"},
 	}, list.NewDefaultDelegate(), 0, 0)
 	// If there are connections available, add the connected actions
 	l.Title = lipgloss.NewStyle().Background(style.AsePrimary).Bold(true).Padding(0, 0).Render("VU ASE") + lipgloss.NewStyle().Foreground(lipgloss.Color("#3C3C3C")).Render(" - racing Rovers since 2024")
@@ -51,7 +51,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		// These keys should exit the page.
 		case "ctrl+c", "esc", "q":
-			state.Get().CurrentView = ""
+			state.Get().CurrentView = "home"
 			return m, tea.Quit
 		case "enter":
 			value := m.actions.SelectedItem().FilterValue()

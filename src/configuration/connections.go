@@ -67,7 +67,7 @@ func (c RoverConnections) Save() error {
 		return err
 	}
 
-	// Write the file
+	// Write the file, overwriting the existing one
 	return os.WriteFile(connectionsFileName, content, 0644)
 }
 
@@ -82,11 +82,24 @@ func (c RoverConnections) Add(new RoverConnection) RoverConnections {
 	return c
 }
 
+func (c RoverConnections) Get(name string) *RoverConnection {
+	for _, connection := range c.Available {
+		if connection.Name == name {
+			return &connection
+		}
+	}
+	return nil
+}
+
 func (c RoverConnections) Remove(name string) RoverConnections {
 	// Find the connection to remove
 	c.Available = slices.DeleteFunc(c.Available, func(c RoverConnection) bool {
 		return c.Name == name
 	})
+	// Set the active connection to the first one in the list
+	if len(c.Available) > 0 {
+		c.Active = c.Available[0].Name
+	}
 	return c
 }
 
