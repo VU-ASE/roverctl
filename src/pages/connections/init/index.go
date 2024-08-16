@@ -316,7 +316,7 @@ func checkAuth(m model, a int) tea.Cmd {
 
 func checkDebix(m model, a int) tea.Cmd {
 	return func() tea.Msg {
-		// Start new ssh connection with private key.
+		// Start new ssh connection with password auth.
 		auth := goph.Password(m.formValues.password)
 		client, err := goph.New(m.formValues.username, m.host, auth)
 		if err != nil {

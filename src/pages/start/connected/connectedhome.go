@@ -22,6 +22,7 @@ type model struct {
 
 func InitialModel() model {
 	l := list.New([]list.Item{
+		components.ActionItem{Name: "Services", Desc: "Create, upload, download and install services"},
 		components.ActionItem{Name: "Connections", Desc: "Manage your Rover connections"},
 		components.ActionItem{Name: "Utilities", Desc: "Various utilities to interact with your Rover"},
 		// components.ActionItem{Name: "Configure", Desc: "Configure your pipeline"},

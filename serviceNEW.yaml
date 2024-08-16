@@ -7,6 +7,15 @@ author: vu-ase
 source: https://github.com/vu-ase/example-service
 version: 1.0.0
 
+# The rover will execute these commands to build and start the service
+# NB: they will be executed from the service folder, where the service.yaml file is located
+commands:
+  build: make build # you can omit this if there is no build step involved
+  run: ./example-service
+
+# Do we need to inject the roverlib into the environment of the service?
+inject_roverlib: false
+
 # From each service, describe which stream we are interested in
 inputs:
   - service: imaging
@@ -33,10 +42,3 @@ configuration:
     value: 456
     tunable: true
     type: string # override the auto-detected type (can be string/int/float)
-
-    
-
-
-
-
-    

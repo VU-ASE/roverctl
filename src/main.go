@@ -10,6 +10,8 @@ import (
 	"github.com/VU-ASE/rover/src/configuration"
 	initconnectionpage "github.com/VU-ASE/rover/src/pages/connections/init"
 	manageconnectionspage "github.com/VU-ASE/rover/src/pages/connections/manage"
+	servicespage "github.com/VU-ASE/rover/src/pages/services"
+	initservicepage "github.com/VU-ASE/rover/src/pages/services/init"
 	startpageconnected "github.com/VU-ASE/rover/src/pages/start/connected"
 	utilitiespage "github.com/VU-ASE/rover/src/pages/start/connected/utilities"
 	startpagedisconnected "github.com/VU-ASE/rover/src/pages/start/disconnected"
@@ -46,6 +48,10 @@ func selectPage(s *state.AppState) tea.Model {
 		return utilitiespage.InitialModel()
 	case "connect":
 		return initconnectionpage.InitialModel(nil)
+	case "services":
+		return servicespage.InitialModel()
+	case "service init":
+		return initservicepage.InitialModel()
 	default:
 		{
 			if len(s.RoverConnections.Available) > 0 {
