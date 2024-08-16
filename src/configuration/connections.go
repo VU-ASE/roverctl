@@ -38,7 +38,7 @@ func ReadConnections() (RoverConnections, error) {
 			// 	Password: "root",
 			// },
 		},
-		Active: "rover1",
+		Active: "",
 	}
 
 	// Check if the file exists
@@ -58,13 +58,13 @@ func ReadConnections() (RoverConnections, error) {
 	return connections, err
 }
 
-func (c RoverConnections) GetActive() RoverConnection {
+func (c RoverConnections) GetActive() *RoverConnection {
 	for _, connection := range c.Available {
 		if connection.Name == c.Active {
-			return connection
+			return &connection
 		}
 	}
-	return RoverConnection{}
+	return nil
 }
 
 func (c RoverConnections) Save() error {
@@ -75,11 +75,17 @@ func (c RoverConnections) Save() error {
 	}
 
 	// Write the file
-	return os.WriteFile(connectionsFileName, content, 0644)
+	return os.WriteFile(connectionsFileName+"hh", content, 0644)
 }
 
 func (c RoverConnections) Add(new RoverConnection) RoverConnections {
+	// If a connection with the same name already exists, remove it
+	c.Available = slices.DeleteFunc(c.Available, func(c RoverConnection) bool {
+		return c.Name == new.Name
+	})
+
 	c.Available = append(c.Available, new)
+	c.Active = new.Name
 	return c
 }
 
@@ -92,7 +98,6 @@ func (c RoverConnections) Remove(name string) RoverConnections {
 }
 
 func (c RoverConnections) SetActive(name string) RoverConnections {
-
 	// Check if the connection exists
 	found := false
 	for _, c := range c.Available {

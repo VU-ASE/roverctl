@@ -10,6 +10,7 @@ var AsePrimary = lipgloss.Color("#0077B3")
 var WarningPrimary = lipgloss.Color("#FFA500")
 var SuccessPrimary = lipgloss.Color("#008000")
 var ErrorPrimary = lipgloss.Color("#FF0000")
+var GrayPrimary = lipgloss.Color("#808080")
 
 // Form theme
 var FormTheme = huh.ThemeBase()

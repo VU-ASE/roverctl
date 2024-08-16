@@ -10,7 +10,7 @@ var (
 	Docstyle          = lipgloss.NewStyle().Margin(1, 2)
 	TitleStyle        = lipgloss.NewStyle().MarginLeft(0)
 	ItemStyle         = lipgloss.NewStyle().PaddingLeft(4)
-	SelectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
+	SelectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(AsePrimary)
 	PaginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
 	HelpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(0).PaddingBottom(1)
 	QuitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)

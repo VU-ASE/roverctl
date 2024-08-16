@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"os/exec"
+	"syscall"
 
 	"github.com/VU-ASE/rover/src/configuration"
 	initconnectionpage "github.com/VU-ASE/rover/src/pages/connections/init"
@@ -14,13 +17,28 @@ import (
 )
 
 func selectPage(s *state.AppState) tea.Model {
-	if s.CurrentView == "Connect" {
-		return initconnectionpage.InitialModel()
-	}
-
 	switch s.CurrentView {
+	// SSH is different, it replaces the current process
+	case "SSH":
+		{
+			// Get the active connection
+			activeConnection := s.RoverConnections.GetActive()
+			if activeConnection == nil {
+				// This should never happen
+				syscall.Exec("/bin/echo", []string{"error"}, os.Environ())
+				return nil
+			}
+
+			ssh, lookErr := exec.LookPath("ssh")
+			if lookErr != nil {
+				panic(lookErr)
+			}
+			connectionString := fmt.Sprintf("%s@%s", activeConnection.Username, activeConnection.Host)
+			syscall.Exec(ssh, []string{"ssh", connectionString, "-p", "22"}, os.Environ())
+			return nil
+		}
 	case "Connect":
-		return initconnectionpage.InitialModel()
+		return initconnectionpage.InitialModel(nil)
 	default:
 		{
 			if len(s.RoverConnections.Available) > 0 {
@@ -43,6 +61,7 @@ func run() error {
 
 	// Create the app state
 	appState := state.Get()
+	defer appState.RoverConnections.Save()
 
 	// We start the app in a separate (full) screen
 	firsttime := true

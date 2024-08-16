@@ -22,7 +22,7 @@ type model struct {
 
 func InitialModel() model {
 	l := list.New([]list.Item{
-		components.ActionItem{Name: "Start", Desc: "Start your pipeline"}, // Should be "stop" when a pipeline is running
+		components.ActionItem{Name: "SSH", Desc: "Start an SSH shell into your Rover"},
 		components.ActionItem{Name: "Configure", Desc: "Configure your pipeline"},
 		components.ActionItem{Name: "Debug", Desc: "Enable remote debugging for your pipeline"}, // Should not be available when no pipeline is running or disable when enabled
 		components.ActionItem{Name: "Status", Desc: "Watcdh module outputs and status logs"},    // Should not be available when no pipeline is running
@@ -59,6 +59,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		// These keys should exit the page.
 		case "ctrl+c", "esc", "q":
+			state.Get().CurrentView = ""
 			return m, tea.Quit
 		case "enter":
 			value := m.actions.SelectedItem().FilterValue()
