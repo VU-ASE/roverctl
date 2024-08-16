@@ -35,13 +35,14 @@ type resultMsg struct {
 }
 
 type model struct {
-	form               *huh.Form
-	spinner            spinner.Model
-	serviceInitialized tribool.Tribool // download template and replace magic strings in it
-	isInitializing     bool
-	errors             []error // errors that occurred during the process
-	service            *serviceyaml.RoverService
-	selectedPreset     *string
+	serviceAlreadyExists bool
+	form                 *huh.Form
+	spinner              spinner.Model
+	serviceInitialized   tribool.Tribool // download template and replace magic strings in it
+	isInitializing       bool
+	errors               []error // errors that occurred during the process
+	service              *serviceyaml.RoverService
+	selectedPreset       *string
 }
 
 func InitialModel() model {
@@ -52,6 +53,10 @@ func InitialModel() model {
 	if err != nil {
 		defaultAuthor = ""
 	}
+
+	// Check if the service already exists, in which case we will not initialize it
+	_, err = os.Stat("./service.yaml")
+	serviceAlreadyExists := err == nil
 
 	service := serviceyaml.RoverService{
 		Name:          "",
@@ -67,12 +72,13 @@ func InitialModel() model {
 	selectedPreset := "golang"
 
 	return model{
-		spinner:            s,
-		service:            &service,
-		selectedPreset:     &selectedPreset,
-		serviceInitialized: tribool.Maybe,
-		errors:             []error{},
-		isInitializing:     false,
+		spinner:              s,
+		serviceAlreadyExists: serviceAlreadyExists,
+		service:              &service,
+		selectedPreset:       &selectedPreset,
+		serviceInitialized:   tribool.Maybe,
+		errors:               []error{},
+		isInitializing:       false,
 		form: huh.NewForm(
 			huh.NewGroup(
 				huh.NewInput().
@@ -226,12 +232,19 @@ func (m model) initializedSuccessView() string {
 func (m model) initializedFailureView() string {
 	s := lipgloss.NewStyle().Foreground(style.AsePrimary).Render("Could not initialize service")
 
-	s += lipgloss.NewStyle().Foreground(style.WarningPrimary).Render("\n\nAn error occurred while initializing your service")
+	s += "\n\nAn error occurred while initializing your service"
 	if len(m.errors) > 0 {
 		for _, err := range m.errors {
 			s += lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("\n - " + err.Error())
 		}
 	}
+
+	return s
+}
+func (m model) serviceAlreadyExistsView() string {
+	s := lipgloss.NewStyle().Foreground(style.AsePrimary).Render("Cannot initialize service")
+
+	s += "\n\nYou already initialized a service in this folder. \nIf you want to initialize a new service, create a sibling folder and try again."
 
 	return s
 }
@@ -241,7 +254,9 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) View() string {
-	if m.form.State == huh.StateCompleted && m.serviceInitialized == tribool.Maybe {
+	if m.serviceAlreadyExists {
+		return style.Docstyle.Render(m.serviceAlreadyExistsView())
+	} else if m.form.State == huh.StateCompleted && m.serviceInitialized == tribool.Maybe {
 		return style.Docstyle.Render(m.initializationView())
 	} else if m.form.State == huh.StateCompleted && m.serviceInitialized == tribool.True {
 		return style.Docstyle.Render(m.initializedSuccessView())

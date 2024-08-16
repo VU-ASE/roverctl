@@ -1,6 +1,8 @@
 package servicespage
 
 import (
+	"os"
+
 	"github.com/VU-ASE/rover/src/components"
 	"github.com/VU-ASE/rover/src/state"
 	"github.com/VU-ASE/rover/src/style"
@@ -17,11 +19,20 @@ type model struct {
 }
 
 func InitialModel() model {
-	l := list.New([]list.Item{
-		components.ActionItem{Name: "Initialize", Desc: "Initialize a new service in your current directory"},
-		components.ActionItem{Name: "Upload", Desc: "Upload the latest version of your service to your Rover"},
-		// components.ActionItem{Name: "Download", Desc: "Download official ASE services to your Rover"},
-	}, list.NewDefaultDelegate(), 0, 0)
+	// Is there already a service.yaml file in the current directory?
+	_, err := os.Stat("./service.yaml")
+
+	listItems := []list.Item{}
+	if err != nil {
+		listItems = append(listItems, components.ActionItem{Name: "Initialize", Desc: "Initialize a new service"})
+	} else {
+		listItems = append(listItems, components.ActionItem{Name: "Upload", Desc: "Upload your current service"})
+	}
+	listItems = append(listItems, []list.Item{
+		components.ActionItem{Name: "Download", Desc: "Download official ASE services to your Rover"},
+	}...)
+
+	l := list.New(listItems, list.NewDefaultDelegate(), 0, 0)
 	// If there are connections available, add the connected actions
 	l.Title = lipgloss.NewStyle().Background(style.AsePrimary).Bold(true).Padding(0, 0).Render("VU ASE") + lipgloss.NewStyle().Foreground(lipgloss.Color("#3C3C3C")).Render(" - racing Rovers since 2024")
 	l.SetShowStatusBar(false)
