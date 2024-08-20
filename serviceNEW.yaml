@@ -13,9 +13,6 @@ commands:
   build: make build # you can omit this if there is no build step involved
   run: ./example-service
 
-# Do we need to inject the roverlib into the environment of the service?
-inject_roverlib: false
-
 # From each service, describe which stream we are interested in
 inputs:
   - service: imaging

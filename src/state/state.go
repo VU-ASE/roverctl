@@ -7,7 +7,7 @@ import (
 // This is the struct that implements the Bubbletea model interface. It contains all the app state.
 // It is used as a singleton to keep track of the state of the app
 type AppState struct {
-	CurrentView      string                         // Keep track of the view that we are currently in
+	Route            route                          // used to keep track of the current view
 	RoverConnections configuration.RoverConnections // used to track state changes, if the connection state changes
 }
 
@@ -22,7 +22,7 @@ func initialize() *AppState {
 	}
 
 	return &AppState{
-		CurrentView:      "",
+		Route:            NewRoute(),
 		RoverConnections: connections,
 	}
 }

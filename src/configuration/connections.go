@@ -4,6 +4,7 @@ import (
 	"os"
 	"slices"
 
+	"golang.org/x/crypto/ssh"
 	"gopkg.in/yaml.v3"
 )
 
@@ -118,4 +119,19 @@ func (c RoverConnections) SetActive(name string) RoverConnections {
 	}
 
 	return c
+}
+
+// Convert the RoverConnetion to an SSH connection object
+func (c RoverConnection) ToSSH() (*ssh.Client, error) {
+	// ssh.NewClient()
+
+	config := &ssh.ClientConfig{
+		User: c.Username,
+		Auth: []ssh.AuthMethod{
+			ssh.Password(c.Password),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+
+	return ssh.Dial("tcp", c.Host+":22", config)
 }

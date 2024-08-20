@@ -8,8 +8,10 @@ import (
 	"syscall"
 
 	"github.com/VU-ASE/rover/src/configuration"
+	roverlock "github.com/VU-ASE/rover/src/lock"
 	initconnectionpage "github.com/VU-ASE/rover/src/pages/connections/init"
 	manageconnectionspage "github.com/VU-ASE/rover/src/pages/connections/manage"
+	lockfailedpage "github.com/VU-ASE/rover/src/pages/lock/failed"
 	servicespage "github.com/VU-ASE/rover/src/pages/services"
 	initservicepage "github.com/VU-ASE/rover/src/pages/services/init"
 	startpageconnected "github.com/VU-ASE/rover/src/pages/start/connected"
@@ -22,7 +24,24 @@ import (
 )
 
 func selectPage(s *state.AppState) tea.Model {
-	switch strings.ToLower(s.CurrentView) {
+	// If the page is one of the following, we need to lock the Rover first before accessing it
+	// then, we can proceed to the page
+	currPage := strings.ToLower(s.Route.Peek())
+	if currPage == "services" {
+		// Get the rover
+		roverConn := s.RoverConnections.GetActive()
+		if roverConn == nil {
+			return lockfailedpage.InitialModel("No active connection")
+		}
+
+		// Lock the Rover
+		if err := roverlock.Lock(*roverConn); err != nil {
+			// If there is an error, we need to show the lock failed page
+			return lockfailedpage.InitialModel(err.Error())
+		}
+	}
+
+	switch strings.ToLower(s.Route.Peek()) {
 	// SSH is different, it replaces the current process
 	case "ssh":
 		{
@@ -75,10 +94,17 @@ func run() error {
 	// Create the app state
 	appState := state.Get()
 
+	// Push the home route to the stack
+	appState.Route.Push("")
+
 	// We start the app in a separate (full) screen
-	firsttime := true
-	for firsttime || appState.CurrentView != "" {
-		firsttime = false
+	for !appState.Route.IsEmpty() {
+		// Always try to unlock first (best-effort)
+		rovercon := appState.RoverConnections.GetActive()
+		if rovercon != nil {
+			_ = roverlock.Unlock(*rovercon)
+		}
+
 		page := selectPage(appState)
 		p := tea.NewProgram(page, tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
@@ -86,11 +112,20 @@ func run() error {
 		}
 	}
 
-	// Save the connections
+	// Always try to unlock first (best-effort)
+	rovercon := appState.RoverConnections.GetActive()
+	if rovercon != nil {
+		_ = roverlock.Unlock(*rovercon)
+	}
+
+	// Save the connections to disk
 	return state.Get().RoverConnections.Save()
 }
 
 func main() {
+	// Clear the screen
+	fmt.Println("\033[2J")
+
 	// Configure zerolog to output to stdout beautifully
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 

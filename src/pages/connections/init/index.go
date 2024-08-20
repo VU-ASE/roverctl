@@ -106,7 +106,12 @@ func InitialModel(val *formValues) model {
 					Title("Enter a name for this connection to find it back later").
 					CharLimit(255).
 					Prompt("> ").
-					Value(&formValues.name),
+					Value(&formValues.name).Validate(func(s string) error {
+					if len(s) <= 0 {
+						return fmt.Errorf("You cannot leave this field empty")
+					}
+					return nil
+				}),
 			),
 		).WithTheme(style.FormTheme),
 	}
@@ -127,7 +132,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						Username: m.formValues.username,
 						Password: m.formValues.password,
 					})
-					state.Get().CurrentView = "home"
+					state.Get().Route.Replace("connections")
 					return m, tea.Quit
 				}
 			case "n":

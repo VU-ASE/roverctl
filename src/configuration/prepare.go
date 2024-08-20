@@ -1,6 +1,7 @@
 package configuration
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/VU-ASE/rover/src/configuration/asciitool"
@@ -16,6 +17,12 @@ const RemoteConfigDir = "/etc/rover"
 
 // Initialize the configuration directory
 func Initialize() error {
+	// Check if we are root
+	uid := os.Geteuid()
+	if uid != 0 {
+		return fmt.Errorf("You must run this utility as root. Try rerunning with sudo.")
+	}
+
 	// Create the configuration directory if it does not exist
 	if err := os.MkdirAll(LocalConfigDir, 0755); err != nil {
 		return err

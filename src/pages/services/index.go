@@ -6,6 +6,7 @@ import (
 	"github.com/VU-ASE/rover/src/components"
 	"github.com/VU-ASE/rover/src/state"
 	"github.com/VU-ASE/rover/src/style"
+	"github.com/VU-ASE/rover/src/tui"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -34,7 +35,7 @@ func InitialModel() model {
 
 	l := list.New(listItems, list.NewDefaultDelegate(), 0, 0)
 	// If there are connections available, add the connected actions
-	l.Title = lipgloss.NewStyle().Background(style.AsePrimary).Bold(true).Padding(0, 0).Render("VU ASE") + lipgloss.NewStyle().Foreground(lipgloss.Color("#3C3C3C")).Render(" - racing Rovers since 2024")
+	l.Title = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true).Padding(0, 0).Render("VU ASE") + lipgloss.NewStyle().Foreground(lipgloss.Color("#3C3C3C")).Render(" - racing Rovers since 2024")
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 	l.Styles.Title = style.TitleStyle
@@ -53,7 +54,6 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-
 	case tea.WindowSizeMsg:
 		h, v := style.Docstyle.GetFrameSize()
 		m.actions.SetSize(msg.Width-h, msg.Height-v) // leave some room for the header
@@ -62,10 +62,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		// Cool, what was the actual key pressed?
 		switch msg.String() {
-		// These keys should exit the page.
-		case "ctrl+c", "esc", "q":
-			state.Get().CurrentView = "home"
-			return m, tea.Quit
 		case "enter":
 			value := m.actions.SelectedItem().FilterValue()
 			if value != "" {
@@ -75,10 +71,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case "Upload":
 					value = "service upload"
 				}
-				state.Get().CurrentView = value
+				state.Get().Route.Push(value)
 				return m, tea.Quit
 			}
 		}
+	}
+
+	// Is there a main action to take?
+	rootmodel, rootcmd := tui.Update(m, msg)
+	if rootcmd != nil {
+		return rootmodel, rootcmd
 	}
 
 	var cmd tea.Cmd

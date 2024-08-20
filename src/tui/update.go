@@ -10,13 +10,13 @@ func Update(m tea.Model, msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		// These keys should exit the page.
-		case "ctrl+c", "esc", "q":
-			if state.Get().CurrentView == "home" {
-				state.Get().CurrentView = ""
-			} else if state.Get().CurrentView != "" {
-				state.Get().CurrentView = "home"
-			}
+		case "esc", "q":
+			// Go to the previous page
+			state.Get().Route.Pop()
+			return m, tea.Quit
+		case "ctrl+c":
+			// Exit the application immeediately
+			state.Get().Route.Clear()
 			return m, tea.Quit
 		}
 	}
