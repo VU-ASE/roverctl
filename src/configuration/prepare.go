@@ -5,26 +5,34 @@ import (
 	"os"
 
 	"github.com/VU-ASE/rover/src/configuration/asciitool"
-	// "github.com/rs/zerolog/log"
 )
 
 // This is where the Rover configuration files are saved both remotely
 // and on the local machine of the user.
 // Directories will be created if they do not exist
 
-const LocalConfigDir = "/etc/rover"
+func LocalConfigDir() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "/home/.rover"
+	}
+
+	return home + "/.rover"
+}
+
 const RemoteConfigDir = "/etc/rover"
+const RemoteServiceDir = "/home/debix/.rover/services" // this directory holds all service folders. Each subfolder represents a service
 
 // Initialize the configuration directory
 func Initialize() error {
 	// Check if we are root
 	uid := os.Geteuid()
-	if uid != 0 {
-		return fmt.Errorf("You must run this utility as root. Try rerunning with sudo.")
+	if uid == 0 {
+		return fmt.Errorf("You should not run this utility as root.")
 	}
 
 	// Create the configuration directory if it does not exist
-	if err := os.MkdirAll(LocalConfigDir, 0755); err != nil {
+	if err := os.MkdirAll(LocalConfigDir(), 0755); err != nil {
 		return err
 	}
 
@@ -34,7 +42,7 @@ func Initialize() error {
 	// }
 
 	// Initialize the ascii tool that we need
-	return asciitool.Init(LocalConfigDir)
+	return asciitool.Init(LocalConfigDir())
 }
 
 // Cleanup the configuration directory

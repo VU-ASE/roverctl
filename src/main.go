@@ -14,6 +14,7 @@ import (
 	lockfailedpage "github.com/VU-ASE/rover/src/pages/lock/failed"
 	servicespage "github.com/VU-ASE/rover/src/pages/services"
 	initservicepage "github.com/VU-ASE/rover/src/pages/services/init"
+	uploadservicepage "github.com/VU-ASE/rover/src/pages/services/upload"
 	startpageconnected "github.com/VU-ASE/rover/src/pages/start/connected"
 	utilitiespage "github.com/VU-ASE/rover/src/pages/start/connected/utilities"
 	startpagedisconnected "github.com/VU-ASE/rover/src/pages/start/disconnected"
@@ -65,12 +66,14 @@ func selectPage(s *state.AppState) tea.Model {
 		return manageconnectionspage.InitialModel()
 	case "utilities":
 		return utilitiespage.InitialModel()
-	case "connect":
+	case "connection init":
 		return initconnectionpage.InitialModel(nil)
 	case "services":
 		return servicespage.InitialModel()
 	case "service init":
 		return initservicepage.InitialModel()
+	case "service upload":
+		return uploadservicepage.InitialModel()
 	default:
 		{
 			if len(s.RoverConnections.Available) > 0 {

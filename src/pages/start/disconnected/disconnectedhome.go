@@ -23,7 +23,7 @@ func InitialModel() model {
 		components.ActionItem{Name: "Connect", Desc: "Initialize a connection to a Rover"}, // Should be "stop" when a pipeline is running
 	}, list.NewDefaultDelegate(), 0, 0)
 	// If there are connections available, add the connected actions
-	l.Title = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true).Padding(0, 0).Render("VU ASE") + lipgloss.NewStyle().Foreground(lipgloss.Color("#3C3C3C")).Render(" - racing Rovers since 2024")
+	l.Title = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Background(style.AsePrimary).Bold(true).Padding(0, 0).Render("VU ASE") + lipgloss.NewStyle().Foreground(lipgloss.Color("#3C3C3C")).Render(" - racing Rovers since 2024")
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 	l.Styles.Title = style.TitleStyle
@@ -53,7 +53,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			value := m.actions.SelectedItem().FilterValue()
 			if value != "" {
-				state.Get().Route.Push(value)
+				switch value {
+				case "Connect":
+					state.Get().Route.Push("connection init")
+				default:
+					state.Get().Route.Push(value)
+				}
 				return m, tea.Quit
 			}
 		}

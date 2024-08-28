@@ -296,7 +296,7 @@ func initializeTemplate(m model, a int) tea.Cmd {
 		_ = replaceMagicStrings("Makefile", toreplace)
 		_ = replaceMagicStrings("go.mod", toreplace)
 
-		return resultMsg{result: true, err: nil, action: initializeService, attempt: a}
+		return resultMsg{result: err == nil, err: err, action: initializeService, attempt: a}
 	}
 }
 

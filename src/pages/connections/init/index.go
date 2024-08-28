@@ -16,6 +16,7 @@ import (
 	"github.com/melbahja/goph"
 	probing "github.com/prometheus-community/pro-bing"
 	wifiname "github.com/yelinaung/wifi-name"
+	"golang.org/x/crypto/ssh"
 	"gopkg.in/grignaak/tribool.v1"
 )
 
@@ -53,6 +54,8 @@ type model struct {
 	isChecking  bool
 	formValues  *formValues
 	host        string // the IP of the rover to use
+	port        uint
+	error       error // any errors that occurred
 }
 
 func InitialModel(val *formValues) model {
@@ -73,10 +76,12 @@ func InitialModel(val *formValues) model {
 		spinner:     s,
 		formValues:  formValues,
 		host:        "",
+		port:        22,
 		routeExists: tribool.Maybe,
 		authValid:   tribool.Maybe,
 		debixValid:  tribool.Maybe,
 		isChecking:  false,
+		error:       nil,
 		form: huh.NewForm(
 			huh.NewGroup(
 				huh.NewInput().
@@ -177,18 +182,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case routePingAction:
 			m.routeExists = tribool.FromBool(msg.result)
 		case authCheckAction:
+			m.error = msg.err
 			m.authValid = tribool.FromBool(msg.result)
 		case debixCheckAction:
 			m.debixValid = tribool.FromBool(msg.result)
 		}
 		return m, nil
 	default:
-		// Base command
-		model, cmd := tui.Update(m, msg)
-		if cmd != nil {
-			return model, cmd
-		}
-
 		cmds := []tea.Cmd{}
 		form, cmd := m.form.Update(msg)
 		if f, ok := form.(*huh.Form); ok {
@@ -201,15 +201,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.routeExists = tribool.False
 					return m, cmd
 				}
-				m.host = fmt.Sprintf("192.168.1.%d", index+100)
-				m.host = "www.google.com"
-				m.host = "localhost"
+				// todo: change to 192.168.1 instead of 192.168.0
+				m.host = fmt.Sprintf("192.168.0.%d", index+100)
 
 				cmds = append(cmds, checkRoute(m, attemptNumber), checkAuth(m, attemptNumber), checkDebix(m, attemptNumber))
 			}
 		}
 		if cmd != nil {
 			cmds = append(cmds, cmd)
+		} else {
+			// Base command (put in this ugly nested else statement because we don't want to quit when a user is typing in a 'q')
+			model, cmd := tui.Update(m, msg)
+			if cmd != nil {
+				return model, cmd
+			}
 		}
 		return m, tea.Batch(cmds...)
 	}
@@ -254,7 +259,7 @@ func (m model) testConnectionView() string {
 		s += "\n " + m.spinner.View() + " checking if authentication is valid"
 		return s
 	} else if m.authValid == tribool.False {
-		s += "\n - " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("Authentication failed. Please check your credentials")
+		s += "\n - " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("Authentication failed. Please check your credentials"+"\n"+m.error.Error())
 	} else {
 		s += "\n - " + lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render("Authentication successful")
 	}
@@ -307,7 +312,15 @@ func checkAuth(m model, a int) tea.Cmd {
 	return func() tea.Msg {
 		// Start new ssh connection with private key.
 		auth := goph.Password(m.formValues.password)
-		client, err := goph.New(m.formValues.username, m.host, auth)
+
+		client, err := goph.NewConn(&goph.Config{
+			User:     m.formValues.username,
+			Addr:     m.host,
+			Port:     m.port,
+			Auth:     auth,
+			Timeout:  goph.DefaultTimeout,
+			Callback: ssh.InsecureIgnoreHostKey(),
+		})
 		if err != nil {
 			return resultMsg{result: false, err: err, action: authCheckAction, attempt: a}
 		}
@@ -323,14 +336,21 @@ func checkDebix(m model, a int) tea.Cmd {
 	return func() tea.Msg {
 		// Start new ssh connection with password auth.
 		auth := goph.Password(m.formValues.password)
-		client, err := goph.New(m.formValues.username, m.host, auth)
+		client, err := goph.NewConn(&goph.Config{
+			User:     m.formValues.username,
+			Addr:     m.host,
+			Port:     m.port,
+			Auth:     auth,
+			Timeout:  goph.DefaultTimeout,
+			Callback: ssh.InsecureIgnoreHostKey(),
+		})
 		if err != nil {
 			return resultMsg{result: false, err: err, action: debixCheckAction, attempt: a}
 		}
 		defer client.Close()
 
 		// Check if the connection is working by running a simple command
-		_, err = client.Run("ls ./debix") // todo: change to /home/debix
+		_, err = client.Run("ls /home/debix")
 		return resultMsg{result: err == nil, err: nil, action: debixCheckAction, attempt: a}
 	}
 }

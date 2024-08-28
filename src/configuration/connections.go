@@ -13,7 +13,7 @@ import (
 //
 
 // The file name in the configuration directory where the connections are stored
-const connectionsFileName = LocalConfigDir + "/connections.yaml"
+var connectionsFileName = LocalConfigDir() + "/connections.yaml"
 
 type RoverConnection struct {
 	Name     string `yaml:"name"`
@@ -122,9 +122,8 @@ func (c RoverConnections) SetActive(name string) RoverConnections {
 }
 
 // Convert the RoverConnetion to an SSH connection object
+// Don't forget to close!
 func (c RoverConnection) ToSSH() (*ssh.Client, error) {
-	// ssh.NewClient()
-
 	config := &ssh.ClientConfig{
 		User: c.Username,
 		Auth: []ssh.AuthMethod{

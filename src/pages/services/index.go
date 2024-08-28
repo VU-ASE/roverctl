@@ -25,9 +25,9 @@ func InitialModel() model {
 
 	listItems := []list.Item{}
 	if err != nil {
-		listItems = append(listItems, components.ActionItem{Name: "Initialize", Desc: "Initialize a new service"})
+		listItems = append(listItems, components.ActionItem{Name: "Initialize", Desc: "Initialize a new service in your current working directory"})
 	} else {
-		listItems = append(listItems, components.ActionItem{Name: "Upload", Desc: "Upload your current service"})
+		listItems = append(listItems, components.ActionItem{Name: "Upload", Desc: "Upload the service in your current working directory"})
 	}
 	listItems = append(listItems, []list.Item{
 		components.ActionItem{Name: "Download", Desc: "Download official ASE services to your Rover"},
@@ -35,7 +35,7 @@ func InitialModel() model {
 
 	l := list.New(listItems, list.NewDefaultDelegate(), 0, 0)
 	// If there are connections available, add the connected actions
-	l.Title = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true).Padding(0, 0).Render("VU ASE") + lipgloss.NewStyle().Foreground(lipgloss.Color("#3C3C3C")).Render(" - racing Rovers since 2024")
+	l.Title = lipgloss.NewStyle().Foreground(style.AsePrimary).Bold(true).Padding(0, 0).Render("Manage your services")
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 	l.Styles.Title = style.TitleStyle
@@ -70,6 +70,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					value = "service init"
 				case "Upload":
 					value = "service upload"
+				case "Download":
+					value = "service download"
 				}
 				state.Get().Route.Push(value)
 				return m, tea.Quit

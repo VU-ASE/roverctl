@@ -142,7 +142,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 		case key.Matches(msg, keys.New):
-			state.Get().Route.Push("newconnection")
+			state.Get().Route.Push("connection init")
 			return m, tea.Quit
 		case key.Matches(msg, keys.Delete):
 			if len(m.list.Items()) > 1 && m.list.Index() >= 0 && m.list.Index() < len(m.list.Items()) {

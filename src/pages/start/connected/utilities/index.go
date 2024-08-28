@@ -22,7 +22,7 @@ func InitialModel() model {
 		components.ActionItem{Name: "SSH", Desc: "Open an SSH terminal to your Rover"},
 	}, list.NewDefaultDelegate(), 0, 0)
 	// If there are connections available, add the connected actions
-	l.Title = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true).Padding(0, 0).Render("VU ASE") + lipgloss.NewStyle().Foreground(lipgloss.Color("#3C3C3C")).Render(" - racing Rovers since 2024")
+	l.Title = lipgloss.NewStyle().Foreground(style.AsePrimary).Bold(true).Padding(0, 0).Render("Utilities")
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 	l.Styles.Title = style.TitleStyle
