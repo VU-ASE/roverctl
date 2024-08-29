@@ -15,7 +15,7 @@ import (
 
 type model struct {
 	spinner        spinner.Model
-	transferAction tui.Action
+	transferAction tui.Action[any]
 }
 
 func InitialModel() model {
@@ -24,7 +24,7 @@ func InitialModel() model {
 
 	m := model{
 		spinner:        s,
-		transferAction: tui.NewAction("transfer"),
+		transferAction: tui.NewAction[any]("transfer"),
 	}
 	m.transferAction.Started = true
 	return m
@@ -42,7 +42,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case spinner.TickMsg:
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
-	case tui.ActionResult:
+	case tui.ActionResult[any]:
 		actions := tui.Actions{&m.transferAction}
 		actions.ProcessResult(msg)
 	}
@@ -92,29 +92,21 @@ func (m model) View() string {
 }
 
 func uploadService(m model) tea.Cmd {
-	return tui.PerformAction(&m.transferAction, func() error {
+	return tui.PerformAction(&m.transferAction, func() (*any, error) {
 		conn := state.Get().RoverConnections.GetActive()
 		if conn == nil {
-			return fmt.Errorf("Not connected to an active Rover")
+			return nil, fmt.Errorf("Not connected to an active Rover")
 		}
 
-		// Lock the rover
-		err := roverlock.Lock(*conn)
-		if err != nil {
-			return fmt.Errorf("Could not lock rover %v", err.Error())
-		}
+		err := roverlock.WithLock(*conn, func() error {
+			// Upload the service
+			err := services.Upload(*conn)
+			if err != nil {
+				return fmt.Errorf("Failed with %v", err.Error())
+			}
+			return nil
+		})
 
-		// Upload the service
-		err = services.Upload(*conn)
-		if err != nil {
-			return fmt.Errorf("Failed with %v", err.Error())
-		}
-
-		// Unlock the rover
-		err = roverlock.Unlock(*conn)
-		if err != nil {
-			return fmt.Errorf("Could not unlock rover %v", err.Error())
-		}
-		return nil
+		return nil, err
 	})
 }

@@ -120,3 +120,13 @@ func Unlock(conn configuration.RoverConnection) error {
 	// No lockfile exists, so we are already unlocked
 	return nil
 }
+
+func WithLock(conn configuration.RoverConnection, f func() error) error {
+	err := Lock(conn)
+	if err != nil {
+		return fmt.Errorf("Could not lock rover %v", err.Error())
+	}
+	defer Unlock(conn)
+
+	return f()
+}

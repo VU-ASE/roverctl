@@ -3,6 +3,7 @@ package roveryaml
 import (
 	"io"
 	"os"
+	"slices"
 
 	"github.com/VU-ASE/rover/src/configuration"
 	"github.com/pkg/sftp"
@@ -25,6 +26,49 @@ type ServiceDownload struct {
 	Name    string `yaml:"name"`
 	Source  string `yaml:"source"`
 	Version string `yaml:"version"`
+}
+
+func (c *RoverConfig) Enable(path string) {
+	if c == nil {
+		return
+	}
+
+	c.Enabled = append(c.Enabled, path)
+}
+
+func (c *RoverConfig) Disable(path string) {
+	if c == nil {
+		return
+	}
+
+	c.Enabled = slices.DeleteFunc(
+		c.Enabled,
+		func(p string) bool {
+			return p == path
+		},
+	)
+}
+
+func (c *RoverConfig) Toggle(path string) {
+	if c.HasEnabled(path) {
+		c.Disable(path)
+	} else {
+		c.Enable(path)
+	}
+}
+
+func (c *RoverConfig) HasEnabled(path string) bool {
+	if c == nil {
+		return false
+	}
+
+	for _, p := range c.Enabled {
+		if p == path {
+			return true
+		}
+	}
+
+	return false
 }
 
 var defaultPath = configuration.RemoteConfigDir + "/rover.yaml"

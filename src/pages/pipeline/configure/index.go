@@ -131,6 +131,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch {
+		// todo: keymatches
+		case msg.String() == "n":
+			state.Get().Route.Push("services enable")
 		case key.Matches(msg, keys.MarkActive):
 			if m.list.Index() >= 0 && m.list.Index() < len(m.list.Items()) {
 				item := m.list.Items()[m.list.Index()].(item)
@@ -171,7 +174,7 @@ func (m model) View() string {
 	s := "Configure your pipeline\n\n"
 
 	// Create a pipeline drawing with the mermaid-ascii tool
-	pipeline := `graph
+	pipeline := `graph LR
 topcam --> controller
 controller --> actuator`
 

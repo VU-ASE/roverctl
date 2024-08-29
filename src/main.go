@@ -11,8 +11,8 @@ import (
 	roverlock "github.com/VU-ASE/rover/src/lock"
 	initconnectionpage "github.com/VU-ASE/rover/src/pages/connections/init"
 	manageconnectionspage "github.com/VU-ASE/rover/src/pages/connections/manage"
-	configurepipelinepage "github.com/VU-ASE/rover/src/pages/pipeline/configure"
 	servicespage "github.com/VU-ASE/rover/src/pages/services"
+	enableservicespage "github.com/VU-ASE/rover/src/pages/services/enable"
 	initservicepage "github.com/VU-ASE/rover/src/pages/services/init"
 	uploadservicepage "github.com/VU-ASE/rover/src/pages/services/upload"
 	startpageconnected "github.com/VU-ASE/rover/src/pages/start/connected"
@@ -58,7 +58,7 @@ func selectPage(s *state.AppState) tea.Model {
 	case "service upload":
 		return uploadservicepage.InitialModel()
 	case "pipeline configure":
-		return configurepipelinepage.InitialModel()
+		return enableservicespage.InitialModel()
 	default:
 		{
 			if len(s.RoverConnections.Available) > 0 {

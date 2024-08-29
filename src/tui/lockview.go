@@ -14,7 +14,7 @@ import (
 // A reusable view that can show lock information
 // if not locked yet, it shows a loading state or a message, if successfully locked, it shows the string passed in
 // NB: the spinner needs to be initialized already
-func LockView(lockAction Action, unlockAction Action, spinner spinner.Model, view string) string {
+func LockView(lockAction Action[any], unlockAction Action[any], spinner spinner.Model, view string) string {
 	if lockAction.IsLoading() {
 		return spinner.View() + " locking your Rover"
 	} else if unlockAction.IsLoading() {
@@ -47,7 +47,7 @@ func LockView(lockAction Action, unlockAction Action, spinner spinner.Model, vie
 }
 
 // A reusable update function that can be used to retry lock and unlock actions
-func LockUpdate(m tea.Model, msg tea.Msg, lockAction *Action, unlockAction *Action) (tea.Model, tea.Cmd) {
+func LockUpdate(m tea.Model, msg tea.Msg, lockAction *Action[any], unlockAction *Action[any]) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -60,7 +60,7 @@ func LockUpdate(m tea.Model, msg tea.Msg, lockAction *Action, unlockAction *Acti
 				return m, lock(lockAction)
 			}
 		}
-	case ActionResult:
+	case ActionResult[any]:
 		actions := Actions{lockAction, unlockAction}
 		actions.ProcessResult(msg)
 	}
@@ -68,35 +68,35 @@ func LockUpdate(m tea.Model, msg tea.Msg, lockAction *Action, unlockAction *Acti
 	return m, nil
 }
 
-func LockInit(lockAction *Action, unlockAction *Action) tea.Cmd {
+func LockInit(lockAction *Action[any], unlockAction *Action[any]) tea.Cmd {
 	return tea.Batch(
 		lock(lockAction),
 		unlock(unlockAction),
 	)
 }
 
-func lock(lockAction *Action) tea.Cmd {
-	return PerformAction(lockAction, func() error {
+func lock(lockAction *Action[any]) tea.Cmd {
+	return PerformAction(lockAction, func() (*any, error) {
 		// Get the active rover
 		active := state.Get().RoverConnections.GetActive()
 		if active == nil {
-			return fmt.Errorf("Not connected to an active Rover")
+			return nil, fmt.Errorf("Not connected to an active Rover")
 		}
 
 		// Unlock the rover
-		return roverlock.Unlock(*active)
+		return nil, roverlock.Unlock(*active)
 	})
 }
 
-func unlock(unlockAction *Action) tea.Cmd {
-	return PerformAction(unlockAction, func() error {
+func unlock(unlockAction *Action[any]) tea.Cmd {
+	return PerformAction(unlockAction, func() (*any, error) {
 		// Get the active rover
 		active := state.Get().RoverConnections.GetActive()
 		if active == nil {
-			return fmt.Errorf("Not connected to an active Rover")
+			return nil, fmt.Errorf("Not connected to an active Rover")
 		}
 
 		// Unlock the rover
-		return roverlock.Lock(*active)
+		return nil, roverlock.Lock(*active)
 	})
 }
