@@ -1,9 +1,11 @@
 package configuration
 
 import (
+	"fmt"
 	"os"
 	"slices"
 
+	"github.com/melbahja/goph"
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/yaml.v3"
 )
@@ -18,6 +20,7 @@ var connectionsFileName = LocalConfigDir() + "/connections.yaml"
 type RoverConnection struct {
 	Name     string `yaml:"name"`
 	Host     string `yaml:"host"`
+	Port     uint   `yaml:"port"`
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
 }
@@ -123,7 +126,7 @@ func (c RoverConnections) SetActive(name string) RoverConnections {
 
 // Convert the RoverConnetion to an SSH connection object
 // Don't forget to close!
-func (c RoverConnection) ToSSH() (*ssh.Client, error) {
+func (c RoverConnection) ToSshConnection() (*ssh.Client, error) {
 	config := &ssh.ClientConfig{
 		User: c.Username,
 		Auth: []ssh.AuthMethod{
@@ -132,5 +135,19 @@ func (c RoverConnection) ToSSH() (*ssh.Client, error) {
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
-	return ssh.Dial("tcp", c.Host+":22", config)
+	return ssh.Dial("tcp", fmt.Sprintf("%s:%d", c.Host, c.Port), config)
+}
+
+// Convert the RoverConnection to a goph SSH connection object (which often is more useful)
+// Don't forget to close!
+func (c RoverConnection) ToSsh() (*goph.Client, error) {
+	auth := goph.Password(c.Password)
+	return goph.NewConn(&goph.Config{
+		User:     c.Username,
+		Addr:     c.Host,
+		Port:     c.Port,
+		Auth:     auth,
+		Timeout:  goph.DefaultTimeout,
+		Callback: ssh.InsecureIgnoreHostKey(),
+	})
 }

@@ -8,16 +8,13 @@ import (
 
 	"github.com/VU-ASE/rover/src/configuration"
 	"github.com/VU-ASE/rover/src/serviceyaml"
-	"github.com/VU-ASE/rover/src/state"
-	"github.com/melbahja/goph"
 	"github.com/pkg/sftp"
-	"golang.org/x/crypto/ssh"
 )
 
 // Functions for uploading rover services to the Rover over a remote connection
 
-// This will upload the current working directory to the Rover as a sservice
-func UploadService() error {
+// This will upload the current working directory as a service to the Rover
+func Upload(conn configuration.RoverConnection) error {
 	// Check if this service contains a service.yaml file
 	_, err := os.Stat("./service.yaml")
 	if err != nil {
@@ -25,34 +22,20 @@ func UploadService() error {
 	}
 
 	// Parse the service.yaml file
-	yaml, err := serviceyaml.Parse("./service.yaml")
+	yaml, err := serviceyaml.ParseFrom("./service.yaml")
 	if err != nil {
 		return fmt.Errorf("Failed to parse service.yaml file: %v", err)
 	}
 
-	// Get the active connection
-	activeConnection := state.Get().RoverConnections.GetActive()
-	if activeConnection == nil {
-		return fmt.Errorf("No active Rover connection found, do not know where to upload the service.")
-	}
-
 	// Create an SSH client
-	sshconn, err := activeConnection.ToSSH()
+	sshconn, err := conn.ToSshConnection()
 	if err != nil {
 		return err
 	}
 	defer sshconn.Close()
 
 	// Connect over SSH
-	auth := goph.Password(activeConnection.Password)
-	sshclient, err := goph.NewConn(&goph.Config{
-		User:     activeConnection.Username,
-		Addr:     activeConnection.Host,
-		Port:     22,
-		Auth:     auth,
-		Timeout:  goph.DefaultTimeout,
-		Callback: ssh.InsecureIgnoreHostKey(),
-	})
+	sshclient, err := conn.ToSsh()
 	if err != nil {
 		return err
 	}

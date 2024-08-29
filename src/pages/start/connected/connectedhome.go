@@ -23,10 +23,10 @@ type model struct {
 
 func InitialModel() model {
 	l := list.New([]list.Item{
+		components.ActionItem{Name: "Configure", Desc: "Configure your pipeline"},
 		components.ActionItem{Name: "Services", Desc: "Create, upload, download and install services"},
 		components.ActionItem{Name: "Connections", Desc: "Manage your Rover connections"},
 		components.ActionItem{Name: "Utilities", Desc: "Various utilities to interact with your Rover"},
-		// components.ActionItem{Name: "Configure", Desc: "Configure your pipeline"},
 		// components.ActionItem{Name: "Debug", Desc: "Enable remote debugging for your pipeline"}, // Should not be available when no pipeline is running or disable when enabled
 		// components.ActionItem{Name: "Status", Desc: "Watcdh module outputs and status logs"},    // Should not be available when no pipeline is running
 		// components.ActionItem{Name: "Update", Desc: "Fetch the latest versions of all modules and install them"},
@@ -63,7 +63,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			value := m.actions.SelectedItem().FilterValue()
 			if value != "" {
-				state.Get().Route.Push(value)
+				if value == "Configure" {
+					state.Get().Route.Push("pipeline configure")
+				} else {
+					state.Get().Route.Push(value)
+				}
 				return m, tea.Quit
 			}
 		}

@@ -30,17 +30,22 @@ type RoverServiceConfigurationOption struct {
 	Tunable bool   `yaml:"tunable"`
 }
 
+// Parse the YAML content
+// NB: having a custom Parse function allows us to set default values for the struct
+func Parse(content []byte) (*RoverService, error) {
+	service := &RoverService{}
+	err := yaml.Unmarshal(content, service)
+
+	return service, err
+}
+
 // Parse the YAML file at the given path
-func Parse(path string) (*RoverService, error) {
+func ParseFrom(path string) (*RoverService, error) {
 	// Read the file
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	// Parse YAML
-	service := &RoverService{}
-	err = yaml.Unmarshal(content, service)
-
-	return service, err
+	return Parse(content)
 }

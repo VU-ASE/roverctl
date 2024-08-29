@@ -11,7 +11,7 @@ import (
 	roverlock "github.com/VU-ASE/rover/src/lock"
 	initconnectionpage "github.com/VU-ASE/rover/src/pages/connections/init"
 	manageconnectionspage "github.com/VU-ASE/rover/src/pages/connections/manage"
-	lockfailedpage "github.com/VU-ASE/rover/src/pages/lock/failed"
+	configurepipelinepage "github.com/VU-ASE/rover/src/pages/pipeline/configure"
 	servicespage "github.com/VU-ASE/rover/src/pages/services"
 	initservicepage "github.com/VU-ASE/rover/src/pages/services/init"
 	uploadservicepage "github.com/VU-ASE/rover/src/pages/services/upload"
@@ -25,23 +25,6 @@ import (
 )
 
 func selectPage(s *state.AppState) tea.Model {
-	// If the page is one of the following, we need to lock the Rover first before accessing it
-	// then, we can proceed to the page
-	currPage := strings.ToLower(s.Route.Peek())
-	if currPage == "services" {
-		// Get the rover
-		roverConn := s.RoverConnections.GetActive()
-		if roverConn == nil {
-			return lockfailedpage.InitialModel("No active connection")
-		}
-
-		// Lock the Rover
-		if err := roverlock.Lock(*roverConn); err != nil {
-			// If there is an error, we need to show the lock failed page
-			return lockfailedpage.InitialModel(err.Error())
-		}
-	}
-
 	switch strings.ToLower(s.Route.Peek()) {
 	// SSH is different, it replaces the current process
 	case "ssh":
@@ -74,6 +57,8 @@ func selectPage(s *state.AppState) tea.Model {
 		return initservicepage.InitialModel()
 	case "service upload":
 		return uploadservicepage.InitialModel()
+	case "pipeline configure":
+		return configurepipelinepage.InitialModel()
 	default:
 		{
 			if len(s.RoverConnections.Available) > 0 {

@@ -14,15 +14,14 @@ import (
 	"github.com/pkg/sftp"
 )
 
-// var lockfileName = configuration.RemoteConfigDir + "/.roverlock"
-var lockfileName = ".roverlock"
+var lockfileName = configuration.RemoteConfigDir + "/.roverlock"
 
 // Functions to lock the Rover so that only one user can configure the Rover at a time
 
 // Lock the Rover
 func Lock(conn configuration.RoverConnection) error {
 	// Create an ssh client
-	client, err := conn.ToSSH()
+	client, err := conn.ToSshConnection()
 	if err != nil {
 		return err
 	}
@@ -79,7 +78,7 @@ func Lock(conn configuration.RoverConnection) error {
 // Unlock the rover
 func Unlock(conn configuration.RoverConnection) error {
 	// Create an ssh client
-	client, err := conn.ToSSH()
+	client, err := conn.ToSshConnection()
 	if err != nil {
 		return err
 	}

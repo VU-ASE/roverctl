@@ -3,6 +3,7 @@ package initservicepage
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -49,9 +50,11 @@ func InitialModel() model {
 	s := spinner.New()
 	s.Spinner = spinner.Line
 
-	defaultAuthor, err := os.Hostname()
-	if err != nil {
-		defaultAuthor = ""
+	defaultAuthor := ""
+	userDir, err := os.UserHomeDir()
+	if err == nil {
+		// Get the last part of the user directory
+		_, defaultAuthor = filepath.Split(userDir)
 	}
 
 	// Check if the service already exists, in which case we will not initialize it

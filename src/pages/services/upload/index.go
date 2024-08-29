@@ -1,46 +1,34 @@
 package uploadservicepage
 
 import (
+	"fmt"
+
+	roverlock "github.com/VU-ASE/rover/src/lock"
 	"github.com/VU-ASE/rover/src/services"
+	"github.com/VU-ASE/rover/src/state"
 	"github.com/VU-ASE/rover/src/style"
 	"github.com/VU-ASE/rover/src/tui"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"gopkg.in/grignaak/tribool.v1"
 )
-
-// Persistent global state (ugly, yes) to allow retrying of connection checks by discarding results with an attempt number lower than the current one
-var attemptNumber = 1
-
-// Action codes
-const (
-	transferAction = "transferfiles"
-)
-
-// Used to communicate the result of various tests
-type resultMsg struct {
-	action  string
-	result  bool
-	err     error
-	attempt int
-}
 
 type model struct {
-	spinner          spinner.Model
-	filesTransferred tribool.Tribool
-	error            error // any errors that occurred
+	spinner        spinner.Model
+	lockAction     tui.Action
+	unlockAction   tui.Action
+	transferAction tui.Action
+	error          error // any errors that occurred
 }
 
 func InitialModel() model {
 	s := spinner.New()
 	s.Spinner = spinner.Line
-	attemptNumber++
 
 	return model{
-		spinner:          s,
-		filesTransferred: tribool.Maybe,
-		error:            nil,
+		spinner:        s,
+		transferAction: tui.NewAction("transfer"),
+		error:          nil,
 	}
 }
 
@@ -56,16 +44,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case spinner.TickMsg:
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
-	case resultMsg:
-		if msg.attempt < attemptNumber {
-			return m, nil
-		}
-		switch msg.action {
-		case transferAction:
-			m.error = msg.err
-			m.filesTransferred = tribool.FromBool(msg.result)
-		}
-		return m, nil
+	case tui.ActionResult:
+		actions := tui.Actions{&m.lockAction, &m.unlockAction, &m.transferAction}
+		actions.ProcessResult(msg)
 	default:
 		// Base command
 		model, cmd := tui.Update(m, msg)
@@ -79,7 +60,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) uploadResultsView() string {
 	s := lipgloss.NewStyle().Foreground(style.AsePrimary).Render("Upload service")
 
-	if m.filesTransferred == tribool.True {
+	if m.transferAction.IsSuccess() {
 		s += "\n\n" + lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render("Files uploaded successfully")
 	} else {
 		s += "\n\n" + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("Failed to upload files")
@@ -102,20 +83,38 @@ func (m model) uploadingView() string {
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.Batch(m.spinner.Tick, uploadService(attemptNumber))
+	return tea.Batch(m.spinner.Tick, uploadService(m))
 }
 
 func (m model) View() string {
-	if m.filesTransferred != tribool.Maybe {
+	if m.transferAction.IsLoading() {
 		return style.Docstyle.Render(m.uploadResultsView())
 	} else {
 		return style.Docstyle.Render(m.uploadingView())
 	}
 }
 
-func uploadService(a int) tea.Cmd {
-	return func() tea.Msg {
-		err := services.UploadService()
-		return resultMsg{result: err == nil, err: err, action: transferAction, attempt: a}
-	}
+func uploadService(m model) tea.Cmd {
+	return tui.PerformAction(&m.transferAction, func() error {
+		conn := state.Get().RoverConnections.GetActive()
+		if conn == nil {
+			return fmt.Errorf("Not connected to an active Rover")
+		}
+
+		// Lock the rover
+		err := roverlock.Lock(*conn)
+		if err != nil {
+			return err
+		}
+
+		// Upload the service
+		err = services.Upload(*conn)
+		if err != nil {
+			return err
+		}
+
+		// Unlock the rover
+		err = roverlock.Unlock(*conn)
+		return err
+	})
 }
