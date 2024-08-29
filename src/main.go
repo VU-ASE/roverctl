@@ -87,12 +87,6 @@ func run() error {
 
 	// We start the app in a separate (full) screen
 	for !appState.Route.IsEmpty() {
-		// Always try to unlock first (best-effort)
-		rovercon := appState.RoverConnections.GetActive()
-		if rovercon != nil {
-			_ = roverlock.Unlock(*rovercon)
-		}
-
 		page := selectPage(appState)
 		p := tea.NewProgram(page, tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
@@ -112,7 +106,7 @@ func run() error {
 
 func main() {
 	// Clear the screen
-	fmt.Println("\033[2J")
+	// fmt.Println("\033[2J")
 
 	// Configure zerolog to output to stdout beautifully
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})

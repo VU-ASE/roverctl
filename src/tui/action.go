@@ -29,7 +29,7 @@ type Actions []*Action
 // ProcessResult takes an ActionResult and updates the Actions where the name matches
 func (a Actions) ProcessResult(res ActionResult) {
 	for _, action := range a {
-		if action.Name == res.Name && action.Attempt == res.ForAttempt {
+		if action.Name == res.Name {
 			action.Result = res.Result
 			action.Error = res.Error
 			action.Finished = true
@@ -86,8 +86,6 @@ func PerformAction(action *Action, f ActionFunction) tea.Cmd {
 
 	return func() tea.Msg {
 		err := f()
-		action.Finished = true
-
 		return NewResult(*action, err == nil, err, attempt)
 	}
 }

@@ -34,6 +34,9 @@ func Lock(conn configuration.RoverConnection) error {
 	}
 	defer sftp.Close()
 
+	// Create the configuration directory if it does not exist, ignore errors
+	_ = sftp.MkdirAll(configuration.RemoteConfigDir)
+
 	// Check if the lockfile exists and if it holds our hostname
 	file, err := sftp.Open(lockfileName)
 	if err == nil {

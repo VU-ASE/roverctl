@@ -15,21 +15,19 @@ import (
 
 type model struct {
 	spinner        spinner.Model
-	lockAction     tui.Action
-	unlockAction   tui.Action
 	transferAction tui.Action
-	error          error // any errors that occurred
 }
 
 func InitialModel() model {
 	s := spinner.New()
 	s.Spinner = spinner.Line
 
-	return model{
+	m := model{
 		spinner:        s,
 		transferAction: tui.NewAction("transfer"),
-		error:          nil,
 	}
+	m.transferAction.Started = true
+	return m
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -45,15 +43,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
 	case tui.ActionResult:
-		actions := tui.Actions{&m.lockAction, &m.unlockAction, &m.transferAction}
+		actions := tui.Actions{&m.transferAction}
 		actions.ProcessResult(msg)
-	default:
-		// Base command
-		model, cmd := tui.Update(m, msg)
-		return model, cmd
 	}
 
-	return m, nil
+	// Base command
+	model, cmd := tui.Update(m, msg)
+	return model, cmd
+
 }
 
 // the update view with the view method
@@ -64,8 +61,8 @@ func (m model) uploadResultsView() string {
 		s += "\n\n" + lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render("Files uploaded successfully")
 	} else {
 		s += "\n\n" + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("Failed to upload files")
-		if m.error != nil {
-			s += "\n > " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render(m.error.Error())
+		if m.transferAction.Error != nil {
+			s += "\n > " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render(m.transferAction.Error.Error())
 		}
 	}
 
@@ -88,9 +85,9 @@ func (m model) Init() tea.Cmd {
 
 func (m model) View() string {
 	if m.transferAction.IsLoading() {
-		return style.Docstyle.Render(m.uploadResultsView())
-	} else {
 		return style.Docstyle.Render(m.uploadingView())
+	} else {
+		return style.Docstyle.Render(m.uploadResultsView())
 	}
 }
 
@@ -104,17 +101,20 @@ func uploadService(m model) tea.Cmd {
 		// Lock the rover
 		err := roverlock.Lock(*conn)
 		if err != nil {
-			return err
+			return fmt.Errorf("Could not lock rover %v", err.Error())
 		}
 
 		// Upload the service
 		err = services.Upload(*conn)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed with %v", err.Error())
 		}
 
 		// Unlock the rover
 		err = roverlock.Unlock(*conn)
-		return err
+		if err != nil {
+			return fmt.Errorf("Could not unlock rover %v", err.Error())
+		}
+		return nil
 	})
 }

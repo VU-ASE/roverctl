@@ -11,10 +11,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type item string
-
-func (i item) FilterValue() string { return "" }
-
 type model struct {
 	// To select an action to perform with this utility
 	actions list.Model // actions you can perform when connected to a Rover

@@ -134,6 +134,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					state.Get().RoverConnections = state.Get().RoverConnections.Add(configuration.RoverConnection{
 						Name:     m.formValues.name,
 						Host:     m.host,
+						Port:     m.port,
 						Username: m.formValues.username,
 						Password: m.formValues.password,
 					})
@@ -146,6 +147,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					state.Get().RoverConnections = state.Get().RoverConnections.Add(configuration.RoverConnection{
 						Name:     m.formValues.name,
 						Host:     m.host,
+						Port:     m.port,
 						Username: m.formValues.username,
 						Password: m.formValues.password,
 					})
@@ -203,6 +205,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				// todo: change to 192.168.1 instead of 192.168.0
 				m.host = fmt.Sprintf("192.168.0.%d", index+100)
+				m.port = 22
 
 				cmds = append(cmds, checkRoute(m, attemptNumber), checkAuth(m, attemptNumber), checkDebix(m, attemptNumber))
 			}

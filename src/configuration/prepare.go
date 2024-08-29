@@ -20,7 +20,7 @@ func LocalConfigDir() string {
 	return home + "/.rover"
 }
 
-const RemoteConfigDir = "/etc/rover"
+const RemoteConfigDir = "/home/debix/.rover/config"
 const RemoteServiceDir = "/home/debix/.rover/services" // this directory holds all service folders. Each subfolder represents a service
 
 // Initialize the configuration directory
