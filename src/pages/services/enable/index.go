@@ -25,6 +25,7 @@ type model struct {
 	list                     list.Model
 	fetchServicesAction      tui.Action[[]services.FoundService]
 	fetchConfigurationAction tui.Action[roveryaml.RoverConfig]
+	error                    error // Can be shown to the user
 }
 
 // keyMap defines a set of keybindings. To work for help it must satisfy key.Map
@@ -139,6 +140,7 @@ func InitialModel() model {
 		spinner:                  spin,
 		fetchServicesAction:      fetchServicesAction,
 		fetchConfigurationAction: fetchConfigAction,
+		error:                    nil,
 	}
 }
 
@@ -176,6 +178,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, keys.MarkActive):
 			if m.list.Index() >= 0 && m.list.Index() < len(m.list.Items()) {
 				item := m.list.Items()[m.list.Index()].(item)
+				// We can only have one active service with this name, so if there is another service with the same name but a different path, show an error
+				for _, other := range *m.fetchServicesAction.Data {
+					if other.Service.Name == item.service.Service.Name && other.Path != item.service.Path && m.fetchConfigurationAction.Data.HasEnabled(other.Path) {
+						m.error = fmt.Errorf("A service with the name '%s' is already active. Services must be unique.", item.service.Service.Name)
+						return m, nil
+					}
+				}
+				m.error = nil
+
 				m.fetchConfigurationAction.Data.Toggle(item.service.Path)
 				m.list.SetItems(servicesToListItem(*m.fetchServicesAction.Data, m.fetchConfigurationAction.Data))
 				return m, nil
@@ -235,19 +246,51 @@ func (m model) View() string {
 		}
 	}
 
-	// Create a pipeline drawing with the mermaid-ascii tool
-	pipeline := `graph LR
-topcam --> controller
-controller --> actuator`
+	if m.error != nil {
+		s += "\n\n" + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render(m.error.Error())
+	}
 
-	s += "\n\n"
+	if m.fetchServicesAction.IsSuccess() && m.fetchConfigurationAction.IsSuccess() {
+		// From all the services, create a dot graph of the pipeline
+		dotgraph := "graph LR"
 
-	// Draw the pipeline
-	pipelineDrawing, err := asciitool.Draw(pipeline)
-	if err != nil {
-		s += "Your pipeline could not be drawn. Please check the configuration."
-	} else {
-		s += pipelineDrawing
+		// For every service, add a connection if there is a service that depends on it
+		for _, found := range *m.fetchServicesAction.Data {
+			if !m.fetchConfigurationAction.Data.HasEnabled(found.Path) {
+				continue
+			}
+			for _, outputStream := range found.Service.Outputs {
+				// Go over all other services
+				for _, other := range *m.fetchServicesAction.Data {
+					if !m.fetchConfigurationAction.Data.HasEnabled(other.Path) || found.Path == other.Path {
+						continue
+					}
+
+					// Does this service depend on the current service?
+					for _, input := range other.Service.Inputs {
+						for _, inputStream := range input.Streams {
+							if inputStream == outputStream && input.Service == found.Service.Name {
+								// Add a connection
+								connection := found.Service.Name + " --> " + other.Service.Name
+								if !strings.Contains(dotgraph, connection) {
+									dotgraph += "\n" + connection
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		s += "\n\n"
+
+		// Draw the pipeline
+		pipelineDrawing, err := asciitool.Draw(dotgraph)
+		if err != nil {
+			s += "Your pipeline could not be drawn. Please check the configuration."
+		} else {
+			s += pipelineDrawing
+		}
 	}
 
 	return style.Docstyle.Render(s)
