@@ -61,6 +61,18 @@ func (a Action[T]) IsDone() bool {
 	return a.Started && a.Finished
 }
 
+func (a *Action[T]) Reset() {
+	a.Started = false
+	a.Finished = false
+	a.Result = false
+	a.Error = nil
+	a.Data = nil
+}
+
+func (a *Action[T]) Start() {
+	a.Started = true
+}
+
 // Generate a new ActionResult from an Action
 func NewResult[T interface{}](a Action[T], success bool, err error, data *T, attempt uint) ActionResult[T] {
 	return ActionResult[T]{

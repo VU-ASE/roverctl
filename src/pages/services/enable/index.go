@@ -3,8 +3,10 @@ package enableservicespage
 import (
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 
+	"github.com/VU-ASE/rover/src/configuration"
 	roverlock "github.com/VU-ASE/rover/src/lock"
 	"github.com/VU-ASE/rover/src/roveryaml"
 	"github.com/VU-ASE/rover/src/services"
@@ -26,18 +28,21 @@ type model struct {
 	list                     list.Model
 	fetchServicesAction      tui.Action[[]services.FoundService]
 	fetchConfigurationAction tui.Action[roveryaml.RoverConfig]
+	saveConfigurationAction  tui.Action[any]
 	error                    error // Can be shown to the user
 }
 
 // keyMap defines a set of keybindings. To work for help it must satisfy key.Map
 type keyMap struct {
 	MarkActive key.Binding
+	Save       key.Binding
+	Reload     key.Binding
 }
 
 // ShortHelp returns keybindings to be shown in the mini help view. It's part
 // of the key.Map interface.
 func (k keyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.MarkActive}
+	return []key.Binding{k.MarkActive, k.Save, k.Reload}
 }
 
 // FullHelp returns keybindings for the expanded help view. It's part of the
@@ -49,7 +54,15 @@ func (k keyMap) FullHelp() [][]key.Binding {
 var keys = keyMap{
 	MarkActive: key.NewBinding(
 		key.WithKeys(" "),
-		key.WithHelp("space", "set active"),
+		key.WithHelp("space", "toggle service"),
+	),
+	Save: key.NewBinding(
+		key.WithKeys("s"),
+		key.WithHelp("s", "save to Rover"),
+	),
+	Reload: key.NewBinding(
+		key.WithKeys("r"),
+		key.WithHelp("r", "reload"),
 	),
 }
 
@@ -72,7 +85,9 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 		return
 	}
 
-	str := i.service.Service.Name + " " + lipgloss.NewStyle().Foreground(style.AsePrimary).Render(i.service.Service.Version) + " " + lipgloss.NewStyle().Foreground(style.GrayPrimary).Render("("+i.service.Path+")")
+	shortPath := strings.Replace(i.service.Path, configuration.RemoteServiceDir+"/", "", 1)
+
+	str := i.service.Service.Name + " " + lipgloss.NewStyle().Foreground(style.AsePrimary).Render(i.service.Service.Version) + " " + lipgloss.NewStyle().Foreground(style.GrayPrimary).Render("("+shortPath+")")
 
 	fn := lipgloss.NewStyle().Render
 	if index == m.Index() {
@@ -90,6 +105,63 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 	}
 
 	fmt.Fprint(w, fn(str))
+}
+
+type serviceDependency struct {
+	service string
+	stream  string
+}
+
+func getUnmetDependencies(service services.FoundService, enabled []services.FoundService) []serviceDependency {
+	dependencies := make([]serviceDependency, 0)
+	for _, dependency := range service.Service.Inputs {
+		for _, stream := range dependency.Streams {
+			dependencies = append(dependencies, serviceDependency{
+				service: dependency.Service,
+				stream:  stream,
+			})
+		}
+	}
+
+	for _, dependency := range service.Service.Inputs {
+		// Go over all other service
+		for _, other := range enabled {
+			// Is this the service we are looking for?
+			if dependency.Service == other.Service.Name {
+				// Are all the streams available?
+				for _, stream := range dependency.Streams {
+					if slices.Contains(other.Service.Outputs, stream) {
+						// Remove the dependency
+						dependencies = slices.DeleteFunc(dependencies, func(d serviceDependency) bool {
+							return d.service == dependency.Service && d.stream == stream
+						})
+					}
+				}
+			}
+		}
+	}
+
+	return dependencies
+}
+
+// Returns the errors in the configuration, if none are found, the configuration is valid
+func configurationValid(config *roveryaml.RoverConfig, allservices []services.FoundService) []error {
+	enabledServices := make([]services.FoundService, 0)
+	for _, service := range allservices {
+		if config.HasEnabled(service.Path) {
+			enabledServices = append(enabledServices, service)
+		}
+	}
+
+	errors := make([]error, 0)
+	for _, service := range enabledServices {
+		unmet := getUnmetDependencies(service, enabledServices)
+		for _, dep := range unmet {
+			errors = append(errors, fmt.Errorf("Service '%s' depends on service '%s' for stream '%s' which is not enabled", service.Service.Name, dep.service, dep.stream))
+		}
+	}
+
+	return errors
 }
 
 func servicesToListItem(services []services.FoundService, config *roveryaml.RoverConfig) []list.Item {
@@ -123,10 +195,10 @@ func InitialModel() model {
 	spin.Spinner = spinner.Line
 
 	fetchServicesAction := tui.NewAction[[]services.FoundService]("getServices")
-	fetchServicesAction.Started = true
+	fetchServicesAction.Start()
 
 	fetchConfigAction := tui.NewAction[roveryaml.RoverConfig]("getConfig")
-	fetchConfigAction.Started = true
+	fetchConfigAction.Start()
 
 	return model{
 		keys:                     keys,
@@ -134,6 +206,7 @@ func InitialModel() model {
 		spinner:                  spin,
 		fetchServicesAction:      fetchServicesAction,
 		fetchConfigurationAction: fetchConfigAction,
+		saveConfigurationAction:  tui.NewAction[any]("saveConfig"),
 		error:                    nil,
 	}
 }
@@ -152,16 +225,30 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.fetchServicesAction.Result = msg.Result
 			m.fetchServicesAction.Error = msg.Error
 			m.fetchServicesAction.Finished = true
-			m.fetchServicesAction.Data = msg.Data
-			m.list.SetItems(servicesToListItem(*m.fetchServicesAction.Data, nil))
+			allservices := msg.Data
+			if allservices != nil {
+				m.fetchServicesAction.Data = msg.Data
+				m.list.SetItems(servicesToListItem(*allservices, m.fetchConfigurationAction.Data))
+			}
 		}
 	case tui.ActionResult[roveryaml.RoverConfig]:
 		if msg.IsFor(&m.fetchConfigurationAction) {
 			m.fetchConfigurationAction.Result = msg.Result
 			m.fetchConfigurationAction.Error = msg.Error
 			m.fetchConfigurationAction.Finished = true
-			m.fetchConfigurationAction.Data = msg.Data
-			m.list.SetItems(servicesToListItem(nil, m.fetchConfigurationAction.Data))
+
+			config := msg.Data
+			if config != nil {
+				m.fetchConfigurationAction.Data = config
+				m.list.SetItems(servicesToListItem(nil, config))
+			}
+		}
+	case tui.ActionResult[any]:
+		if msg.IsFor(&m.saveConfigurationAction) {
+			m.saveConfigurationAction.Result = msg.Result
+			m.saveConfigurationAction.Error = msg.Error
+			m.saveConfigurationAction.Finished = true
+			m.error = nil
 		}
 	case spinner.TickMsg:
 		var cmd tea.Cmd
@@ -169,8 +256,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	case tea.KeyMsg:
 		switch {
+		case key.Matches(msg, keys.Reload):
+			if !m.fetchServicesAction.IsLoading() && !m.fetchConfigurationAction.IsLoading() && !m.saveConfigurationAction.IsLoading() {
+				m = InitialModel()
+				return m, m.Init()
+			}
 		case key.Matches(msg, keys.MarkActive):
 			if m.list.Index() >= 0 && m.list.Index() < len(m.list.Items()) {
+				m.saveConfigurationAction.Reset()
+				m.error = nil
+
 				item := m.list.Items()[m.list.Index()].(item)
 				// We can only have one active service with this name, so if there is another service with the same name but a different path, show an error
 				for _, other := range *m.fetchServicesAction.Data {
@@ -179,12 +274,49 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m, nil
 					}
 				}
-				m.error = nil
 
 				m.fetchConfigurationAction.Data.Toggle(item.service.Path)
 				m.list.SetItems(servicesToListItem(*m.fetchServicesAction.Data, m.fetchConfigurationAction.Data))
 				return m, nil
 			}
+		case key.Matches(msg, keys.Save):
+			if m.saveConfigurationAction.IsLoading() {
+				return m, nil
+			}
+
+			var configErrors []error
+			if m.fetchServicesAction.IsSuccess() && m.fetchConfigurationAction.IsSuccess() {
+				configErrors = configurationValid(m.fetchConfigurationAction.Data, *m.fetchServicesAction.Data)
+			} else {
+				m.error = fmt.Errorf("Cannot save configuration, services or configuration not loaded")
+				return m, nil
+			}
+
+			// Remove enabled services that are not in the list of available services
+			for _, enabled := range m.fetchConfigurationAction.Data.Enabled {
+				if !slices.ContainsFunc(*m.fetchServicesAction.Data, func(f services.FoundService) bool {
+					return f.Path == enabled
+				}) {
+					m.fetchConfigurationAction.Data.Disable(enabled)
+				}
+			}
+
+			if len(configErrors) > 0 {
+				errorString := "Cannot save configuration because it is invalid:"
+				maxHeight := 3
+				for _, err := range configErrors[:min(len(configErrors), maxHeight)] {
+					errorString += "\n > " + err.Error()
+				}
+				if len(configErrors) > maxHeight {
+					errorString += "\n > ..."
+				}
+
+				m.error = fmt.Errorf(errorString)
+				return m, nil
+			}
+			m.error = nil
+			m.saveConfigurationAction.Start()
+			return m, saveConfiguration(m)
 		}
 	}
 
@@ -203,20 +335,98 @@ func (m model) Init() tea.Cmd {
 	return tea.Batch(m.spinner.Tick, getServices(m), getConfiguration(m))
 }
 
-func (m model) View() string {
+func configureView(m model) string {
+	s := m.list.View()
+	if m.error != nil {
+		s += "\n" + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render(m.error.Error()) + "\n"
+	}
+
+	if m.saveConfigurationAction.IsSuccess() {
+		s += "\n" + lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render("Configuration saved successfully to Rover") + "\n"
+	}
+
+	// From all the services, create a dot graph of the pipeline
+	nodes := make([]core.NodeInput, 0)
+
+	// Shorthands
+	config := m.fetchConfigurationAction.Data
+	allservices := *m.fetchServicesAction.Data
+	enabledservices := make([]services.FoundService, 0)
+	for _, service := range allservices {
+		if config.HasEnabled(service.Path) {
+			enabledservices = append(enabledservices, service)
+		}
+	}
+
+	// For every service, add a connection if there is a service that depends on it
+	for _, found := range enabledservices {
+		newNode := core.NodeInput{
+			Id:   found.Service.Name,
+			Next: make([]string, 0),
+		}
+
+		for _, outputStream := range found.Service.Outputs {
+			// Go over all other services
+			for _, other := range enabledservices {
+				if found.Path == other.Path {
+					continue
+				}
+
+				// Does this service depend on the current service?
+				for _, input := range other.Service.Inputs {
+					for _, inputStream := range input.Streams {
+						if inputStream == outputStream && input.Service == found.Service.Name {
+							// Add a connection
+							newNode.Next = append(newNode.Next, other.Service.Name)
+						}
+					}
+				}
+			}
+		}
+
+		nodes = append(nodes, newNode)
+	}
+
+	// Draw the pipeline
+	canvas, err := dgraph.DrawGraph(nodes)
+	canvasView := ""
+	if err != nil {
+		canvasView += "Failed to draw pipeline"
+	} else if len(nodes) > 0 {
+		canvasView += fmt.Sprintf("\n%s\n", canvas)
+	}
+
+	// Add arrows
+	canvasView = strings.ReplaceAll(canvasView, "─┤", ">┤")
+
+	// Show unmet dependencies in the pipeline with a red > symbol
+	for _, service := range enabledservices {
+		unmet := getUnmetDependencies(service, enabledservices)
+		if len(unmet) > 0 {
+			canvasView = strings.Replace(canvasView, ">┤ "+service.Service.Name, style.RenderColor(">┤ ", style.ErrorPrimary)+service.Service.Name, -1)
+			canvasView = strings.Replace(canvasView, "│ "+service.Service.Name, style.RenderColor("> ", style.ErrorPrimary)+service.Service.Name, -1)
+		}
+	}
+
+	// If the current list item is active, highlight it
+	currItem := m.list.Items()[m.list.Index()].(item)
+	if currItem.active {
+		unmet := getUnmetDependencies(currItem.service, enabledservices)
+		color := style.SuccessPrimary
+		if len(unmet) > 0 {
+			color = style.ErrorPrimary
+		}
+		canvasView = strings.Replace(canvasView, currItem.service.Service.Name, lipgloss.NewStyle().Foreground(color).Bold(true).Render(currItem.service.Service.Name), -1)
+	}
+
+	s += lipgloss.NewStyle().Margin(0, 1).Render(canvasView)
+	return s
+}
+
+func loadErrorView(m model) string {
 	s := ""
 
-	if m.fetchServicesAction.IsLoading() {
-		s += m.spinner.View() + " Fetching services..."
-	}
-
-	if m.fetchConfigurationAction.IsLoading() {
-		s += "\n" + m.spinner.View() + " Fetching configuration..."
-	}
-
-	if m.fetchServicesAction.IsSuccess() && m.fetchConfigurationAction.IsSuccess() {
-		s += m.list.View()
-	} else if m.fetchServicesAction.IsError() {
+	if m.fetchServicesAction.IsError() {
 		s += "Failed to fetch services"
 		if m.fetchServicesAction.Error != nil {
 			s += "\n > " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render(m.fetchServicesAction.Error.Error())
@@ -228,67 +438,55 @@ func (m model) View() string {
 		}
 	}
 
-	if m.error != nil {
-		s += "\n" + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render(m.error.Error()) + "\n"
+	return s
+}
+
+func loadindView(m model) string {
+	s := ""
+
+	if m.fetchServicesAction.IsLoading() {
+		s += m.spinner.View() + " Fetching services...\n"
 	}
 
-	if m.fetchServicesAction.IsSuccess() && m.fetchConfigurationAction.IsSuccess() {
-		// From all the services, create a dot graph of the pipeline
-		nodes := make([]core.NodeInput, 0)
+	if m.fetchConfigurationAction.IsLoading() {
+		s += m.spinner.View() + " Fetching configuration..."
+	}
 
-		// For every service, add a connection if there is a service that depends on it
-		for _, found := range *m.fetchServicesAction.Data {
-			newNode := core.NodeInput{
-				Id:   found.Service.Name,
-				Next: make([]string, 0),
-			}
+	return s
+}
 
-			if !m.fetchConfigurationAction.Data.HasEnabled(found.Path) {
-				continue
-			}
-			for _, outputStream := range found.Service.Outputs {
-				// Go over all other services
-				for _, other := range *m.fetchServicesAction.Data {
-					if !m.fetchConfigurationAction.Data.HasEnabled(other.Path) || found.Path == other.Path {
-						continue
-					}
+func saveErrorView(m model) string {
+	s := ""
 
-					// Does this service depend on the current service?
-					for _, input := range other.Service.Inputs {
-						for _, inputStream := range input.Streams {
-							if inputStream == outputStream && input.Service == found.Service.Name {
-								// Add a connection
-								newNode.Next = append(newNode.Next, other.Service.Name)
-							}
-						}
-					}
-				}
-			}
-
-			nodes = append(nodes, newNode)
+	if m.saveConfigurationAction.IsError() {
+		s += "Failed to save configuration"
+		if m.saveConfigurationAction.Error != nil {
+			s += "\n > " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render(m.saveConfigurationAction.Error.Error())
 		}
+	}
 
-		s += lipgloss.NewStyle().Foreground(style.AsePrimary).Margin(0, 2).Render("\nPipeline visualization") + "\n\n"
+	s += "\n\n" + style.RenderColor("Press 'r' to reload the configuration or press 'q' to quit", style.GrayPrimary)
 
-		// Draw the pipeline
-		canvas, err := dgraph.DrawGraph(nodes)
-		canvasView := ""
-		if len(nodes) <= 0 {
-			canvasView += style.RenderColor("No services enabled", style.GrayPrimary)
-		} else if err != nil {
-			canvasView += "Failed to draw pipeline"
-		} else {
-			canvasView += fmt.Sprintf("%s\n", canvas)
-		}
+	return s
+}
 
-		// If the current list item is active, highlight it
-		currItem := m.list.Items()[m.list.Index()].(item)
-		if currItem.active {
-			canvasView = strings.Replace(canvasView, currItem.service.Service.Name, lipgloss.NewStyle().Foreground(style.SuccessPrimary).Bold(true).Render(currItem.service.Service.Name), -1)
-		}
+func savingView(m model) string {
+	return m.spinner.View() + " Saving configuration..."
+}
 
-		s += lipgloss.NewStyle().Margin(0, 1).Render(canvasView)
+func (m model) View() string {
+	s := ""
 
+	if m.fetchServicesAction.IsLoading() || m.fetchConfigurationAction.IsLoading() {
+		s = loadindView(m)
+	} else if m.fetchServicesAction.IsError() || m.fetchConfigurationAction.IsError() {
+		s = loadErrorView(m)
+	} else if m.saveConfigurationAction.IsLoading() {
+		s = savingView(m)
+	} else if m.saveConfigurationAction.IsError() {
+		s = saveErrorView(m)
+	} else {
+		s = configureView(m)
 	}
 
 	return style.Docstyle.Render(s)
@@ -329,5 +527,40 @@ func getConfiguration(m model) tea.Cmd {
 		})
 
 		return found, err
+	})
+}
+
+func saveConfiguration(m model) tea.Cmd {
+	return tui.PerformAction(&m.saveConfigurationAction, func() (*any, error) {
+		// Shorthand
+		config := m.fetchConfigurationAction.Data
+		if config == nil {
+			return nil, fmt.Errorf("No configuration loaded")
+		}
+
+		conn := state.Get().RoverConnections.GetActive()
+		if conn == nil {
+			return nil, fmt.Errorf("Not connected to an active Rover")
+		}
+
+		err := roverlock.WithLock(*conn, func() error {
+			// Check if all enabled services still exist
+			current, err := services.Scan(*conn)
+			if err != nil {
+				return err
+			}
+			for _, enabled := range config.Enabled {
+				if !slices.ContainsFunc(current, func(f services.FoundService) bool {
+					return f.Path == enabled
+				}) {
+					return fmt.Errorf("Service '%s' does not exist anymore", enabled)
+				}
+			}
+
+			// Try to save the configuration
+			return config.Save(*conn)
+		})
+
+		return nil, err
 	})
 }

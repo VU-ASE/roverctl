@@ -3,8 +3,6 @@ package configuration
 import (
 	"fmt"
 	"os"
-
-	"github.com/VU-ASE/rover/src/configuration/asciitool"
 )
 
 // This is where the Rover configuration files are saved both remotely
@@ -36,13 +34,7 @@ func Initialize() error {
 		return err
 	}
 
-	// // Lock the Rover
-	// if err := Lock(); err != nil {
-	// 	return err
-	// }
-
-	// Initialize the ascii tool that we need
-	return asciitool.Init(LocalConfigDir())
+	return nil
 }
 
 // Cleanup the configuration directory
@@ -51,5 +43,4 @@ func Cleanup() {
 	// if err := Unlock(); err != nil {
 	// 	log.Error().Err(err).Msg("An error occurred while unlocking the Rover.")
 	// }
-
 }
