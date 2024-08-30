@@ -5,7 +5,6 @@ import (
 	"io"
 	"strings"
 
-	"github.com/VU-ASE/rover/src/configuration/asciitool"
 	roverlock "github.com/VU-ASE/rover/src/lock"
 	"github.com/VU-ASE/rover/src/roveryaml"
 	"github.com/VU-ASE/rover/src/services"
@@ -17,6 +16,8 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/lempiy/dgraph"
+	"github.com/lempiy/dgraph/core"
 )
 
 type model struct {
@@ -30,16 +31,13 @@ type model struct {
 
 // keyMap defines a set of keybindings. To work for help it must satisfy key.Map
 type keyMap struct {
-	Edit       key.Binding
-	Delete     key.Binding
 	MarkActive key.Binding
-	New        key.Binding
 }
 
 // ShortHelp returns keybindings to be shown in the mini help view. It's part
 // of the key.Map interface.
 func (k keyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.New, k.Edit, k.Delete, k.MarkActive}
+	return []key.Binding{k.MarkActive}
 }
 
 // FullHelp returns keybindings for the expanded help view. It's part of the
@@ -49,20 +47,13 @@ func (k keyMap) FullHelp() [][]key.Binding {
 }
 
 var keys = keyMap{
-	New: key.NewBinding(
-		key.WithKeys("n"),
-		key.WithHelp("n", "new"),
-	),
 	MarkActive: key.NewBinding(
 		key.WithKeys(" "),
 		key.WithHelp("space", "set active"),
 	),
-	Delete: key.NewBinding(
-		key.WithKeys("backspace"),
-		key.WithHelp("backspace", "delete"),
-	),
 }
 
+// List item to render
 type item struct {
 	service services.FoundService
 	active  bool
@@ -82,15 +73,18 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 	}
 
 	str := i.service.Service.Name + " " + lipgloss.NewStyle().Foreground(style.AsePrimary).Render(i.service.Service.Version) + " " + lipgloss.NewStyle().Foreground(style.GrayPrimary).Render("("+i.service.Path+")")
-	if i.active {
-		str += lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render(" (active)")
-	}
 
 	fn := lipgloss.NewStyle().Render
 	if index == m.Index() {
 		fn = func(s ...string) string {
-			return lipgloss.NewStyle().Bold(true).Render("> " + strings.Join(s, " "))
+			if i.active {
+				return lipgloss.NewStyle().Bold(true).Foreground(style.SuccessPrimary).Render("> " + strings.Join(s, " "))
+			} else {
+				return lipgloss.NewStyle().Bold(true).Render("> " + strings.Join(s, " "))
+			}
 		}
+	} else if i.active {
+		str = style.RenderColor("✓ ", style.SuccessPrimary) + str
 	} else {
 		str = "- " + str
 	}
@@ -117,7 +111,7 @@ func servicesToListItem(services []services.FoundService, config *roveryaml.Rove
 
 func InitialModel() model {
 	l := list.New([]list.Item{}, itemDelegate{}, 0, 14)
-	l.Title = "Manage Rover services"
+	l.Title = "Configure Rover pipeline"
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 	l.Styles.Title = style.TitleStyle
@@ -191,18 +185,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.list.SetItems(servicesToListItem(*m.fetchServicesAction.Data, m.fetchConfigurationAction.Data))
 				return m, nil
 			}
-		case key.Matches(msg, keys.New):
-			state.Get().Route.Push("connection init")
-			return m, tea.Quit
-		case key.Matches(msg, keys.Delete):
-			if len(m.list.Items()) > 1 && m.list.Index() >= 0 && m.list.Index() < len(m.list.Items()) {
-				// todo:
-				// item := m.list.Items()[m.list.Index()].(item)
-				// state.Get().RoverConnections = state.Get().RoverConnections.Remove(item.connection.Name)
-				// m.list.SetItems(connectionsToListItems())
-				// m.list.ResetSelected()
-				return m, nil
-			}
 		}
 	}
 
@@ -247,15 +229,20 @@ func (m model) View() string {
 	}
 
 	if m.error != nil {
-		s += "\n\n" + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render(m.error.Error())
+		s += "\n" + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render(m.error.Error()) + "\n"
 	}
 
 	if m.fetchServicesAction.IsSuccess() && m.fetchConfigurationAction.IsSuccess() {
 		// From all the services, create a dot graph of the pipeline
-		dotgraph := "graph LR"
+		nodes := make([]core.NodeInput, 0)
 
 		// For every service, add a connection if there is a service that depends on it
 		for _, found := range *m.fetchServicesAction.Data {
+			newNode := core.NodeInput{
+				Id:   found.Service.Name,
+				Next: make([]string, 0),
+			}
+
 			if !m.fetchConfigurationAction.Data.HasEnabled(found.Path) {
 				continue
 			}
@@ -271,26 +258,37 @@ func (m model) View() string {
 						for _, inputStream := range input.Streams {
 							if inputStream == outputStream && input.Service == found.Service.Name {
 								// Add a connection
-								connection := found.Service.Name + " --> " + other.Service.Name
-								if !strings.Contains(dotgraph, connection) {
-									dotgraph += "\n" + connection
-								}
+								newNode.Next = append(newNode.Next, other.Service.Name)
 							}
 						}
 					}
 				}
 			}
+
+			nodes = append(nodes, newNode)
 		}
 
-		s += "\n\n"
+		s += lipgloss.NewStyle().Foreground(style.AsePrimary).Margin(0, 2).Render("\nPipeline visualization") + "\n\n"
 
 		// Draw the pipeline
-		pipelineDrawing, err := asciitool.Draw(dotgraph)
-		if err != nil {
-			s += "Your pipeline could not be drawn. Please check the configuration."
+		canvas, err := dgraph.DrawGraph(nodes)
+		canvasView := ""
+		if len(nodes) <= 0 {
+			canvasView += style.RenderColor("No services enabled", style.GrayPrimary)
+		} else if err != nil {
+			canvasView += "Failed to draw pipeline"
 		} else {
-			s += pipelineDrawing
+			canvasView += fmt.Sprintf("%s\n", canvas)
 		}
+
+		// If the current list item is active, highlight it
+		currItem := m.list.Items()[m.list.Index()].(item)
+		if currItem.active {
+			canvasView = strings.Replace(canvasView, currItem.service.Service.Name, lipgloss.NewStyle().Foreground(style.SuccessPrimary).Bold(true).Render(currItem.service.Service.Name), -1)
+		}
+
+		s += lipgloss.NewStyle().Margin(0, 1).Render(canvasView)
+
 	}
 
 	return style.Docstyle.Render(s)

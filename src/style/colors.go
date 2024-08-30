@@ -14,3 +14,7 @@ var GrayPrimary = lipgloss.Color("#808080")
 
 // Form theme
 var FormTheme = huh.ThemeBase()
+
+func RenderColor(view string, color lipgloss.Color) string {
+	return lipgloss.NewStyle().Foreground(color).Render(view)
+}
