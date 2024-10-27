@@ -20,7 +20,6 @@ var connectionsFileName = LocalConfigDir() + "/connections.yaml"
 type RoverConnection struct {
 	Name     string `yaml:"name"`
 	Host     string `yaml:"host"`
-	Port     uint   `yaml:"port"`
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
 }
@@ -135,7 +134,7 @@ func (c RoverConnection) ToSshConnection() (*ssh.Client, error) {
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
-	return ssh.Dial("tcp", fmt.Sprintf("%s:%d", c.Host, c.Port), config)
+	return ssh.Dial("tcp", fmt.Sprintf("%s:%d", c.Host), config)
 }
 
 // Convert the RoverConnection to a goph SSH connection object (which often is more useful)
@@ -145,7 +144,6 @@ func (c RoverConnection) ToSsh() (*goph.Client, error) {
 	return goph.NewConn(&goph.Config{
 		User:     c.Username,
 		Addr:     c.Host,
-		Port:     c.Port,
 		Auth:     auth,
 		Timeout:  goph.DefaultTimeout,
 		Callback: ssh.InsecureIgnoreHostKey(),

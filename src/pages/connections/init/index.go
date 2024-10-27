@@ -13,15 +13,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/melbahja/goph"
 	probing "github.com/prometheus-community/pro-bing"
 	wifiname "github.com/yelinaung/wifi-name"
-	"golang.org/x/crypto/ssh"
-	"gopkg.in/grignaak/tribool.v1"
 )
-
-// Persistent global state (ugly, yes) to allow retrying of connection checks by discarding results with an attempt number lower than the current one
-var attemptNumber = 1
 
 type formValues struct {
 	name     string
@@ -30,32 +24,17 @@ type formValues struct {
 	password string
 }
 
-// Action codes
-const (
-	routePingAction  = "routePing"
-	authCheckAction  = "authCheck"
-	debixCheckAction = "debixCheck"
-)
-
-// Used to communicate the result of various tests
-type resultMsg struct {
-	action  string
-	result  bool
-	err     error
-	attempt int
-}
-
 type model struct {
-	form        *huh.Form
-	spinner     spinner.Model
-	routeExists tribool.Tribool
-	authValid   tribool.Tribool
-	debixValid  tribool.Tribool
-	isChecking  bool
-	formValues  *formValues
-	host        string // the IP of the rover to use
-	port        uint
-	error       error // any errors that occurred
+	form          *huh.Form
+	spinner       spinner.Model
+	routeExists   tui.Action[bool]
+	authValid     tui.Action[bool]
+	roverdVersion tui.Action[string]
+	roverNumber   tui.Action[int]
+	isChecking    bool
+	formValues    *formValues
+	host          string // the ip or hostname of the rover to connect to
+	error         error  // any errors that occurred
 }
 
 func InitialModel(val *formValues) model {
@@ -72,16 +51,21 @@ func InitialModel(val *formValues) model {
 		formValues = val
 	}
 
+	routeExistsAction := tui.NewAction[bool]("routeExists")
+	authValidAction := tui.NewAction[bool]("authValid")
+	roverdVersionAction := tui.NewAction[string]("roverdVersion")
+	roverNumberAction := tui.NewAction[int]("roverNumber")
+
 	return model{
-		spinner:     s,
-		formValues:  formValues,
-		host:        "",
-		port:        22,
-		routeExists: tribool.Maybe,
-		authValid:   tribool.Maybe,
-		debixValid:  tribool.Maybe,
-		isChecking:  false,
-		error:       nil,
+		spinner:       s,
+		formValues:    formValues,
+		host:          "",
+		routeExists:   routeExistsAction,
+		authValid:     authValidAction,
+		roverdVersion: roverdVersionAction,
+		roverNumber:   roverNumberAction,
+		isChecking:    false,
+		error:         nil,
 		form: huh.NewForm(
 			huh.NewGroup(
 				huh.NewInput().
@@ -127,46 +111,33 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch msg.String() {
-			case "enter":
+			case "n", "enter":
 				// Save the connection if all checks are successful
-				if m.routeExists == tribool.True && m.authValid == tribool.True && m.debixValid == tribool.True {
+				if m.routeExists.IsSuccess() && m.authValid.IsSuccess() {
 					// Save the connection
 					state.Get().RoverConnections = state.Get().RoverConnections.Add(configuration.RoverConnection{
 						Name:     m.formValues.name,
 						Host:     m.host,
-						Port:     m.port,
 						Username: m.formValues.username,
 						Password: m.formValues.password,
 					})
-					state.Get().Route.Replace("connections")
-					return m, tea.Quit
-				}
-			case "n":
-				if m.routeExists == tribool.True && m.authValid == tribool.True && m.debixValid == tribool.True {
-					// Save the connection
-					state.Get().RoverConnections = state.Get().RoverConnections.Add(configuration.RoverConnection{
-						Name:     m.formValues.name,
-						Host:     m.host,
-						Port:     m.port,
-						Username: m.formValues.username,
-						Password: m.formValues.password,
-					})
-					m = InitialModel(nil)
-					return m, tea.Batch(m.form.Init(), m.spinner.Tick)
+
+					if msg.String() == "n" {
+						m = InitialModel(nil)
+						return m, tea.Batch(m.form.Init(), m.spinner.Tick)
+					} else {
+						state.Get().Route.Replace("connections")
+						return m, tea.Quit
+					}
 				}
 			case "b":
 				// Restore to the initial form, but recover the form values
 				m = InitialModel(m.formValues)
-				attemptNumber++
 				return m, tea.Batch(m.form.Init(), m.spinner.Tick)
 			case "r":
 				// Retry the connection checks
-				attemptNumber++
 				m.isChecking = true
-				m.authValid = tribool.Maybe
-				m.routeExists = tribool.Maybe
-				m.debixValid = tribool.Maybe
-				return m, tea.Batch(checkRoute(m, attemptNumber), checkAuth(m, attemptNumber), checkDebix(m, attemptNumber))
+				return m, tea.Batch(checkRoute(m), checkAuth(m), checkRoverdVersion(m), checkRoverNumber(m))
 			}
 		}
 	}
@@ -176,19 +147,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case spinner.TickMsg:
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
-	case resultMsg:
-		if msg.attempt < attemptNumber {
-			return m, nil
-		}
-		switch msg.action {
-		case routePingAction:
-			m.routeExists = tribool.FromBool(msg.result)
-		case authCheckAction:
-			m.error = msg.err
-			m.authValid = tribool.FromBool(msg.result)
-		case debixCheckAction:
-			m.debixValid = tribool.FromBool(msg.result)
-		}
+	case tui.ActionInit[bool]:
+		m.routeExists.ProcessInit(msg)
+		m.authValid.ProcessInit(msg)
+		return m, nil
+	case tui.ActionInit[string]:
+		m.roverdVersion.ProcessInit(msg)
+		return m, nil
+	case tui.ActionInit[int]:
+		m.roverNumber.ProcessInit(msg)
+		return m, nil
+	case tui.ActionResult[bool]:
+		m.authValid.ProcessResult(msg)
+		m.routeExists.ProcessResult(msg)
+		return m, nil
+	case tui.ActionResult[string]:
+		m.roverdVersion.ProcessResult(msg)
+		return m, nil
+	case tui.ActionResult[int]:
+		m.roverNumber.ProcessResult(msg)
 		return m, nil
 	default:
 		cmds := []tea.Cmd{}
@@ -200,14 +177,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				index, err := strconv.Atoi(m.formValues.index)
 				if err != nil || index < 1 || index > 20 {
-					m.routeExists = tribool.False
+					m.routeExists = tui.NewAction[bool]("routeExists")
 					return m, cmd
 				}
 				// todo: change to 192.168.1 instead of 192.168.0
-				m.host = fmt.Sprintf("192.168.0.%d", index+100)
-				m.port = 22
+				// m.host = fmt.Sprintf("192.168.0.%d", index+100)
+				m.host = "google.com"
 
-				cmds = append(cmds, checkRoute(m, attemptNumber), checkAuth(m, attemptNumber), checkDebix(m, attemptNumber))
+				// We are optimistic, start all checks in parallel
+				cmds = append(cmds, checkRoute(m), checkAuth(m), checkRoverdVersion(m), checkRoverNumber(m))
 			}
 		}
 		if cmd != nil {
@@ -249,35 +227,42 @@ func (m model) testConnectionView() string {
 
 	s += "\n\n" + lipgloss.NewStyle().Foreground(style.GrayPrimary).Render("Press 'b' to to back, 'r' to retry the connection checks, or 'q' to quit")
 
-	if m.routeExists == tribool.Maybe {
-		s += "\n\n " + m.spinner.View() + " checking if a route to Rover exists"
+	if m.routeExists.IsLoading() || m.authValid.IsLoading() || m.roverdVersion.IsLoading() || m.roverNumber.IsLoading() {
+		s += "\n\n " + m.spinner.View() + " Performing connection checks..."
 		return s
-	} else if m.routeExists == tribool.False {
-		s += "\n\n - " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("No route could be established to the Rover at "+m.host+" Are you sure it is powered on? ")
-	} else {
-		s += "\n\n - " + lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render("Established route to Rover at "+m.host)
 	}
 
-	if m.authValid == tribool.Maybe {
-		s += "\n " + m.spinner.View() + " checking if authentication is valid"
-		return s
-	} else if m.authValid == tribool.False {
-		s += "\n - " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("Authentication failed. Please check your credentials"+"\n"+m.error.Error())
+	if !m.routeExists.IsSuccess() {
+		s += "\n\n ✗ " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("No route could be established to the Rover. Are you sure it is powered on? (Tried "+m.host+")")
 	} else {
-		s += "\n - " + lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render("Authentication successful")
+		s += "\n\n ✓ " + lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render("Established route to Rover at "+m.host)
 	}
 
-	if m.debixValid == tribool.Maybe {
-		s += "\n " + m.spinner.View() + " checking Debix state"
-		return s
-	} else if m.debixValid == tribool.False {
-		s += "\n - " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("Debix is not properly configured")
-	} else {
-		s += "\n - " + lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render("Debix is properly configured")
+	if m.routeExists.IsSuccess() {
+		if !m.roverdVersion.IsSuccess() {
+			s += "\n ✗ " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("Could not determine roverd version")
+		} else {
+			s += "\n ✓ " + lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render("Found roverd version: "+*m.roverdVersion.Data)
+		}
+
+		index, _ := strconv.Atoi(m.formValues.index)
+		if !m.roverNumber.IsSuccess() {
+			s += "\n ✗ " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("Could not determine rover number")
+		} else if *m.roverNumber.Data != index {
+			s += "\n ! " + lipgloss.NewStyle().Foreground(style.WarningPrimary).Render("This Rover presented itself as Rover "+strconv.Itoa(*m.roverNumber.Data)+" but you wanted to connect to Rover "+m.formValues.index)
+		} else {
+			s += "\n ✓ " + lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render("Rover number matches the index you entered ("+m.formValues.index+")")
+		}
+
+		if !m.authValid.IsSuccess() {
+			s += "\n ✗ " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("Authentication to the roverd endpoint failed. Please check your credentials")
+		} else {
+			s += "\n ✓ " + lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render("Authentication successful")
+		}
 	}
 
-	if m.routeExists == tribool.False || m.authValid == tribool.False || m.debixValid == tribool.False {
-		s += "\n\n" + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("This Rover configuration is not valid and cannot be saved.")
+	if !m.routeExists.IsSuccess() || !m.authValid.IsSuccess() || !m.roverdVersion.IsSuccess() {
+		s += "\n\n" + lipgloss.NewStyle().Foreground(style.GrayPrimary).Render("This connection configuration is not valid and cannot be saved.")
 	} else {
 		s += "\n\n" + "You are all set! Press enter to go start using your Rover, or press 'n' to add another connection."
 	}
@@ -297,63 +282,47 @@ func (m model) View() string {
 	}
 }
 
-func checkRoute(m model, a int) tea.Cmd {
-	return func() tea.Msg {
+func checkRoute(m model) tea.Cmd {
+	return tui.PerformAction(&m.routeExists, func() (*bool, error) {
 		ping, _ := probing.NewPinger(m.host)
 		ping.Count = 3
 		ping.Timeout = 10 * time.Second
 		err := ping.Run()
-		if ping.Statistics().PacketsRecv > 0 {
-			return resultMsg{result: err == nil, err: nil, action: routePingAction, attempt: a}
-		} else {
-			return resultMsg{result: false, err: err, action: routePingAction, attempt: a}
+
+		valid := ping.Statistics().PacketsRecv > 0
+		if !valid {
+			err = fmt.Errorf("No route to host")
 		}
-	}
+		return &valid, err
+	})
 }
 
-func checkAuth(m model, a int) tea.Cmd {
-	return func() tea.Msg {
-		// Start new ssh connection with private key.
-		auth := goph.Password(m.formValues.password)
+func checkAuth(m model) tea.Cmd {
+	// todo: replace with actual authentication check
+	return tui.PerformAction(&m.authValid, func() (*bool, error) {
+		ping, _ := probing.NewPinger(m.host)
+		ping.Count = 3
+		ping.Timeout = 10 * time.Second
+		err := ping.Run()
 
-		client, err := goph.NewConn(&goph.Config{
-			User:     m.formValues.username,
-			Addr:     m.host,
-			Port:     m.port,
-			Auth:     auth,
-			Timeout:  goph.DefaultTimeout,
-			Callback: ssh.InsecureIgnoreHostKey(),
-		})
-		if err != nil {
-			return resultMsg{result: false, err: err, action: authCheckAction, attempt: a}
+		valid := ping.Statistics().PacketsRecv > 0
+		if !valid {
+			err = fmt.Errorf("No route to host")
 		}
-		defer client.Close()
-
-		// Check if the connection is working by running a simple command
-		_, err = client.Run("ls /tmp/")
-		return resultMsg{result: err == nil, err: nil, action: authCheckAction, attempt: a}
-	}
+		return &valid, err
+	})
 }
 
-func checkDebix(m model, a int) tea.Cmd {
-	return func() tea.Msg {
-		// Start new ssh connection with password auth.
-		auth := goph.Password(m.formValues.password)
-		client, err := goph.NewConn(&goph.Config{
-			User:     m.formValues.username,
-			Addr:     m.host,
-			Port:     m.port,
-			Auth:     auth,
-			Timeout:  goph.DefaultTimeout,
-			Callback: ssh.InsecureIgnoreHostKey(),
-		})
-		if err != nil {
-			return resultMsg{result: false, err: err, action: debixCheckAction, attempt: a}
-		}
-		defer client.Close()
+func checkRoverdVersion(m model) tea.Cmd {
+	return tui.PerformAction(&m.roverdVersion, func() (*string, error) {
+		res := "linux 1234"
+		return &res, nil
+	})
+}
 
-		// Check if the connection is working by running a simple command
-		_, err = client.Run("ls /home/debix")
-		return resultMsg{result: err == nil, err: nil, action: debixCheckAction, attempt: a}
-	}
+func checkRoverNumber(m model) tea.Cmd {
+	return tui.PerformAction(&m.roverNumber, func() (*int, error) {
+		res := 123
+		return &res, nil
+	})
 }

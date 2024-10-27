@@ -2,7 +2,7 @@
 .PHONY: build start clean test
 
 BUILD_DIR=bin/
-BINARY_NAME=rover
+BINARY_NAME=roverctl
 
 build:
 	@echo "building ${BINARY_NAME}"
