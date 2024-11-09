@@ -1,8 +1,6 @@
 package tui
 
 import (
-	"time"
-
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -153,10 +151,9 @@ func PerformAction[T interface{}](action *Action[T], f ActionFunction[T]) tea.Cm
 	}
 	run := func() tea.Cmd {
 		return func() tea.Msg {
-			time.Sleep(100 * time.Millisecond) // make sure that init has time to run
 			data, err := f()
 			return NewResult(*action, err == nil, err, data, attempt)
 		}
 	}
-	return tea.Batch(init(), run())
+	return tea.Sequence(init(), run())
 }

@@ -19,9 +19,9 @@ type model struct {
 
 func InitialModel() model {
 	l := list.New([]list.Item{
-		components.ActionItem{Name: "Configure", Desc: "Configure your pipeline"},
+		components.ActionItem{Name: "Pipeline", Desc: "Manage your pipeline"},
 		components.ActionItem{Name: "Services", Desc: "Create, upload, download and install services"},
-		components.ActionItem{Name: "Connections", Desc: "Manage your Rover connections"},
+		components.ActionItem{Name: "Connections", Desc: "Manage connections to roverd instances"},
 		components.ActionItem{Name: "Utilities", Desc: "Various utilities to interact with your Rover"},
 		// components.ActionItem{Name: "Debug", Desc: "Enable remote debugging for your pipeline"}, // Should not be available when no pipeline is running or disable when enabled
 		// components.ActionItem{Name: "Status", Desc: "Watcdh module outputs and status logs"},    // Should not be available when no pipeline is running

@@ -30,6 +30,7 @@ func InitialModel() model {
 		listItems = append(listItems, components.ActionItem{Name: "Upload", Desc: "Upload the service in your current working directory"})
 	}
 	listItems = append(listItems, []list.Item{
+		components.ActionItem{Name: "Update", Desc: "Update the sources for your service"},
 		components.ActionItem{Name: "Download", Desc: "Download official ASE services to your Rover"},
 	}...)
 
@@ -70,6 +71,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					value = "service init"
 				case "Upload":
 					value = "service upload"
+				case "Update":
+					value = "sources update"
 				case "Download":
 					value = "service download"
 				}
