@@ -14,7 +14,12 @@ RUN apt-get update && \
     build-essential \
     pkg-config \
     xz-utils \
+    sudo \
     && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user `devuser` with sudo privileges
+RUN useradd -m -s /bin/bash devuser && \
+    echo "devuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Install Go 1.21 based on the system architecture
 RUN ARCH=$(dpkg --print-architecture) && \
@@ -80,3 +85,15 @@ RUN npm install -g @openapitools/openapi-generator-cli
 
 # Verify openapi-generator-cli installation
 RUN openapi-generator-cli version
+
+# Change ownership of /usr/local to allow the non-root user to install packages globally if needed
+RUN chown -R devuser:devuser /usr/local
+
+# Switch to non-root user `devuser`
+USER devuser
+
+# Set the working directory to `devuser`'s home
+WORKDIR /home/devuser
+
+# Default command (optional)
+CMD ["bash"]

@@ -13,7 +13,7 @@ build-open-api:
 	@echo "generating openapi client"
 	@openapi-generator-cli generate -i spec/apispec.yaml -g go -o src/openapi --additional-properties=withGoMod=false
 
-build: build-open-api
+build: #build-open-api
 	@echo "building ${BINARY_NAME}"
 	@cd src/ && go build -o "../$(BUILD_DIR)${BINARY_NAME}" ${buildargs}
 

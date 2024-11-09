@@ -10,12 +10,13 @@ import (
 	"github.com/VU-ASE/rover/src/state"
 	"github.com/VU-ASE/rover/src/style"
 	"github.com/VU-ASE/rover/src/tui"
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
 	probing "github.com/prometheus-community/pro-bing"
-	wifiname "github.com/yelinaung/wifi-name"
 )
 
 type formValues struct {
@@ -25,17 +26,101 @@ type formValues struct {
 	password string
 }
 
+// keyMap defines a set of keybindings. To work for help it must satisfy key.Map
+type keyMap struct {
+	Save  key.Binding
+	New   key.Binding
+	Back  key.Binding
+	Retry key.Binding
+	Quit  key.Binding
+}
+
 type model struct {
 	form          *huh.Form
+	help          help.Model
 	spinner       spinner.Model
 	routeExists   tui.Action[bool]
 	authValid     tui.Action[bool]
 	roverdVersion tui.Action[string]
-	roverNumber   tui.Action[int]
+	roverNumber   tui.Action[int32]
 	isChecking    bool
 	formValues    *formValues
 	host          string // the ip or hostname of the rover to connect to
 	error         error  // any errors that occurred
+}
+
+// ShortHelp returns keybindings to be shown in the mini help view. It's part
+// of the key.Map interface.
+func (k keyMap) ShortHelp() []key.Binding {
+	return []key.Binding{k.Back, k.Retry, k.Quit, k.Save, k.New}
+}
+
+// FullHelp returns keybindings for the expanded help view. It's part of the
+// key.Map interface.
+func (k keyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{}
+}
+
+var keys = keyMap{
+	Back: key.NewBinding(
+		key.WithKeys("b"),
+		key.WithHelp("b", "back"),
+	),
+	Retry: key.NewBinding(
+		key.WithKeys("r"),
+		key.WithHelp("r", "retry"),
+	),
+	Quit: key.NewBinding(
+		key.WithKeys("q"),
+		key.WithHelp("q", "quit"),
+	),
+}
+
+// Shown when the form is completed and the connection checks are successful
+var successKeys = keyMap{
+	Save: key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "save"),
+	),
+	New: key.NewBinding(
+		key.WithKeys("n"),
+		key.WithHelp("n", "save and new"),
+	),
+	Back: key.NewBinding(
+		key.WithKeys("b"),
+		key.WithHelp("b", "back"),
+	),
+	Retry: key.NewBinding(
+		key.WithKeys("r"),
+		key.WithHelp("r", "retry"),
+	),
+	Quit: key.NewBinding(
+		key.WithKeys("q"),
+		key.WithHelp("q", "quit"),
+	),
+}
+
+var failureKeys = keyMap{
+	Save: key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "save anyway"),
+	),
+	New: key.NewBinding(
+		key.WithKeys("n"),
+		key.WithHelp("n", "save and new"),
+	),
+	Back: key.NewBinding(
+		key.WithKeys("b"),
+		key.WithHelp("b", "back"),
+	),
+	Retry: key.NewBinding(
+		key.WithKeys("r"),
+		key.WithHelp("r", "retry"),
+	),
+	Quit: key.NewBinding(
+		key.WithKeys("q"),
+		key.WithHelp("q", "quit"),
+	),
 }
 
 func InitialModel(val *formValues) model {
@@ -55,12 +140,13 @@ func InitialModel(val *formValues) model {
 	routeExistsAction := tui.NewAction[bool]("routeExists")
 	authValidAction := tui.NewAction[bool]("authValid")
 	roverdVersionAction := tui.NewAction[string]("roverdVersion")
-	roverNumberAction := tui.NewAction[int]("roverNumber")
+	roverNumberAction := tui.NewAction[int32]("roverNumber")
 
 	return model{
 		spinner:       s,
 		formValues:    formValues,
 		host:          "",
+		help:          help.New(),
 		routeExists:   routeExistsAction,
 		authValid:     authValidAction,
 		roverdVersion: roverdVersionAction,
@@ -110,11 +196,26 @@ func InitialModel(val *formValues) model {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.form.State == huh.StateCompleted {
 		switch msg := msg.(type) {
+		case tea.WindowSizeMsg:
+			// If we set a width on the help menu it can gracefully truncate
+			// its view as needed.
+			m.help.Width = msg.Width
 		case tea.KeyMsg:
+			switch {
+			case key.Matches(msg, keys.Back):
+				// Restore to the initial form, but recover the form values
+				m = InitialModel(m.formValues)
+				return m, tea.Batch(m.form.Init(), m.spinner.Tick)
+			case key.Matches(msg, keys.Retry):
+				// Retry the connection checks
+				m.isChecking = true
+				return m, tea.Batch(checkRoute(m), checkAuth(m), checkRoverdVersion(m), checkRoverNumber(m))
+			}
+
 			switch msg.String() {
 			case "n", "enter":
 				// Save the connection if all checks are successful
-				if m.routeExists.IsSuccess() && m.authValid.IsSuccess() {
+				if m.routeExists.IsDone() && m.authValid.IsDone() {
 					// Save the connection
 					state.Get().RoverConnections = state.Get().RoverConnections.Add(configuration.RoverConnection{
 						Name:     m.formValues.name,
@@ -131,14 +232,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m, tea.Quit
 					}
 				}
-			case "b":
-				// Restore to the initial form, but recover the form values
-				m = InitialModel(m.formValues)
-				return m, tea.Batch(m.form.Init(), m.spinner.Tick)
-			case "r":
-				// Retry the connection checks
-				m.isChecking = true
-				return m, tea.Batch(checkRoute(m), checkAuth(m), checkRoverdVersion(m), checkRoverNumber(m))
 			}
 		}
 	}
@@ -155,7 +248,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tui.ActionInit[string]:
 		m.roverdVersion.ProcessInit(msg)
 		return m, nil
-	case tui.ActionInit[int]:
+	case tui.ActionInit[int32]:
 		m.roverNumber.ProcessInit(msg)
 		return m, nil
 	case tui.ActionResult[bool]:
@@ -165,7 +258,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tui.ActionResult[string]:
 		m.roverdVersion.ProcessResult(msg)
 		return m, nil
-	case tui.ActionResult[int]:
+	case tui.ActionResult[int32]:
 		m.roverNumber.ProcessResult(msg)
 		return m, nil
 	default:
@@ -207,16 +300,16 @@ func (m model) enterDetailsView() string {
 	// Introduction
 	s := lipgloss.NewStyle().Foreground(style.AsePrimary).Render("Connect to a Rover")
 
-	// Get the current wifi name
-	wifi := wifiname.WifiName()
+	// // Get the current wifi name
+	// wifi := wifiname.WifiName()
 
-	if wifi == "Could not get SSID" {
-		wifi = "unknown network"
-	}
+	// if wifi == "Could not get SSID" {
+	// 	wifi = "unknown network"
+	// }
 
-	if wifi != "aselabs" {
-		s += lipgloss.NewStyle().Foreground(style.WarningPrimary).Render("\n\nIt seems you are not connected to the ASElabs WiFi but to '" + wifi + "' instead. \nRead how to connect at: https://docs.ase.vu.nl/docs/tutorials/setting-up-your-workspace/accessing-the-network")
-	}
+	// if wifi != "aselabs" {
+	// 	s += lipgloss.NewStyle().Foreground(style.WarningPrimary).Render("\n\nIt seems you are not connected to the ASElabs WiFi but to '" + wifi + "' instead. \nRead how to connect at: https://docs.ase.vu.nl/docs/tutorials/setting-up-your-workspace/accessing-the-network")
+	// }
 
 	s += "\n\n" + m.form.View()
 
@@ -226,22 +319,28 @@ func (m model) enterDetailsView() string {
 func (m model) testConnectionView() string {
 	s := lipgloss.NewStyle().Foreground(style.AsePrimary).Render("Connecting to " + m.formValues.name)
 
-	s += "\n\n" + lipgloss.NewStyle().Foreground(style.GrayPrimary).Render("Press 'b' to to back, 'r' to retry the connection checks, or 'q' to quit")
-
 	if m.routeExists.IsLoading() || m.authValid.IsLoading() || m.roverdVersion.IsLoading() || m.roverNumber.IsLoading() {
 		s += "\n\n " + m.spinner.View() + " Performing connection checks..."
+
+		s += "\n\n" + m.help.View(keys)
 		return s
 	}
 
 	if !m.routeExists.IsSuccess() {
-		s += "\n\n ✗ " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("No route could be established to the Rover. Are you sure it is powered on? (Tried "+m.host+")")
+		s += "\n\n ✗ " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("No route could be established to the Rover. Are you sure it is powered on? (Tried "+m.host+")\n   Read how to connect at: https://docs.ase.vu.nl/docs/tutorials/setting-up-your-workspace/accessing-the-network")
+		if m.routeExists.Error != nil {
+			s += "\n   (" + m.routeExists.Error.Error() + ")"
+		}
 	} else {
 		s += "\n\n ✓ " + lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render("Established route to Rover at "+m.host)
 	}
 
 	if m.routeExists.IsSuccess() {
 		if !m.roverdVersion.IsSuccess() {
-			s += "\n ✗ " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("Could not determine roverd version "+m.roverdVersion.Error.Error())
+			s += "\n ✗ " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("Could not determine roverd version")
+			if m.roverdVersion.Error != nil {
+				s += " (" + m.roverdVersion.Error.Error() + ")"
+			}
 		} else {
 			s += "\n ✓ " + lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render("Found roverd version: "+*m.roverdVersion.Data)
 		}
@@ -249,23 +348,31 @@ func (m model) testConnectionView() string {
 		index, _ := strconv.Atoi(m.formValues.index)
 		if !m.roverNumber.IsSuccess() {
 			s += "\n ✗ " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("Could not determine rover number")
-		} else if *m.roverNumber.Data != index {
-			s += "\n ! " + lipgloss.NewStyle().Foreground(style.WarningPrimary).Render("This Rover presented itself as Rover "+strconv.Itoa(*m.roverNumber.Data)+" but you wanted to connect to Rover "+m.formValues.index)
+			if m.roverNumber.Error != nil {
+				s += " (" + m.roverNumber.Error.Error() + ")"
+			}
+		} else if *m.roverNumber.Data != int32(index) {
+			s += "\n ! " + lipgloss.NewStyle().Foreground(style.WarningPrimary).Render("This Rover presented itself as Rover "+strconv.Itoa(int(*m.roverNumber.Data))+" but you wanted to connect to Rover "+m.formValues.index)
 		} else {
 			s += "\n ✓ " + lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render("Rover number matches the index you entered ("+m.formValues.index+")")
 		}
 
 		if !m.authValid.IsSuccess() {
 			s += "\n ✗ " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("Authentication to the roverd endpoint failed. Please check your credentials")
+			if m.authValid.Error != nil {
+				s += " (" + m.authValid.Error.Error() + ")"
+			}
 		} else {
 			s += "\n ✓ " + lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render("Authentication successful")
 		}
 	}
 
 	if !m.routeExists.IsSuccess() || !m.authValid.IsSuccess() || !m.roverdVersion.IsSuccess() {
-		s += "\n\n" + lipgloss.NewStyle().Foreground(style.GrayPrimary).Render("This connection configuration is not valid and cannot be saved.")
+		s += "\n\n" + lipgloss.NewStyle().Foreground(style.GrayPrimary).Render("This connection configuration is not valid and should not be saved.")
+		s += "\n\n" + m.help.View(failureKeys)
 	} else {
-		s += "\n\n" + "You are all set! Press enter to go start using your Rover, or press 'n' to add another connection."
+		s += "\n\n" + "You are all set!"
+		s += "\n\n" + m.help.View(successKeys)
 	}
 
 	return s
@@ -299,18 +406,18 @@ func checkRoute(m model) tea.Cmd {
 }
 
 func checkAuth(m model) tea.Cmd {
-	// todo: replace with actual authentication check
 	return tui.PerformAction(&m.authValid, func() (*bool, error) {
-		ping, _ := probing.NewPinger(m.host)
-		ping.Count = 3
-		ping.Timeout = 10 * time.Second
-		err := ping.Run()
-
-		valid := ping.Statistics().PacketsRecv > 0
-		if !valid {
-			err = fmt.Errorf("No route to host")
+		// Send a protected request to the roverd endpoint
+		c := configuration.RoverConnection{
+			Host:     m.host,
+			Username: m.formValues.username,
+			Password: m.formValues.password,
 		}
-		return &valid, err
+		a := c.ToApiClient()
+
+		_, _, err := a.PipelineAPI.PipelineGet(context.Background()).Execute()
+		res := err == nil
+		return &res, err
 	})
 }
 
@@ -333,8 +440,20 @@ func checkRoverdVersion(m model) tea.Cmd {
 }
 
 func checkRoverNumber(m model) tea.Cmd {
-	return tui.PerformAction(&m.roverNumber, func() (*int, error) {
-		res := 123
-		return &res, nil
+	return tui.PerformAction(&m.roverNumber, func() (*int32, error) {
+		c := configuration.RoverConnection{
+			Host:     m.host,
+			Username: m.formValues.username,
+			Password: m.formValues.password,
+		}
+		a := c.ToApiClient()
+
+		res, _, err := a.HealthAPI.StatusGet(context.Background()).Execute()
+		if err != nil {
+			return nil, err
+		}
+
+		num := res.RoverId
+		return num, err
 	})
 }
