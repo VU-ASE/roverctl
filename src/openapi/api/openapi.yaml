@@ -1,0 +1,905 @@
+openapi: 3.0.0
+info:
+  description: "API exposed from each rover to allow process, service, source and\
+    \ file management"
+  title: roverd REST API
+  version: 1.0.0
+servers:
+- description: Local rover instance
+  url: http://localhost
+security:
+- BasicAuth: []
+tags:
+- description: Managing pipeline execution and processes
+  name: Pipeline
+- description: Managing services that compose a pipeline
+  name: Services
+- description: Managing sources that services can be downloaded from
+  name: Sources
+- description: Health and versioning information
+  name: Health
+paths:
+  /pipeline:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_pipeline_get_200_response'
+          description: Pipeline status and an array of processes
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: Retrieve pipeline status and process execution information
+      tags:
+      - Pipeline
+    post:
+      parameters:
+      - description: The action to perform on the pipeline
+        example: start
+        explode: true
+        in: query
+        name: action
+        required: true
+        schema:
+          enum:
+          - start
+          - stop
+          type: string
+        style: form
+      responses:
+        "200":
+          description: The pipeline action was performed successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: Start or stop the pipeline of all enabled services
+      tags:
+      - Pipeline
+  /pipeline/{name}:
+    get:
+      parameters:
+      - description: The name of the service running as a process in the pipeline
+        example: imaging
+        explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The number of log lines to retrieve
+        example: 100
+        explode: true
+        in: query
+        name: log_lines
+        required: false
+        schema:
+          default: 50
+          maximum: 1000
+          minimum: 1
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_pipeline__name__get_200_response'
+          description: The status of the process
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+        "404":
+          description: Entity not found
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: Retrieve the status of a service running as a process in the pipeline
+      tags:
+      - Pipeline
+  /services:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/_services_get_200_response_inner'
+                type: array
+          description: An array of services
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: Retrieve all services and their status
+      tags:
+      - Services
+    post:
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/_services_post_request'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_services_post_200_response'
+          description: The service action was performed successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: Upload a new service or new version to the rover by uploading a ZIP
+        file
+      tags:
+      - Services
+  /services/{name}:
+    get:
+      parameters:
+      - description: The name of the service
+        example: imaging
+        explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_services__name__get_200_response'
+          description: The status of the service
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+        "404":
+          description: Entity not found
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: Retrieve the status and versions of a service
+      tags:
+      - Services
+  /services/{name}/{version}:
+    delete:
+      parameters:
+      - description: The name of the service
+        example: imaging
+        explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The version of the service
+        example: 1.0.0
+        explode: false
+        in: path
+        name: version
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: The service version was deleted successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+        "404":
+          description: Entity not found
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: Delete a specific version of a service
+      tags:
+      - Services
+    get:
+      parameters:
+      - description: The name of the service
+        example: imaging
+        explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The version of the service
+        example: 1.0.0
+        explode: false
+        in: path
+        name: version
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_services__name___version__get_200_response'
+          description: The status of the service
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+        "404":
+          description: Entity not found
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: Retrieve the status of a specific version of a service
+      tags:
+      - Services
+    post:
+      parameters:
+      - description: The name of the service
+        example: imaging
+        explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The version of the service
+        example: 1.0.0
+        explode: false
+        in: path
+        name: version
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The action to perform on the service version
+        example: enable
+        explode: true
+        in: query
+        name: action
+        required: true
+        schema:
+          enum:
+          - enable
+          - disable
+          - build
+          type: string
+        style: form
+      responses:
+        "200":
+          description: The service action was performed successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+        "404":
+          description: Entity not found
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: "Enable, disable or build a specific version of a service in the pipeline"
+      tags:
+      - Services
+  /sources:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/_sources_get_200_response_inner'
+                type: array
+          description: An array of sources
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: Retrieve all sources
+      tags:
+      - Sources
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_sources_post_request'
+        required: true
+      responses:
+        "200":
+          description: The source was added successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: Add a new source
+      tags:
+      - Sources
+  /sources/{name}:
+    delete:
+      parameters:
+      - description: The name of the source
+        example: imaging
+        explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: The source was deleted successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+        "404":
+          description: Entity not found
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: Delete a source
+      tags:
+      - Sources
+    post:
+      parameters:
+      - description: The name of the source
+        example: imaging
+        explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: The service was downloaded and installed successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+        "404":
+          description: Entity not found
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: Download and install a service from a source
+      tags:
+      - Sources
+  /status:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_status_get_200_response'
+          description: The health and versioning information
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+      security: []
+      summary: Retrieve the health and versioning information
+      tags:
+      - Health
+  /update:
+    post:
+      responses:
+        "200":
+          description: The roverd daemon process initiated a self-update successfully.
+            You should expect the process to terminate and restart soon.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: Self-update the roverd daemon process
+      tags:
+      - Health
+components:
+  responses:
+    Error:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GenericError'
+      description: An error occurred
+    UnauthorizedError:
+      description: Unauthorized access (you need to set the Authorization header with
+        a valid username and password)
+    NotFoundError:
+      description: Entity not found
+  schemas:
+    PipelineStatus:
+      description: The status of the entire pipeline corresponding to a state machine
+      enum:
+      - started
+      - restarting
+      - invalid
+      - valid
+      type: string
+    ProcessStatus:
+      description: The status of a process in the pipeline
+      enum:
+      - running
+      - stopped
+      - terminated
+      - killed
+      type: string
+    ServiceStatus:
+      description: The status of any given service is either enabled or disabled
+      enum:
+      - enabled
+      - disabled
+      type: string
+    DaemonStatus:
+      description: The status of the roverd process
+      enum:
+      - operational
+      - recoverable
+      - unrecoverable
+      type: string
+    GenericError:
+      example:
+        code: 0
+        message: message
+      properties:
+        message:
+          description: A message describing the error
+          type: string
+        code:
+          description: A code describing the error (this is not an HTTP status code)
+          type: integer
+      type: object
+    _pipeline_get_200_response_pipeline:
+      example:
+        last_start: 1612345678211
+        last_restart: 1612345678901
+        last_stop: 1612345678910
+        status: started
+      properties:
+        status:
+          $ref: '#/components/schemas/PipelineStatus'
+        last_start:
+          description: Milliseconds since epoch when the pipeline was manually started
+          example: 1612345678211
+          format: int64
+          type: integer
+        last_stop:
+          description: Milliseconds since epoch when the pipeline was manually stopped
+          example: 1612345678910
+          format: int64
+          type: integer
+        last_restart:
+          description: Milliseconds since epoch when the pipeline was automatically
+            restarted (on process faults)
+          example: 1612345678901
+          format: int64
+          type: integer
+      type: object
+    _pipeline_get_200_response_processes_inner:
+      example:
+        memory: 1024
+        name: imaging
+        cpu: 20
+        pid: 7890
+        faults: 1
+        status: running
+        uptime: 121
+      properties:
+        name:
+          description: The name of the service running as a process
+          example: imaging
+          type: string
+        status:
+          $ref: '#/components/schemas/ProcessStatus'
+        pid:
+          description: The process ID
+          example: 7890
+          type: integer
+        uptime:
+          description: The number of milliseconds the process has been running
+          example: 121
+          format: int64
+          type: integer
+        memory:
+          description: The amount of memory used by the process in megabytes
+          example: 1024
+          type: integer
+        cpu:
+          description: The percentage of CPU used by the process
+          example: 20
+          type: integer
+        faults:
+          description: The number of faults that have occurred (causing the pipeline
+            to restart) since last_start
+          example: 1
+          type: integer
+      type: object
+    _pipeline_get_200_response:
+      example:
+        pipeline:
+          last_start: 1612345678211
+          last_restart: 1612345678901
+          last_stop: 1612345678910
+          status: started
+        processes:
+        - memory: 1024
+          name: imaging
+          cpu: 20
+          pid: 7890
+          faults: 1
+          status: running
+          uptime: 121
+        - memory: 1024
+          name: imaging
+          cpu: 20
+          pid: 7890
+          faults: 1
+          status: running
+          uptime: 121
+      properties:
+        pipeline:
+          $ref: '#/components/schemas/_pipeline_get_200_response_pipeline'
+        processes:
+          items:
+            $ref: '#/components/schemas/_pipeline_get_200_response_processes_inner'
+          type: array
+      type: object
+    _pipeline__name__get_200_response:
+      example:
+        memory: 1024
+        service_name: imaging
+        name: imaging
+        cpu: 20
+        pid: 7890
+        service_version: 1.0.0
+        faults: 1
+        logs:
+        - "INFO: Starting imaging service"
+        - "INFO: Imaging service completed"
+        status: running
+        uptime: 121
+      properties:
+        name:
+          description: The name of the service running as a process
+          example: imaging
+          type: string
+        status:
+          $ref: '#/components/schemas/ProcessStatus'
+        pid:
+          description: The process ID
+          example: 7890
+          type: integer
+        uptime:
+          description: The number of milliseconds the process has been running
+          example: 121
+          format: int64
+          type: integer
+        memory:
+          description: The amount of memory used by the process in megabytes
+          example: 1024
+          type: integer
+        cpu:
+          description: The percentage of CPU used by the process
+          example: 20
+          type: integer
+        faults:
+          description: The number of faults that have occurred (causing the pipeline
+            to restart) since last_start
+          example: 1
+          type: integer
+        service_name:
+          description: The name of the service that this process is running
+          example: imaging
+          type: string
+        service_version:
+          description: The version of the service that this process is running
+          example: 1.0.0
+          type: string
+        logs:
+          description: The latest <log_lines> log lines of the process
+          example:
+          - "INFO: Starting imaging service"
+          - "INFO: Imaging service completed"
+          items:
+            type: string
+          type: array
+      type: object
+    _services_get_200_response_inner:
+      example:
+        enabled_version: 1.0.0
+        name: imaging
+        status: enabled
+      properties:
+        name:
+          description: The name of the service
+          example: imaging
+          type: string
+        status:
+          $ref: '#/components/schemas/ServiceStatus'
+        enabled_version:
+          description: The version that is enabled for this service (if any)
+          example: 1.0.0
+          type: string
+      type: object
+    _services_post_request:
+      properties:
+        content:
+          description: The content of the ZIP file to upload
+          format: binary
+          type: string
+      type: object
+    _services_post_200_response:
+      example:
+        name: imaging
+        version: 1.0.0
+      properties:
+        name:
+          description: The name of the service
+          example: imaging
+          type: string
+        version:
+          description: The version of the service
+          example: 1.0.0
+          type: string
+      type: object
+    _services__name__get_200_response:
+      example:
+        enabled_version: 1.0.0
+        versions:
+        - 1.0.0
+        - 1.0.1
+        name: imaging
+        status: enabled
+      properties:
+        name:
+          description: The name of the service
+          example: imaging
+          type: string
+        status:
+          $ref: '#/components/schemas/ServiceStatus'
+        versions:
+          example:
+          - 1.0.0
+          - 1.0.1
+          items:
+            description: The versions of the service that are installed
+            type: string
+          type: array
+        enabled_version:
+          description: The version that is enabled for this service (if any)
+          example: 1.0.0
+          type: string
+      type: object
+    _services__name___version__get_200_response_inputs_inner:
+      properties:
+        service:
+          description: The name of the service dependency
+          type: string
+        streams:
+          description: The streams of the service dependency
+          items:
+            type: string
+          type: array
+      type: object
+    _services__name___version__get_200_response:
+      example:
+        outputs:
+        - image
+        built_at: 1612345678142
+        author: Elias
+        inputs:
+        - service: lux
+          streams:
+          - light_level
+          - temperature
+        name: imaging
+        version: 1.0.0
+        errors:
+        - Missing input stream 'light_level'
+        status: enabled
+      properties:
+        name:
+          description: The name of the service
+          example: imaging
+          type: string
+        version:
+          description: The version of the service
+          example: 1.0.0
+          type: string
+        status:
+          $ref: '#/components/schemas/ServiceStatus'
+        built_at:
+          description: The time this version was last built as milliseconds since
+            epoch
+          example: 1612345678142
+          format: int64
+          type: integer
+        author:
+          description: The author of the service
+          example: Elias
+          type: string
+        inputs:
+          description: The dependencies/inputs of this service version
+          example:
+          - service: lux
+            streams:
+            - light_level
+            - temperature
+          items:
+            $ref: '#/components/schemas/_services__name___version__get_200_response_inputs_inner'
+          type: array
+        outputs:
+          description: The output streams of this service version
+          example:
+          - image
+          items:
+            type: string
+          type: array
+        errors:
+          description: The validation errors of this service version (one error per
+            line)
+          example:
+          - Missing input stream 'light_level'
+          items:
+            type: string
+          type: array
+      type: object
+    _sources_get_200_response_inner:
+      example:
+        name: imaging
+        version: 1.0.0
+        sha: 68c4008de241ee6f8c17de9162f80c38533b94fc0ee6de2a83740cdc2e0edf64
+        url: github.com/VU-ASE/imaging
+      properties:
+        name:
+          description: The name of the source
+          example: imaging
+          type: string
+        url:
+          description: The URL of the source (without scheme)
+          example: github.com/VU-ASE/imaging
+          type: string
+        version:
+          example: 1.0.0
+          type: string
+        sha:
+          description: "The SHA256 hash of the source download, computed over the\
+            \ ZIP file downloaded"
+          example: 68c4008de241ee6f8c17de9162f80c38533b94fc0ee6de2a83740cdc2e0edf64
+          type: string
+      type: object
+    _sources_post_request:
+      properties:
+        name:
+          description: The name of the source
+          example: imaging
+          type: string
+        url:
+          description: The URL of the source (without scheme)
+          example: github.com/VU-ASE/imaging
+          type: string
+        version:
+          description: The version of the source
+          example: 1.0.0
+          type: string
+      type: object
+    _status_get_200_response:
+      example:
+        error_message: none
+        rover_name: zenith
+        os: linux 5.4.0-65-generic x86_64 ubuntu 20.04
+        systime: 1612345674703
+        version: 1.0.0
+        rover_id: 12
+        status: operational
+        uptime: 2751
+      properties:
+        status:
+          $ref: '#/components/schemas/DaemonStatus'
+        error_message:
+          description: Error message of the daemon status
+          example: none
+          type: string
+        version:
+          description: The version of the roverd daemon
+          example: 1.0.0
+          type: string
+        uptime:
+          description: The number of milliseconds the roverd daemon process has been
+            running
+          example: 2751
+          format: int64
+          type: integer
+        os:
+          description: The operating system of the rover
+          example: linux 5.4.0-65-generic x86_64 ubuntu 20.04
+          type: string
+        systime:
+          description: The system time of the rover as milliseconds since epoch
+          example: 1612345674703
+          format: int64
+          type: integer
+        rover_id:
+          description: The unique identifier of the rover
+          example: 12
+          type: integer
+        rover_name:
+          description: The unique name of the rover
+          example: zenith
+          type: string
+      type: object
+  securitySchemes:
+    BasicAuth:
+      scheme: basic
+      type: http

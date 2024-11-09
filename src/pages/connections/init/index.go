@@ -1,6 +1,7 @@
 package initconnectionpage
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"time"
@@ -240,7 +241,7 @@ func (m model) testConnectionView() string {
 
 	if m.routeExists.IsSuccess() {
 		if !m.roverdVersion.IsSuccess() {
-			s += "\n ✗ " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("Could not determine roverd version")
+			s += "\n ✗ " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("Could not determine roverd version "+m.roverdVersion.Error.Error())
 		} else {
 			s += "\n ✓ " + lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render("Found roverd version: "+*m.roverdVersion.Data)
 		}
@@ -315,8 +316,19 @@ func checkAuth(m model) tea.Cmd {
 
 func checkRoverdVersion(m model) tea.Cmd {
 	return tui.PerformAction(&m.roverdVersion, func() (*string, error) {
-		res := "linux 1234"
-		return &res, nil
+		c := configuration.RoverConnection{
+			Host:     m.host,
+			Username: m.formValues.username,
+			Password: m.formValues.password,
+		}
+		a := c.ToApiClient()
+
+		res, _, err := a.HealthAPI.StatusGet(context.Background()).Execute()
+		if err != nil {
+			return nil, err
+		}
+
+		return res.Version, nil
 	})
 }
 

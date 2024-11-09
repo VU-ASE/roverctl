@@ -1,27 +1,31 @@
 package configuration
 
 import (
+	"encoding/base64"
 	"fmt"
+	"net/http"
 	"os"
 	"slices"
 
+	"github.com/VU-ASE/rover/src/openapi"
 	"github.com/melbahja/goph"
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/yaml.v3"
 )
 
 //
-// Get, create and set all the available rover connections
+// Get, create and set all the available connections to roverd endpoints
 //
 
 // The file name in the configuration directory where the connections are stored
 var connectionsFileName = LocalConfigDir() + "/connections.yaml"
 
 type RoverConnection struct {
-	Name     string `yaml:"name"`
-	Host     string `yaml:"host"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
+	Name     string             `yaml:"name"`
+	Host     string             `yaml:"host"`
+	Username string             `yaml:"username"`
+	Password string             `yaml:"password"`
+	client   *openapi.APIClient // to be used to communicate with the roverd endpoint
 }
 
 // An overview of all the available connections, as is written to the configuration file
@@ -123,7 +127,7 @@ func (c RoverConnections) SetActive(name string) RoverConnections {
 	return c
 }
 
-// Convert the RoverConnetion to an SSH connection object
+// Convert the RoverConnection to an SSH connection object
 // Don't forget to close!
 func (c RoverConnection) ToSshConnection() (*ssh.Client, error) {
 	config := &ssh.ClientConfig{
@@ -134,7 +138,7 @@ func (c RoverConnection) ToSshConnection() (*ssh.Client, error) {
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
-	return ssh.Dial("tcp", fmt.Sprintf("%s:%d", c.Host), config)
+	return ssh.Dial("tcp", c.Host, config)
 }
 
 // Convert the RoverConnection to a goph SSH connection object (which often is more useful)
@@ -148,4 +152,43 @@ func (c RoverConnection) ToSsh() (*goph.Client, error) {
 		Timeout:  goph.DefaultTimeout,
 		Callback: ssh.InsecureIgnoreHostKey(),
 	})
+}
+
+// To add Basic Auth headers
+type authTransport struct {
+	Username string
+	Password string
+	Base     http.RoundTripper
+}
+
+func (a *authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	// Add Basic Authentication header
+	auth := a.Username + ":" + a.Password
+	encodedAuth := base64.StdEncoding.EncodeToString([]byte(auth))
+	req.Header.Add("Authorization", "Basic "+encodedAuth)
+	return a.Base.RoundTrip(req)
+}
+
+func basicAuthClient(username, password string) *http.Client {
+	return &http.Client{
+		Transport: &authTransport{
+			Username: username,
+			Password: password,
+			Base:     http.DefaultTransport, // Use the default RoundTripper
+		},
+	}
+}
+
+func (c RoverConnection) ToApiClient() *openapi.APIClient {
+	if c.client == nil {
+		config := openapi.NewConfiguration()
+		config.Servers = openapi.ServerConfigurations{
+			{
+				URL: fmt.Sprintf("http://%s", c.Host),
+			},
+		}
+		config.HTTPClient = basicAuthClient(c.Username, c.Password)
+		c.client = openapi.NewAPIClient(config)
+	}
+	return c.client
 }

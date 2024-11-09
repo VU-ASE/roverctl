@@ -10,7 +10,8 @@
                 "golang.go", // Go language server extension
                 "golangci.golangci-lint", // golangci-lint extension
                 "ms-vscode.makefile-tools", // Makefile Tools extension
-                "dbankier.vscode-quick-select" // Quick select with cmd/ctrl+k "
+                "dbankier.vscode-quick-select", // Quick select with cmd/ctrl+k "
+                "ms-azuretools.vscode-docker" // docker extension:
             ]
         }
     },
