@@ -12,6 +12,13 @@ var SuccessPrimary = lipgloss.Color("#008000")
 var ErrorPrimary = lipgloss.Color("#FF0000")
 var GrayPrimary = lipgloss.Color("#808080")
 
+// Lipgloss classes that can be easily reused
+var Title = lipgloss.NewStyle().Foreground(AsePrimary)
+var Subtitle = lipgloss.NewStyle().Foreground(GrayPrimary)
+var Error = lipgloss.NewStyle().Foreground(ErrorPrimary)
+var Warning = lipgloss.NewStyle().Foreground(WarningPrimary)
+var Success = lipgloss.NewStyle().Foreground(SuccessPrimary)
+
 // Form theme
 var FormTheme = huh.ThemeBase()
 

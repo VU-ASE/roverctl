@@ -2,9 +2,7 @@ package startpagedisconnected
 
 import (
 	"github.com/VU-ASE/rover/src/components"
-	"github.com/VU-ASE/rover/src/state"
 	"github.com/VU-ASE/rover/src/style"
-	"github.com/VU-ASE/rover/src/tui"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -50,24 +48,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		// Cool, what was the actual key pressed?
 		switch msg.String() {
+		case "e":
+			// connected := startpageconnected.InitialModel()
+			// return views.RootScreen(state.Get()).SwitchScreen(&connected)
 		case "enter":
 			value := m.actions.SelectedItem().FilterValue()
 			if value != "" {
 				switch value {
 				case "Connect":
-					state.Get().Route.Push("connection init")
 				default:
-					state.Get().Route.Push(value)
 				}
 				return m, tea.Quit
 			}
 		}
-	}
-
-	// Is there a main action to take?
-	rootmodel, rootcmd := tui.Update(m, msg)
-	if rootcmd != nil {
-		return rootmodel, rootcmd
 	}
 
 	var cmd tea.Cmd

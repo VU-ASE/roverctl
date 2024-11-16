@@ -2,9 +2,7 @@ package startpageconnected
 
 import (
 	"github.com/VU-ASE/rover/src/components"
-	"github.com/VU-ASE/rover/src/state"
 	"github.com/VU-ASE/rover/src/style"
-	"github.com/VU-ASE/rover/src/tui"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -60,19 +58,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			value := m.actions.SelectedItem().FilterValue()
 			if value != "" {
 				if value == "Configure" {
-					state.Get().Route.Push("pipeline configure")
 				} else {
-					state.Get().Route.Push(value)
 				}
 				return m, tea.Quit
 			}
 		}
-	}
-
-	// Is there a main action to take?
-	rootmodel, rootcmd := tui.Update(m, msg)
-	if rootcmd != nil {
-		return rootmodel, rootcmd
 	}
 
 	var cmd tea.Cmd

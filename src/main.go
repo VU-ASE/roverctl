@@ -1,75 +1,64 @@
 package main
 
 import (
-	"fmt"
 	"os"
-	"os/exec"
-	"strings"
-	"syscall"
 
 	"github.com/VU-ASE/rover/src/configuration"
-	roverlock "github.com/VU-ASE/rover/src/lock"
-	initconnectionpage "github.com/VU-ASE/rover/src/pages/connections/init"
-	manageconnectionspage "github.com/VU-ASE/rover/src/pages/connections/manage"
-	servicespage "github.com/VU-ASE/rover/src/pages/services"
-	updatesourcespage "github.com/VU-ASE/rover/src/pages/services/update"
-	startpageconnected "github.com/VU-ASE/rover/src/pages/start/connected"
-	utilitiespage "github.com/VU-ASE/rover/src/pages/start/connected/utilities"
-	startpagedisconnected "github.com/VU-ASE/rover/src/pages/start/disconnected"
 	"github.com/VU-ASE/rover/src/state"
+	"github.com/VU-ASE/rover/src/views"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
-func selectPage(s *state.AppState) tea.Model {
-	switch strings.ToLower(s.Route.Peek()) {
-	// SSH is different, it replaces the current process
-	case "ssh":
-		{
-			// Get the active connection
-			activeConnection := s.RoverConnections.GetActive()
-			if activeConnection == nil {
-				// This should never happen
-				syscall.Exec("/bin/echo", []string{"error"}, os.Environ())
-				return nil
-			}
+// func selectPage(s *state.AppState) tea.Model {
+// 	switch strings.ToLower(s.Route.Peek()) {
+// 	// SSH is different, it replaces the current process
+// 	case "ssh":
+// 		{
+// 			// Get the active connection
+// 			activeConnection := s.RoverConnections.GetActive()
+// 			if activeConnection == nil {
+// 				// This should never happen
+// 				syscall.Exec("/bin/echo", []string{"error"}, os.Environ())
+// 				return nil
+// 			}
 
-			ssh, lookErr := exec.LookPath("ssh")
-			if lookErr != nil {
-				panic(lookErr)
-			}
-			connectionString := fmt.Sprintf("%s@%s", activeConnection.Username, activeConnection.Host)
-			syscall.Exec(ssh, []string{"ssh", connectionString, "-p", "22"}, os.Environ())
-			return nil
-		}
-	case "connections":
-		return manageconnectionspage.InitialModel()
-	case "utilities":
-		return utilitiespage.InitialModel()
-	case "connection init":
-		return initconnectionpage.InitialModel(nil)
-	case "services":
-		return servicespage.InitialModel()
-	case "sources update":
-		return updatesourcespage.InitialModel()
-	// case "service init":
-	// 	return initservicepage.InitialModel()
-	// case "service upload":
-	// 	return uploadservicepage.InitialModel()
-	// case "pipeline configure":
-	// 	return enableservicespage.InitialModel()
-	default:
-		{
-			if len(s.RoverConnections.Available) > 0 {
-				return startpageconnected.InitialModel()
-			} else {
-				return startpagedisconnected.InitialModel()
-			}
-		}
-	}
+// 			ssh, lookErr := exec.LookPath("ssh")
+// 			if lookErr != nil {
+// 				panic(lookErr)
+// 			}
+// 			connectionString := fmt.Sprintf("%s@%s", activeConnection.Username, activeConnection.Host)
+// 			syscall.Exec(ssh, []string{"ssh", connectionString, "-p", "22"}, os.Environ())
+// 			return nil
+// 		}
+// 	case "connections":
+// 		return manageconnectionspage.InitialModel()
+// 	case "utilities":
+// 		return utilitiespage.InitialModel()
+// 	case "connection init":
+// 		return initconnectionpage.InitialModel(nil)
+// 	case "services":
+// 		return servicespage.InitialModel()
+// 	case "sources update":
+// 		return updatesourcespage.InitialModel()
+// 	// case "service init":
+// 	// 	return initservicepage.InitialModel()
+// 	// case "service upload":
+// 	// 	return uploadservicepage.InitialModel()
+// 	// case "pipeline configure":
+// 	// 	return enableservicespage.InitialModel()
+// 	default:
+// 		{
+// 			if len(s.RoverConnections.Available) > 0 {
+// 				return
+// 			} else {
+// 				return startpagedisconnected.InitialModel()
+// 			}
+// 		}
+// 	}
 
-}
+// }
 
 func run() error {
 	// Initialize the app
@@ -82,23 +71,13 @@ func run() error {
 	// Create the app state
 	appState := state.Get()
 
-	// Push the home route to the stack
-	appState.Route.Push("")
-
 	// We start the app in a separate (full) screen
-	for !appState.Route.IsEmpty() {
-		page := selectPage(appState)
-		p := tea.NewProgram(page, tea.WithAltScreen())
-		if _, err := p.Run(); err != nil {
-			return err
-		}
+	// for !appState.Route.IsEmpty() {
+	p := tea.NewProgram(views.RootScreen(appState), tea.WithAltScreen())
+	if _, err := p.Run(); err != nil {
+		return err
 	}
-
-	// Always try to unlock first (best-effort)
-	rovercon := appState.RoverConnections.GetActive()
-	if rovercon != nil {
-		_ = roverlock.Unlock(*rovercon)
-	}
+	// }
 
 	// Save the connections to disk
 	return state.Get().RoverConnections.Save()
