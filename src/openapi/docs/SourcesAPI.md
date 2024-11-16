@@ -138,7 +138,7 @@ Name | Type | Description  | Notes
 
 ## SourcesNamePost
 
-> SourcesNamePost(ctx, name).Execute()
+> SourcesNamePost200Response SourcesNamePost(ctx, name).Execute()
 
 Download and install a service from a source
 
@@ -159,11 +159,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.SourcesAPI.SourcesNamePost(context.Background(), name).Execute()
+	resp, r, err := apiClient.SourcesAPI.SourcesNamePost(context.Background(), name).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `SourcesAPI.SourcesNamePost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `SourcesNamePost`: SourcesNamePost200Response
+	fmt.Fprintf(os.Stdout, "Response from `SourcesAPI.SourcesNamePost`: %v\n", resp)
 }
 ```
 
@@ -186,7 +188,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
- (empty response body)
+[**SourcesNamePost200Response**](SourcesNamePost200Response.md)
 
 ### Authorization
 

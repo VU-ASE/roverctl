@@ -1,4 +1,4 @@
-package manageconnectionspage
+package views
 
 import (
 	"fmt"
@@ -8,20 +8,18 @@ import (
 	"github.com/VU-ASE/rover/src/configuration"
 	"github.com/VU-ASE/rover/src/state"
 	"github.com/VU-ASE/rover/src/style"
-	"github.com/VU-ASE/rover/src/tui"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-type model struct {
-	keys keyMap
+type ConnectionsManagePage struct {
 	list list.Model
 }
 
-// keyMap defines a set of keybindings. To work for help it must satisfy key.Map
-type keyMap struct {
+// connectionsManageKeyMap defines a set of keybindings. To work for help it must satisfy key.Map
+type connectionsManageKeyMap struct {
 	Edit       key.Binding
 	Delete     key.Binding
 	MarkActive key.Binding
@@ -30,25 +28,21 @@ type keyMap struct {
 
 // ShortHelp returns keybindings to be shown in the mini help view. It's part
 // of the key.Map interface.
-func (k keyMap) ShortHelp() []key.Binding {
+func (k connectionsManageKeyMap) ShortHelp() []key.Binding {
 	return []key.Binding{k.New, k.Edit, k.Delete, k.MarkActive}
 }
 
 // FullHelp returns keybindings for the expanded help view. It's part of the
 // key.Map interface.
-func (k keyMap) FullHelp() [][]key.Binding {
+func (k connectionsManageKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{}
 }
 
-var keys = keyMap{
+var connectionsManageKeys = connectionsManageKeyMap{
 	New: key.NewBinding(
 		key.WithKeys("n"),
 		key.WithHelp("n", "new"),
 	),
-	// Edit: key.NewBinding(
-	// 	key.WithKeys("enter"),
-	// 	key.WithHelp("enter", "edit"),
-	// ),
 	MarkActive: key.NewBinding(
 		key.WithKeys(" "),
 		key.WithHelp("space", "set active"),
@@ -110,7 +104,7 @@ func connectionsToListItems() []list.Item {
 	return items
 }
 
-func InitialModel() model {
+func NewConnectionsManagePage() ConnectionsManagePage {
 	l := list.New(connectionsToListItems(), itemDelegate{}, 0, 14)
 	l.Title = "Manage Rover connections"
 	l.SetShowStatusBar(false)
@@ -118,14 +112,14 @@ func InitialModel() model {
 	l.Styles.Title = style.TitleStyle
 	l.Styles.PaginationStyle = style.PaginationStyle
 	l.Styles.HelpStyle = style.HelpStyle
-	l.AdditionalShortHelpKeys = keys.ShortHelp
+	l.AdditionalShortHelpKeys = connectionsManageKeys.ShortHelp
 
-	return model{
+	return ConnectionsManagePage{
 		list: l,
 	}
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m ConnectionsManagePage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.WindowSizeMsg:
@@ -134,17 +128,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, keys.MarkActive):
+		case key.Matches(msg, connectionsManageKeys.MarkActive):
 			if m.list.Index() >= 0 && m.list.Index() < len(m.list.Items()) {
 				item := m.list.Items()[m.list.Index()].(item)
 				state.Get().RoverConnections.Active = item.connection.Name
 				m.list.SetItems(connectionsToListItems())
 				return m, nil
 			}
-		case key.Matches(msg, keys.New):
-			state.Get().Route.Push("connection init")
-			return m, tea.Quit
-		case key.Matches(msg, keys.Delete):
+		case key.Matches(msg, connectionsManageKeys.New):
+			return RootScreen(state.Get()).SwitchScreen(NewConnectionsInitPage(nil))
+		case key.Matches(msg, connectionsManageKeys.Delete):
 			if len(m.list.Items()) > 1 && m.list.Index() >= 0 && m.list.Index() < len(m.list.Items()) {
 				item := m.list.Items()[m.list.Index()].(item)
 				state.Get().RoverConnections = state.Get().RoverConnections.Remove(item.connection.Name)
@@ -156,21 +149,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	var cmd tea.Cmd
-	// Base command
-	model, cmd := tui.Update(m, msg)
-	if cmd != nil {
-		return model, cmd
-	}
-
 	m.list, cmd = m.list.Update(msg)
 	return m, cmd
 }
 
-func (m model) Init() tea.Cmd {
+func (m ConnectionsManagePage) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) View() string {
+func (m ConnectionsManagePage) View() string {
 	s := m.list.View()
 
 	return style.Docstyle.Render(s)

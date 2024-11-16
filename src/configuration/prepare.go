@@ -18,9 +18,6 @@ func LocalConfigDir() string {
 	return home + "/.rover"
 }
 
-const RemoteConfigDir = "/home/debix/.rover/config"
-const RemoteServiceDir = "/home/debix/.rover/services" // this directory holds all service folders. Each subfolder represents a service
-
 // Initialize the configuration directory
 func Initialize() error {
 	// Check if we are root
@@ -35,12 +32,4 @@ func Initialize() error {
 	}
 
 	return nil
-}
-
-// Cleanup the configuration directory
-func Cleanup() {
-	// Unlock the Rover
-	// if err := Unlock(); err != nil {
-	// 	log.Error().Err(err).Msg("An error occurred while unlocking the Rover.")
-	// }
 }

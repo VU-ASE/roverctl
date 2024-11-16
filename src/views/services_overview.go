@@ -1,4 +1,4 @@
-package servicespage
+package views
 
 import (
 	"os"
@@ -6,20 +6,19 @@ import (
 	"github.com/VU-ASE/rover/src/components"
 	"github.com/VU-ASE/rover/src/state"
 	"github.com/VU-ASE/rover/src/style"
-	"github.com/VU-ASE/rover/src/tui"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-type model struct {
+type ServicesOverviewPage struct {
 	// To select an action to perform with this utility
 	actions list.Model // actions you can perform when connected to a Rover
 	help    help.Model // to display a help footer
 }
 
-func InitialModel() model {
+func NewServicesOverviewPage() ServicesOverviewPage {
 	// Is there already a service.yaml file in the current directory?
 	_, err := os.Stat("./service.yaml")
 
@@ -35,24 +34,24 @@ func InitialModel() model {
 
 	l := list.New(listItems, list.NewDefaultDelegate(), 0, 0)
 	// If there are connections available, add the connected actions
-	l.Title = lipgloss.NewStyle().Foreground(style.AsePrimary).Bold(true).Padding(0, 0).Render("Manage your services")
+	l.Title = lipgloss.NewStyle().Foreground(style.AsePrimary).Padding(0, 0).Render("Manage your services")
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 	l.Styles.Title = style.TitleStyle
 	l.Styles.PaginationStyle = style.PaginationStyle
 	l.Styles.HelpStyle = style.HelpStyle
 
-	return model{
+	return ServicesOverviewPage{
 		actions: l,
 		help:    help.New(),
 	}
 }
 
-func (m model) Init() tea.Cmd {
+func (m ServicesOverviewPage) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m ServicesOverviewPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		h, v := style.Docstyle.GetFrameSize()
@@ -67,24 +66,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if value != "" {
 				switch value {
 				case "Initialize":
-					value = "service init"
+					return RootScreen(state.Get()).SwitchScreen(NewServiceInitPage())
 				case "Upload":
 					value = "service upload"
 				case "Update":
-					value = "sources update"
+					return RootScreen(state.Get()).SwitchScreen(NewServicesUpdatePage())
 				case "Download":
 					value = "service download"
 				}
-				state.Get().Route.Push(value)
+				// state.Get().Route.Push(value)
 				return m, tea.Quit
 			}
 		}
-	}
-
-	// Is there a main action to take?
-	rootmodel, rootcmd := tui.Update(m, msg)
-	if rootcmd != nil {
-		return rootmodel, rootcmd
 	}
 
 	var cmd tea.Cmd
@@ -92,6 +85,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
-	return style.Docstyle.Render(m.actions.View())
+func (m ServicesOverviewPage) View() string {
+	return m.actions.View()
 }

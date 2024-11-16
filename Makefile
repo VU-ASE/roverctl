@@ -3,6 +3,7 @@
 
 BUILD_DIR=bin/
 BINARY_NAME=roverctl
+LDFLAGS := -X 'github.com/VU-ASE/rover/src/views.version=$(VERSION)'
 
 build-open-api:
 	# Check if the spec/apispec.yaml file exists
@@ -14,8 +15,13 @@ build-open-api:
 	@openapi-generator-cli generate -i spec/apispec.yaml -g go -o src/openapi --additional-properties=withGoMod=false
 
 build: #build-open-api
+	@if [ -z ${VERSION} ]; then \
+		echo "VERSION is not set. Please set it to the semantic version you want to build."; \
+		exit 1; \
+	fi
 	@echo "building ${BINARY_NAME}"
-	@cd src/ && go build -o "../$(BUILD_DIR)${BINARY_NAME}" ${buildargs}
+	@cd src/ && go build -ldflags="$(LDFLAGS)" -o "../$(BUILD_DIR)${BINARY_NAME}" ${buildargs}
+
 
 #
 # You can specify run arguments and build arguments using runargs and buildargs, like this:

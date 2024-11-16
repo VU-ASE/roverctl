@@ -413,6 +413,10 @@ paths:
         style: simple
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_sources__name__post_200_response'
           description: The service was downloaded and installed successfully
         "400":
           content:
@@ -451,6 +455,10 @@ paths:
     post:
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_update_post_200_response'
           description: The roverd daemon process initiated a self-update successfully.
             You should expect the process to terminate and restart soon.
         "400":
@@ -854,6 +862,20 @@ components:
           example: 1.0.0
           type: string
       type: object
+    _sources__name__post_200_response:
+      example:
+        new: false
+        version: v1.0.1
+      properties:
+        version:
+          description: The version of the just downloaded service
+          example: v1.0.1
+          type: string
+        new:
+          description: Whether or not this is the first time this service was downloaded
+          example: false
+          type: boolean
+      type: object
     _status_get_200_response:
       example:
         error_message: none
@@ -897,6 +919,15 @@ components:
         rover_name:
           description: The unique name of the rover
           example: zenith
+          type: string
+      type: object
+    _update_post_200_response:
+      example:
+        version: v1.0.1
+      properties:
+        version:
+          description: The version of the roverd daemon updated to
+          example: v1.0.1
           type: string
       type: object
   securitySchemes:

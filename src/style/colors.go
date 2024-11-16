@@ -18,6 +18,7 @@ var Subtitle = lipgloss.NewStyle().Foreground(GrayPrimary)
 var Error = lipgloss.NewStyle().Foreground(ErrorPrimary)
 var Warning = lipgloss.NewStyle().Foreground(WarningPrimary)
 var Success = lipgloss.NewStyle().Foreground(SuccessPrimary)
+var Gray = lipgloss.NewStyle().Foreground(GrayPrimary)
 
 // Form theme
 var FormTheme = huh.ThemeBase()

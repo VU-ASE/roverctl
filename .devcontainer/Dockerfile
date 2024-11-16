@@ -15,6 +15,7 @@ RUN apt-get update && \
     pkg-config \
     xz-utils \
     sudo \
+    inotify-tools \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user `devuser` with sudo privileges

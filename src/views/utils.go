@@ -1,44 +1,50 @@
-package startpagedisconnected
+package views
 
 import (
 	"github.com/VU-ASE/rover/src/components"
+	"github.com/VU-ASE/rover/src/state"
 	"github.com/VU-ASE/rover/src/style"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-type model struct {
+type UtilitiesPage struct {
 	// To select an action to perform with this utility
 	actions list.Model // actions you can perform when connected to a Rover
 	help    help.Model // to display a help footer
+	spinner spinner.Model
 }
 
-func InitialModel() model {
+func NewUtilitiesPage() UtilitiesPage {
 	l := list.New([]list.Item{
-		components.ActionItem{Name: "Services", Desc: "Create services"},
-		components.ActionItem{Name: "Connect", Desc: "Initialize a connection to a Rover"}, // Should be "stop" when a pipeline is running
+		components.ActionItem{Name: "SSH", Desc: "Open an SSH terminal to your Rover"},
+		components.ActionItem{Name: "Info", Desc: "Info about roverctl on your local system"},
 	}, list.NewDefaultDelegate(), 0, 0)
 	// If there are connections available, add the connected actions
-	l.Title = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Background(style.AsePrimary).Bold(true).Padding(0, 0).Render("VU ASE") + lipgloss.NewStyle().Foreground(lipgloss.Color("#3C3C3C")).Render(" - racing Rovers since 2024")
+	l.Title = lipgloss.NewStyle().Foreground(style.AsePrimary).Padding(0, 0).Render("Utilities")
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 	l.Styles.Title = style.TitleStyle
 	l.Styles.PaginationStyle = style.PaginationStyle
 	l.Styles.HelpStyle = style.HelpStyle
 
-	return model{
+	sp := spinner.New()
+
+	return UtilitiesPage{
 		actions: l,
 		help:    help.New(),
+		spinner: sp,
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return nil
+func (m UtilitiesPage) Init() tea.Cmd {
+	return m.spinner.Tick
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m UtilitiesPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		h, v := style.Docstyle.GetFrameSize()
@@ -48,19 +54,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		// Cool, what was the actual key pressed?
 		switch msg.String() {
-		case "e":
-			// connected := startpageconnected.InitialModel()
-			// return views.RootScreen(state.Get()).SwitchScreen(&connected)
 		case "enter":
 			value := m.actions.SelectedItem().FilterValue()
 			if value != "" {
 				switch value {
-				case "Connect":
-				default:
+				case "Info":
+					return RootScreen(state.Get()).SwitchScreen(NewInfoPage())
 				}
 				return m, tea.Quit
 			}
 		}
+
+	case spinner.TickMsg:
+		var cmd tea.Cmd
+		m.spinner, cmd = m.spinner.Update(msg)
+		return m, cmd
+
 	}
 
 	var cmd tea.Cmd
@@ -68,6 +77,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
-	return style.Docstyle.Render(m.actions.View())
+func (m UtilitiesPage) View() string {
+	return m.actions.View()
 }

@@ -1,6 +1,8 @@
 package state
 
 import (
+	"math/rand"
+
 	"github.com/VU-ASE/rover/src/configuration"
 )
 
@@ -11,6 +13,7 @@ type AppState struct {
 	// Window sizes
 	WindowWidth  int
 	WindowHeight int
+	Quote        string
 }
 
 var state *AppState = nil
@@ -23,8 +26,12 @@ func initialize() *AppState {
 		// todo: throw? Or show a warning?
 	}
 
+	// Pick a random quote
+	quote := quotes[rand.Intn(len(quotes))]
+
 	return &AppState{
 		RoverConnections: connections,
+		Quote:            quote,
 	}
 }
 
@@ -33,4 +40,13 @@ func Get() *AppState {
 		state = initialize()
 	}
 	return state
+}
+
+// List of quotes that are displayed on top
+var quotes = []string{
+	"racing Rovers since 2023",
+	"configuring pipelines since 2023",
+	"setting up services since 2023",
+	"burning rubber since 2023",
+	"exploring autonomously since 2023",
 }

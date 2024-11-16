@@ -1,12 +1,10 @@
 package views
 
 import (
-	"github.com/VU-ASE/rover/src/components"
-	startpageconnected "github.com/VU-ASE/rover/src/pages/start/connected"
+	"fmt"
+
 	"github.com/VU-ASE/rover/src/state"
 	"github.com/VU-ASE/rover/src/style"
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -17,10 +15,9 @@ type MainModel struct {
 }
 
 func RootScreen(s *state.AppState) MainModel {
-	start := InitialModel()
+	start := NewStartPage()
 
 	return MainModel{
-		// current: startpagedisconnected.InitialModel(),
 		current: &start, // needs to be a pointer so that the model state can be modified (see https://shi.foo/weblog/multi-view-interfaces-in-bubble-tea)
 	}
 }
@@ -30,7 +27,23 @@ func (m MainModel) Init() tea.Cmd {
 }
 
 func (m MainModel) View() string {
-	return m.current.View()
+	// Define the header style
+	headerStyle := lipgloss.NewStyle().
+		Width(state.Get().WindowWidth). // Set the width of the header to the window width
+		Align(lipgloss.Center).         // Center-align the text
+		Background(style.AsePrimary)    // Set the background color
+
+	// Define the URL and the text
+	url := "https://ase.vu.nl"
+	text := "read the docs"
+
+	// Hyperlink escape sequence
+	link := fmt.Sprintf("\x1b]8;;%s\x1b\\%s\x1b]8;;\x1b\\", url, text)
+
+	header := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true).Padding(0, 0).Render("VU ASE") + lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Background(style.AsePrimary).Bold(false).Padding(0, 0).Render(", "+state.Get().Quote+" | "+link)
+	fullScreen := lipgloss.NewStyle().Padding(1, 2).Width(state.Get().WindowWidth).Height(state.Get().WindowHeight - 1) // leave room for the header
+
+	return fullScreen.Render(m.current.View()) + "\n" + headerStyle.Render(header)
 }
 
 func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -41,8 +54,13 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		state.Get().WindowWidth = msg.Width
 		state.Get().WindowHeight = msg.Height
 
+		passedMsg := tea.WindowSizeMsg{
+			Width:  msg.Width,
+			Height: msg.Height - 2, // leave room for the header
+		}
+
 		// Forward the message to the current sub-model
-		updatedModel, cmd := m.current.Update(msg)
+		updatedModel, cmd := m.current.Update(passedMsg)
 		m.current = updatedModel
 		return m, cmd
 	case tea.KeyMsg:
@@ -84,74 +102,4 @@ func (m MainModel) SwitchScreen(model tea.Model) (tea.Model, tea.Cmd) {
 	}
 
 	return m.current, tea.Batch(initCmd, sizeCmd())
-}
-
-type model struct {
-	// To select an action to perform with this utility
-	actions list.Model // actions you can perform when connected to a Rover
-	help    help.Model // to display a help footer
-}
-
-func InitialModel() model {
-	l := list.New([]list.Item{
-		components.ActionItem{Name: "ServiceEEEE", Desc: "Create services"},
-		components.ActionItem{Name: "Connect", Desc: "Initialize a connection to a Rover"}, // Should be "stop" when a pipeline is running
-	}, list.NewDefaultDelegate(), 0, 0)
-	// If there are connections available, add the connected actions
-	l.Title = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Background(style.AsePrimary).Bold(true).Padding(0, 0).Render("VU ASE") + lipgloss.NewStyle().Foreground(lipgloss.Color("#3C3C3C")).Render(" - racing Rovers since 2024")
-	l.SetShowStatusBar(false)
-	l.SetFilteringEnabled(false)
-	l.Styles.Title = style.TitleStyle
-	l.Styles.PaginationStyle = style.PaginationStyle
-	l.Styles.HelpStyle = style.HelpStyle
-
-	return model{
-		actions: l,
-		help:    help.New(),
-	}
-}
-
-func (m model) Init() tea.Cmd {
-	return nil
-}
-
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		h, v := style.Docstyle.GetFrameSize()
-		m.actions.SetSize(msg.Width-h, msg.Height-v) // leave some room for the header
-
-	// Is it a key press?
-	case tea.KeyMsg:
-		// Cool, what was the actual key pressed?
-		switch msg.String() {
-		case "e":
-			connected := startpageconnected.InitialModel()
-
-			return RootScreen(state.Get()).SwitchScreen(&connected)
-		case "enter":
-			value := m.actions.SelectedItem().FilterValue()
-			if value != "" {
-				switch value {
-				case "Connect":
-					// state.Get().Route.Push("connection init")
-				default:
-					// state.Get().Route.Push(value)
-				}
-				return m, tea.Quit
-			}
-		}
-	}
-
-	var cmd tea.Cmd
-	m.actions, cmd = m.actions.Update(msg)
-	return m, cmd
-}
-
-func (m model) View() string {
-	return style.Docstyle.Render(m.actions.View())
-}
-
-func (m model) New() tea.Model {
-	return InitialModel()
 }

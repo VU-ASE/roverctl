@@ -27,8 +27,10 @@ docs/ServicesNameVersionGet200ResponseInputsInner.md
 docs/ServicesPost200Response.md
 docs/SourcesAPI.md
 docs/SourcesGet200ResponseInner.md
+docs/SourcesNamePost200Response.md
 docs/SourcesPostRequest.md
 docs/StatusGet200Response.md
+docs/UpdatePost200Response.md
 git_push.sh
 model__pipeline__name__get_200_response.go
 model__pipeline_get_200_response.go
@@ -39,9 +41,11 @@ model__services__name___version__get_200_response_inputs_inner.go
 model__services__name__get_200_response.go
 model__services_get_200_response_inner.go
 model__services_post_200_response.go
+model__sources__name__post_200_response.go
 model__sources_get_200_response_inner.go
 model__sources_post_request.go
 model__status_get_200_response.go
+model__update_post_200_response.go
 model_daemon_status.go
 model_generic_error.go
 model_pipeline_status.go

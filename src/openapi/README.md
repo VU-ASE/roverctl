@@ -112,8 +112,10 @@ Class | Method | HTTP request | Description
  - [ServicesNameVersionGet200ResponseInputsInner](docs/ServicesNameVersionGet200ResponseInputsInner.md)
  - [ServicesPost200Response](docs/ServicesPost200Response.md)
  - [SourcesGet200ResponseInner](docs/SourcesGet200ResponseInner.md)
+ - [SourcesNamePost200Response](docs/SourcesNamePost200Response.md)
  - [SourcesPostRequest](docs/SourcesPostRequest.md)
  - [StatusGet200Response](docs/StatusGet200Response.md)
+ - [UpdatePost200Response](docs/UpdatePost200Response.md)
 
 
 ## Documentation For Authorization

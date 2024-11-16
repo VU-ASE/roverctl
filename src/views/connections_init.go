@@ -1,4 +1,4 @@
-package initconnectionpage
+package views
 
 import (
 	"context"
@@ -19,7 +19,7 @@ import (
 	probing "github.com/prometheus-community/pro-bing"
 )
 
-type formValues struct {
+type ConnectionInitFormValues struct {
 	name     string
 	index    string
 	username string
@@ -35,7 +35,7 @@ type keyMap struct {
 	Quit  key.Binding
 }
 
-type model struct {
+type ConnectionsInitPage struct {
 	form          *huh.Form
 	help          help.Model
 	spinner       spinner.Model
@@ -44,7 +44,7 @@ type model struct {
 	roverdVersion tui.Action[string]
 	roverNumber   tui.Action[int32]
 	isChecking    bool
-	formValues    *formValues
+	formValues    *ConnectionInitFormValues
 	host          string // the ip or hostname of the rover to connect to
 	error         error  // any errors that occurred
 }
@@ -123,11 +123,11 @@ var failureKeys = keyMap{
 	),
 }
 
-func InitialModel(val *formValues) model {
+func NewConnectionsInitPage(val *ConnectionInitFormValues) ConnectionsInitPage {
 	s := spinner.New()
 	s.Spinner = spinner.Line
 
-	formValues := &formValues{
+	formValues := &ConnectionInitFormValues{
 		name:     "",
 		index:    "",
 		username: "debix",
@@ -142,7 +142,7 @@ func InitialModel(val *formValues) model {
 	roverdVersionAction := tui.NewAction[string]("roverdVersion")
 	roverNumberAction := tui.NewAction[int32]("roverNumber")
 
-	return model{
+	return ConnectionsInitPage{
 		spinner:       s,
 		formValues:    formValues,
 		host:          "",
@@ -193,7 +193,7 @@ func InitialModel(val *formValues) model {
 	}
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m ConnectionsInitPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.form.State == huh.StateCompleted {
 		switch msg := msg.(type) {
 		case tea.WindowSizeMsg:
@@ -204,12 +204,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch {
 			case key.Matches(msg, keys.Back):
 				// Restore to the initial form, but recover the form values
-				m = InitialModel(m.formValues)
+				m = NewConnectionsInitPage(m.formValues)
 				return m, tea.Batch(m.form.Init(), m.spinner.Tick)
 			case key.Matches(msg, keys.Retry):
 				// Retry the connection checks
 				m.isChecking = true
-				return m, tea.Batch(checkRoute(m), checkAuth(m), checkRoverdVersion(m), checkRoverNumber(m))
+				return m, tea.Batch(m.checkRoute(), m.checkAuth(), m.checkRoverdVersion(), m.checkRoverNumber())
 			}
 
 			switch msg.String() {
@@ -225,11 +225,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					})
 
 					if msg.String() == "n" {
-						m = InitialModel(nil)
+						m = NewConnectionsInitPage(nil)
 						return m, tea.Batch(m.form.Init(), m.spinner.Tick)
 					} else {
-						state.Get().Route.Replace("connections")
-						return m, tea.Quit
+						return RootScreen(state.Get()).SwitchScreen(NewConnectionsManagePage())
 					}
 				}
 			}
@@ -279,44 +278,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.host = "google.com"
 
 				// We are optimistic, start all checks in parallel
-				cmds = append(cmds, checkRoute(m), checkAuth(m), checkRoverdVersion(m), checkRoverNumber(m))
+				cmds = append(cmds, m.checkRoute(), m.checkAuth(), m.checkRoverdVersion(), m.checkRoverNumber())
 			}
 		}
 		if cmd != nil {
 			cmds = append(cmds, cmd)
-		} else {
-			// Base command (put in this ugly nested else statement because we don't want to quit when a user is typing in a 'q')
-			model, cmd := tui.Update(m, msg)
-			if cmd != nil {
-				return model, cmd
-			}
 		}
 		return m, tea.Batch(cmds...)
 	}
 }
 
 // the update view with the view method
-func (m model) enterDetailsView() string {
+func (m ConnectionsInitPage) enterDetailsView() string {
 	// Introduction
 	s := lipgloss.NewStyle().Foreground(style.AsePrimary).Render("Connect to a Rover")
 
-	// // Get the current wifi name
-	// wifi := wifiname.WifiName()
-
-	// if wifi == "Could not get SSID" {
-	// 	wifi = "unknown network"
-	// }
-
-	// if wifi != "aselabs" {
-	// 	s += lipgloss.NewStyle().Foreground(style.WarningPrimary).Render("\n\nIt seems you are not connected to the ASElabs WiFi but to '" + wifi + "' instead. \nRead how to connect at: https://docs.ase.vu.nl/docs/tutorials/setting-up-your-workspace/accessing-the-network")
-	// }
-
 	s += "\n\n" + m.form.View()
 
-	return style.Docstyle.Render(s)
+	return s
 }
 
-func (m model) testConnectionView() string {
+func (m ConnectionsInitPage) testConnectionView() string {
 	s := lipgloss.NewStyle().Foreground(style.AsePrimary).Render("Connecting to " + m.formValues.name)
 
 	if m.routeExists.IsLoading() || m.authValid.IsLoading() || m.roverdVersion.IsLoading() || m.roverNumber.IsLoading() {
@@ -378,19 +360,22 @@ func (m model) testConnectionView() string {
 	return s
 }
 
-func (m model) Init() tea.Cmd {
+func (m ConnectionsInitPage) Init() tea.Cmd {
 	return tea.Batch(m.form.Init(), m.spinner.Tick)
 }
 
-func (m model) View() string {
+func (m ConnectionsInitPage) View() string {
+	s := ""
 	if m.form.State == huh.StateCompleted {
-		return style.Docstyle.Render(m.testConnectionView())
+		s = m.testConnectionView()
 	} else {
-		return m.enterDetailsView()
+		s = m.enterDetailsView()
 	}
+
+	return s
 }
 
-func checkRoute(m model) tea.Cmd {
+func (m ConnectionsInitPage) checkRoute() tea.Cmd {
 	return tui.PerformAction(&m.routeExists, func() (*bool, error) {
 		ping, _ := probing.NewPinger(m.host)
 		ping.Count = 3
@@ -405,7 +390,7 @@ func checkRoute(m model) tea.Cmd {
 	})
 }
 
-func checkAuth(m model) tea.Cmd {
+func (m ConnectionsInitPage) checkAuth() tea.Cmd {
 	return tui.PerformAction(&m.authValid, func() (*bool, error) {
 		// Send a protected request to the roverd endpoint
 		c := configuration.RoverConnection{
@@ -421,7 +406,7 @@ func checkAuth(m model) tea.Cmd {
 	})
 }
 
-func checkRoverdVersion(m model) tea.Cmd {
+func (m ConnectionsInitPage) checkRoverdVersion() tea.Cmd {
 	return tui.PerformAction(&m.roverdVersion, func() (*string, error) {
 		c := configuration.RoverConnection{
 			Host:     m.host,
@@ -439,7 +424,7 @@ func checkRoverdVersion(m model) tea.Cmd {
 	})
 }
 
-func checkRoverNumber(m model) tea.Cmd {
+func (m ConnectionsInitPage) checkRoverNumber() tea.Cmd {
 	return tui.PerformAction(&m.roverNumber, func() (*int32, error) {
 		c := configuration.RoverConnection{
 			Host:     m.host,

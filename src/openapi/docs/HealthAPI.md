@@ -70,7 +70,7 @@ No authorization required
 
 ## UpdatePost
 
-> UpdatePost(ctx).Execute()
+> UpdatePost200Response UpdatePost(ctx).Execute()
 
 Self-update the roverd daemon process
 
@@ -90,11 +90,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.HealthAPI.UpdatePost(context.Background()).Execute()
+	resp, r, err := apiClient.HealthAPI.UpdatePost(context.Background()).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `HealthAPI.UpdatePost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
+	// response from `UpdatePost`: UpdatePost200Response
+	fmt.Fprintf(os.Stdout, "Response from `HealthAPI.UpdatePost`: %v\n", resp)
 }
 ```
 
@@ -109,7 +111,7 @@ Other parameters are passed through a pointer to a apiUpdatePostRequest struct v
 
 ### Return type
 
- (empty response body)
+[**UpdatePost200Response**](UpdatePost200Response.md)
 
 ### Authorization
 
