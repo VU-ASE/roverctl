@@ -53,8 +53,7 @@ func (m InfoPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m InfoPage) View() string {
-	s := style.Title.Render(`
- _    ____  __       ___   _____ ______
+	s := style.Title.Render(` _    ____  __       ___   _____ ______
 | |  / / / / /      /   | / ___// ____/
 | | / / / / /      / /| | \__ \/ __/   
 | |/ / /_/ /      / ___ |___/ / /___   
