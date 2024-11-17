@@ -20,7 +20,7 @@ build: #build-open-api
 		exit 1; \
 	fi
 	@echo "building ${BINARY_NAME}"
-	@cd src/ && go build -ldflags="$(LDFLAGS)" -o "../$(BUILD_DIR)${BINARY_NAME}" ${buildargs}
+	@cd src/ && go build -buildvcs=false -ldflags="$(LDFLAGS)" -o "../$(BUILD_DIR)${BINARY_NAME}" ${buildargs}
 
 
 #

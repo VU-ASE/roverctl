@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/VU-ASE/rover/src/style"
 	"github.com/VU-ASE/rover/src/tui"
@@ -14,6 +13,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
+	git "github.com/go-git/go-git/v5"
 )
 
 // Persistent global state (ugly, yes) to allow retrying of connection checks by discarding results with an attempt number lower than the current one
@@ -258,47 +258,50 @@ func (m ServiceInitPage) View() string {
 
 func (m ServiceInitPage) initializeTemplate() tea.Cmd {
 	return tui.PerformAction(&m.serviceInitialized, func() (*bool, error) {
-		time.Sleep(2 * time.Second)
-		return nil, nil
 
 		// Based on the programming language chosen, download a specific template and replace the magic strings in it
-		// templateRepo := "unsupported"
-		// switch *m.selectedPreset {
-		// case "golang":
-		// 	templateRepo = "https://github.com/VU-ASE/service-template-go"
-		// case "python":
-		// 	templateRepo = "unsupported"
-		// }
+		templateRepo := "unsupported"
+		switch *m.selectedPreset {
+		case "golang":
+			templateRepo = "https://github.com/VU-ASE/service-template-go"
+		case "python":
+			templateRepo = "unsupported"
+		}
 
-		// _ = downloadTemplate(templateRepo, ".")
-		// // if err != nil {
-		// // 	return resultMsg{result: false, err: err, action: initializeService, attempt: a}
-		// // }
+		err := downloadTemplate(templateRepo, ".")
+		if err != nil {
+			return nil, err
+		}
 
-		// // Strings to be replaced
-		// toreplace := map[string]string{
-		// 	"$SERVICE_NAME":    m.service.Name,
-		// 	"$SERVICE_AUTHOR":  m.service.Author,
-		// 	"$SERVICE_VERSION": m.service.Version,
-		// 	"$SERVICE_SOURCE":  m.service.Source,
-		// }
+		// Strings to be replaced
+		toreplace := map[string]string{
+			"$SERVICE_NAME":    m.service.Name,
+			"$SERVICE_AUTHOR":  m.service.Author,
+			"$SERVICE_VERSION": m.service.Version,
+			"$SERVICE_SOURCE":  m.service.Source,
+		}
 
-		// // Replace the magic strings in the template
-		// _ = replaceMagicStrings("service.yaml", toreplace)
-		// _ = replaceMagicStrings("Makefile", toreplace)
-		// _ = replaceMagicStrings("go.mod", toreplace)
+		// Replace the magic strings in the template
+		_ = replaceMagicStrings("service.yaml", toreplace)
+		_ = replaceMagicStrings("Makefile", toreplace)
+		_ = replaceMagicStrings("go.mod", toreplace)
 
-		// return resultMsg{result: err == nil, err: err, action: initializeService, attempt: a}
+		return nil, nil
 	})
 }
 
 // This function downloads a selected template from a repository and places it in the destination folder
 func downloadTemplate(repository string, destination string) error {
-	// _, err := git.PlainClone(destination, false, &git.CloneOptions{
-	// 	URL: repository,
-	// })
-	// return err
-	return nil
+	_, err := git.PlainClone(destination, false, &git.CloneOptions{
+		URL: repository,
+	})
+	if err != nil {
+		return err
+	}
+
+	// Remove the .git folder from the template
+	err = os.RemoveAll(filepath.Join(destination, ".git"))
+	return err
 }
 
 func replaceMagicStrings(filepath string, replacements map[string]string) error {

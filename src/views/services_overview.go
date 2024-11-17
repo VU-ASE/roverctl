@@ -26,7 +26,7 @@ func NewServicesOverviewPage() ServicesOverviewPage {
 	if err != nil {
 		listItems = append(listItems, components.ActionItem{Name: "Initialize", Desc: "Initialize a new service in your current working directory"})
 	} else {
-		listItems = append(listItems, components.ActionItem{Name: "Upload", Desc: "Upload the service in your current working directory"})
+		listItems = append(listItems, components.ActionItem{Name: "Sync", Desc: "Synchronize your local service with the Rover by watching for changes"})
 	}
 	listItems = append(listItems, []list.Item{
 		components.ActionItem{Name: "Update", Desc: "Update official services from source onto your Rover"},
@@ -67,8 +67,8 @@ func (m ServicesOverviewPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				switch value {
 				case "Initialize":
 					return RootScreen(state.Get()).SwitchScreen(NewServiceInitPage())
-				case "Upload":
-					value = "service upload"
+				case "Sync":
+					return RootScreen(state.Get()).SwitchScreen(NewServicesSyncPage())
 				case "Update":
 					return RootScreen(state.Get()).SwitchScreen(NewServicesUpdatePage())
 				case "Download":
