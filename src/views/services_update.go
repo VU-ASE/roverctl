@@ -2,9 +2,10 @@ package views
 
 import (
 	"fmt"
+	"io"
 	"math/rand"
 	"sort"
-	"strconv"
+	"strings"
 	"time"
 
 	"github.com/VU-ASE/rover/src/openapi"
@@ -12,29 +13,114 @@ import (
 	"github.com/VU-ASE/rover/src/tui"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
+// connectionsManageKeyMap defines a set of keybindings. To work for help it must satisfy key.Map
+// type connectionsManageKeyMap struct {
+// 	Edit       key.Binding
+// 	Delete     key.Binding
+// 	MarkActive key.Binding
+// 	New        key.Binding
+// }
+
+// // ShortHelp returns keybindings to be shown in the mini help view. It's part
+// // of the key.Map interface.
+// func (k connectionsManageKeyMap) ShortHelp() []key.Binding {
+// 	return []key.Binding{k.New, k.Edit, k.Delete, k.MarkActive}
+// }
+
+// // FullHelp returns keybindings for the expanded help view. It's part of the
+// // key.Map interface.
+// func (k connectionsManageKeyMap) FullHelp() [][]key.Binding {
+// 	return [][]key.Binding{}
+// }
+
+// var connectionsManageKeys = connectionsManageKeyMap{
+// 	New: key.NewBinding(
+// 		key.WithKeys("n"),
+// 		key.WithHelp("n", "new"),
+// 	),
+// 	MarkActive: key.NewBinding(
+// 		key.WithKeys(" "),
+// 		key.WithHelp("space", "set active"),
+// 	),
+// 	Delete: key.NewBinding(
+// 		key.WithKeys("backspace"),
+// 		key.WithHelp("backspace", "delete"),
+// 	),
+// }
+
+func (i UpdatableItem) FilterValue() string { return i.RoverdSource.Name }
+
+type UpdateListItemDelegate struct{}
+
+func (d UpdateListItemDelegate) Height() int                             { return 1 }
+func (d UpdateListItemDelegate) Spacing() int                            { return 0 }
+func (d UpdateListItemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
+func (d UpdateListItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
+	i, ok := listItem.(UpdatableItem)
+	if !ok {
+		return
+	}
+
+	str := i.RoverdSource.Name + style.Primary.Render(" v"+i.RoverdSource.Version) + style.Gray.Render(" -> ") + style.Primary.Render("v"+i.Release.NewVersion) + style.Gray.Render(" (from "+i.RoverdSource.Url+")")
+
+	prefix := "[ ]"
+	if i.Queued {
+		prefix = "[" + style.Success.Render("✓") + "]"
+	}
+
+	str = prefix + " " + str
+
+	fn := lipgloss.NewStyle().Render
+	if index == m.Index() {
+		fn = func(s ...string) string {
+			return lipgloss.NewStyle().Bold(true).Render("> " + strings.Join(s, " "))
+		}
+	} else {
+		str = "  " + str
+	}
+
+	fmt.Fprint(w, fn(str))
+}
+
 // ServicesUpdateKeyMap defines a set of keybindings. To work for help it must satisfy key.Map
 type ServicesUpdateKeyMap struct {
-	Retry   key.Binding
-	Confirm key.Binding
-	Quit    key.Binding
+	Retry     key.Binding
+	Confirm   key.Binding
+	Quit      key.Binding
+	Queue     key.Binding
+	QueueAll  key.Binding
+	QueueNone key.Binding
+}
+
+// replace with download manager
+type OfficialRelease struct {
+	NewVersion string // The new version of the source
+}
+
+type UpdatableItem struct {
+	RoverdSource openapi.SourcesGet200ResponseInner
+	Release      OfficialRelease
+	Queued       bool // whether the user wants to update this source
 }
 
 type ServicesUpdatePage struct {
 	help           help.Model
 	spinner        spinner.Model
-	sourceList     tui.Action[[]openapi.SourcesGet200ResponseInner]
+	sourceList     tui.Action[[]UpdatableItem]
 	serviceUpdates map[string]tui.Action[openapi.SourcesNamePost200Response]
+	list           list.Model
 }
 
 // ShortHelp returns keybindings to be shown in the mini help view. It's part
 // of the key.Map interface.
 func (k ServicesUpdateKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Retry, k.Confirm, k.Quit}
+	return []key.Binding{k.Retry, k.Queue, k.QueueAll, k.QueueNone, k.Confirm, k.Quit}
 }
 
 // FullHelp returns keybindings for the expanded help view. It's part of the
@@ -57,11 +143,23 @@ var errorFetchSourcesKeys = ServicesUpdateKeyMap{
 var successFetchSourcesKeys = ServicesUpdateKeyMap{
 	Retry: key.NewBinding(
 		key.WithKeys("r"),
-		key.WithHelp("r", "retry"),
+		key.WithHelp("r", "refetch"),
+	),
+	Queue: key.NewBinding(
+		key.WithKeys(" "),
+		key.WithHelp("space", "toggle"),
+	),
+	QueueAll: key.NewBinding(
+		key.WithKeys("a"),
+		key.WithHelp("a", "select all"),
+	),
+	QueueNone: key.NewBinding(
+		key.WithKeys("n"),
+		key.WithHelp("n", "select none"),
 	),
 	Confirm: key.NewBinding(
 		key.WithKeys("enter"),
-		key.WithHelp("enter", "confirm"),
+		key.WithHelp("enter", "update"),
 	),
 	Quit: key.NewBinding(
 		key.WithKeys("q"),
@@ -85,34 +183,81 @@ func NewServicesUpdatePage() ServicesUpdatePage {
 	s := spinner.New()
 	s.Spinner = spinner.Line
 
-	sourcesList := tui.NewAction[[]openapi.SourcesGet200ResponseInner]("sourcesList")
+	sourcesList := tui.NewAction[[]UpdatableItem]("sourcesList")
 	servicesList := map[string]tui.Action[openapi.SourcesNamePost200Response]{}
+
+	// List
+	l := list.New([]list.Item{}, UpdateListItemDelegate{}, 0, 14)
+	l.Title = "Select services to update"
+	l.SetShowStatusBar(false)
+	l.SetFilteringEnabled(false)
+	l.Styles.Title = style.TitleStyle
+	l.Styles.PaginationStyle = style.PaginationStyle
+	l.Styles.HelpStyle = style.HelpStyle
+	l.AdditionalShortHelpKeys = successFetchSourcesKeys.ShortHelp
 
 	return ServicesUpdatePage{
 		spinner:        s,
 		help:           help.New(),
 		sourceList:     sourcesList,
 		serviceUpdates: servicesList,
+		list:           l,
 	}
 }
 
 func (m ServicesUpdatePage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	var cmd tea.Cmd
+	m.list, cmd = m.list.Update(msg)
+	if cmd != nil {
+		return m, cmd
+	}
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		// If we set a width on the help menu it can gracefully truncate
 		// its view as needed.
 		m.help.Width = msg.Width
+		m.list.SetSize(msg.Width, msg.Height-1)
 		return m, nil
+
 	case tea.KeyMsg:
 		switch {
+		case key.Matches(msg, successFetchSourcesKeys.Queue):
+			// Queue the selected item
+			if m.list.Index() >= 0 && m.list.Index() < len(m.list.Items()) {
+				item := m.list.Items()[m.list.Index()].(UpdatableItem)
+				item.Queued = !item.Queued
+				m.list.SetItem(m.list.Index(), item)
+			}
+			return m, nil
+		case key.Matches(msg, successFetchSourcesKeys.QueueAll):
+			// Queue all items
+			items := m.list.Items()
+			for i, item := range items {
+				updatableItem := item.(UpdatableItem)
+				updatableItem.Queued = true
+				m.list.SetItem(i, updatableItem)
+			}
+			return m, nil
+		case key.Matches(msg, successFetchSourcesKeys.QueueNone):
+			// Queue none
+			items := m.list.Items()
+			for i, item := range items {
+				updatableItem := item.(UpdatableItem)
+				updatableItem.Queued = false
+				m.list.SetItem(i, updatableItem)
+			}
+			return m, nil
 		case key.Matches(msg, successFetchSourcesKeys.Confirm):
 			if m.sourceList.IsSuccess() && len(m.serviceUpdates) <= 0 {
 				cmds := []tea.Cmd{}
-				for _, source := range *m.sourceList.Data {
-					m.serviceUpdates[source.Name] = tui.NewAction[openapi.SourcesNamePost200Response](source.Name)
-					cmds = append(cmds, updateService(m, source.Name))
+				for _, i := range m.list.Items() {
+					source := i.(UpdatableItem)
+					if source.Queued {
+						m.serviceUpdates[source.RoverdSource.Name] = tui.NewAction[openapi.SourcesNamePost200Response](source.RoverdSource.Name)
+						cmds = append(cmds, updateService(m, source.RoverdSource.Name))
+					}
 				}
 				return m, tea.Batch(cmds...)
 			}
@@ -148,11 +293,23 @@ func (m ServicesUpdatePage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case spinner.TickMsg:
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
-	case tui.ActionInit[[]openapi.SourcesGet200ResponseInner]:
+	case tui.ActionInit[[]UpdatableItem]:
 		m.sourceList.ProcessInit(msg)
 		return m, nil
-	case tui.ActionResult[[]openapi.SourcesGet200ResponseInner]:
+	case tui.ActionResult[[]UpdatableItem]:
 		m.sourceList.ProcessResult(msg)
+		if m.sourceList.IsSuccess() {
+			// Populate the list
+			items := []list.Item{}
+			for _, source := range *m.sourceList.Data {
+				items = append(items, UpdatableItem{
+					RoverdSource: source.RoverdSource,
+					Release:      source.Release,
+					Queued:       true,
+				})
+			}
+			m.list.SetItems(items)
+		}
 		return m, nil
 	case tui.ActionInit[openapi.SourcesNamePost200Response]:
 		newServiceUpdates := make(map[string]tui.Action[openapi.SourcesNamePost200Response])
@@ -186,10 +343,10 @@ func (m ServicesUpdatePage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m ServicesUpdatePage) fetchSourcesView() string {
-	s := lipgloss.NewStyle().Foreground(style.AsePrimary).Render("Update sources")
+	s := lipgloss.NewStyle().Foreground(style.AsePrimary).Render("Update services from source")
 
 	if m.sourceList.IsLoading() {
-		s += "\n\n " + m.spinner.View() + " Fetching sources..."
+		s += "\n\n " + m.spinner.View() + " Checking for updates..."
 		return s
 	}
 
@@ -197,18 +354,7 @@ func (m ServicesUpdatePage) fetchSourcesView() string {
 		if len(*m.sourceList.Data) == 0 {
 			s += "\n\n This rover has no enabled sources, nothing to update"
 		} else {
-			s += "\n\n The following " + strconv.Itoa(len(*m.sourceList.Data)) + " source" + func() string {
-				if len(*m.sourceList.Data) > 1 {
-					return "s"
-				}
-				return ""
-			}() + " will be updated:\n"
-
-			for _, source := range *m.sourceList.Data {
-				s += "\n - " + lipgloss.NewStyle().Bold(true).Render(source.Name) + " " + lipgloss.NewStyle().Foreground(style.AsePrimary).Render(source.Url) + " " + lipgloss.NewStyle().Foreground(style.GrayPrimary).Render("(now at v"+source.Version+")")
-			}
-
-			s += "\n\n" + m.help.View(successFetchSourcesKeys)
+			return m.list.View()
 		}
 	} else {
 		s += "\n\n " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("Failed to fetch sources")
@@ -244,8 +390,8 @@ func (m ServicesUpdatePage) testConnectionView() string {
 			oldVersion := "unknown"
 			if source := m.sourceList.Data; source != nil {
 				for _, s := range *source {
-					if s.Name == name {
-						oldVersion = s.Version
+					if s.RoverdSource.Name == name {
+						oldVersion = s.RoverdSource.Version
 						break
 					}
 				}
@@ -286,14 +432,13 @@ func (m ServicesUpdatePage) View() string {
 }
 
 func fetchSources(m ServicesUpdatePage) tea.Cmd {
-	return tui.PerformAction(&m.sourceList, func() (*[]openapi.SourcesGet200ResponseInner, error) {
+	return tui.PerformAction(&m.sourceList, func() (*[]UpdatableItem, error) {
 		// Wait 10 seconds
 		time.Sleep(1 * time.Second)
 		// return nil, errors.New("Failed to connect")
 
-		// Mock sources
+		// Mock sources fetching from roverd
 		//! remove
-
 		sources := []openapi.SourcesGet200ResponseInner{
 			{
 				Name:    ("source1"),
@@ -315,7 +460,21 @@ func fetchSources(m ServicesUpdatePage) tea.Cmd {
 			},
 		}
 
-		return &sources, nil
+		// Mock update fetching from download manager
+		updates := []UpdatableItem{}
+		for _, source := range sources {
+			// Mock fetching the latest version from the download manager
+			//! remove
+
+			updates = append(updates, UpdatableItem{
+				RoverdSource: source,
+				Release: OfficialRelease{
+					NewVersion: "1.0.1",
+				},
+			})
+		}
+
+		return &updates, nil
 	})
 }
 
