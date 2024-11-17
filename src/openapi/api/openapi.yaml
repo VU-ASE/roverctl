@@ -134,7 +134,7 @@ paths:
         "401":
           description: Unauthorized access (you need to set the Authorization header
             with a valid username and password)
-      summary: Retrieve all services and their status
+      summary: Retrieve all parsable services and their status from disk.
       tags:
       - Services
     post:
@@ -327,6 +327,30 @@ paths:
       tags:
       - Services
   /sources:
+    delete:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_sources_post_request'
+        required: true
+      responses:
+        "200":
+          description: The source was deleted successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+        "404":
+          description: Entity not found
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: Delete a source
+      tags:
+      - Sources
     get:
       responses:
         "200":
@@ -368,68 +392,7 @@ paths:
         "401":
           description: Unauthorized access (you need to set the Authorization header
             with a valid username and password)
-      summary: Add a new source
-      tags:
-      - Sources
-  /sources/{name}:
-    delete:
-      parameters:
-      - description: The name of the source
-        example: imaging
-        explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          type: string
-        style: simple
-      responses:
-        "200":
-          description: The source was deleted successfully
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericError'
-          description: An error occurred
-        "404":
-          description: Entity not found
-        "401":
-          description: Unauthorized access (you need to set the Authorization header
-            with a valid username and password)
-      summary: Delete a source
-      tags:
-      - Sources
-    post:
-      parameters:
-      - description: The name of the source
-        example: imaging
-        explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          type: string
-        style: simple
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/_sources__name__post_200_response'
-          description: The service was downloaded and installed successfully
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericError'
-          description: An error occurred
-        "404":
-          description: Entity not found
-        "401":
-          description: Unauthorized access (you need to set the Authorization header
-            with a valid username and password)
-      summary: Download and install a service from a source
+      summary: "Downloads and installs a new source, adds it the 'downloaded' in rover.yaml"
       tags:
       - Sources
   /status:
@@ -495,6 +458,34 @@ components:
       - invalid
       - valid
       type: string
+    UnmetStreamError:
+      description: UnmetStreamError
+      example:
+        stream: stream
+        source: source
+        target: target
+      properties:
+        source:
+          type: string
+        target:
+          type: string
+        stream:
+          type: string
+      type: object
+    UnmetServiceError:
+      description: UnmetServiceError
+      example:
+        source: source
+        target: target
+      properties:
+        source:
+          type: string
+        target:
+          type: string
+      type: object
+    DuplicateServiceError:
+      description: DuplicateServiceError
+      type: string
     ProcessStatus:
       description: The status of a process in the pipeline
       enum:
@@ -528,10 +519,58 @@ components:
           description: A code describing the error (this is not an HTTP status code)
           type: integer
       type: object
+    _pipeline_get_200_response_pipeline_validation_errors:
+      description: "If status is invalid, this array shows the validation errors"
+      example:
+        unmet_streams:
+        - stream: stream
+          source: source
+          target: target
+        - stream: stream
+          source: source
+          target: target
+        unmet_services:
+        - source: source
+          target: target
+        - source: source
+          target: target
+        duplicate_service:
+        - null
+        - null
+      properties:
+        unmet_streams:
+          items:
+            $ref: '#/components/schemas/UnmetStreamError'
+          type: array
+        unmet_services:
+          items:
+            $ref: '#/components/schemas/UnmetServiceError'
+          type: array
+        duplicate_service:
+          items:
+            $ref: '#/components/schemas/DuplicateServiceError'
+          type: array
+      type: object
     _pipeline_get_200_response_pipeline:
       example:
         last_start: 1612345678211
         last_restart: 1612345678901
+        validation_errors:
+          unmet_streams:
+          - stream: stream
+            source: source
+            target: target
+          - stream: stream
+            source: source
+            target: target
+          unmet_services:
+          - source: source
+            target: target
+          - source: source
+            target: target
+          duplicate_service:
+          - null
+          - null
         last_stop: 1612345678910
         status: started
       properties:
@@ -553,6 +592,13 @@ components:
           example: 1612345678901
           format: int64
           type: integer
+        validation_errors:
+          $ref: '#/components/schemas/_pipeline_get_200_response_pipeline_validation_errors'
+      required:
+      - last_restart
+      - last_start
+      - last_stop
+      - status
       type: object
     _pipeline_get_200_response_processes_inner:
       example:
@@ -592,12 +638,36 @@ components:
             to restart) since last_start
           example: 1
           type: integer
+      required:
+      - cpu
+      - faults
+      - memory
+      - name
+      - pid
+      - status
+      - uptime
       type: object
     _pipeline_get_200_response:
       example:
         pipeline:
           last_start: 1612345678211
           last_restart: 1612345678901
+          validation_errors:
+            unmet_streams:
+            - stream: stream
+              source: source
+              target: target
+            - stream: stream
+              source: source
+              target: target
+            unmet_services:
+            - source: source
+              target: target
+            - source: source
+              target: target
+            duplicate_service:
+            - null
+            - null
           last_stop: 1612345678910
           status: started
         processes:
@@ -682,6 +752,16 @@ components:
           items:
             type: string
           type: array
+      required:
+      - cpu
+      - faults
+      - memory
+      - name
+      - pid
+      - service_name
+      - service_version
+      - status
+      - uptime
       type: object
     _services_get_200_response_inner:
       example:
@@ -699,6 +779,10 @@ components:
           description: The version that is enabled for this service (if any)
           example: 1.0.0
           type: string
+      required:
+      - enabled_version
+      - name
+      - status
       type: object
     _services_post_request:
       properties:
@@ -720,6 +804,9 @@ components:
           description: The version of the service
           example: 1.0.0
           type: string
+      required:
+      - name
+      - version
       type: object
     _services__name__get_200_response:
       example:
@@ -748,6 +835,10 @@ components:
           description: The version that is enabled for this service (if any)
           example: 1.0.0
           type: string
+      required:
+      - name
+      - status
+      - versions
       type: object
     _services__name___version__get_200_response_inputs_inner:
       properties:
@@ -822,6 +913,15 @@ components:
           items:
             type: string
           type: array
+      required:
+      - author
+      - built_at
+      - errors
+      - inputs
+      - name
+      - outputs
+      - status
+      - version
       type: object
     _sources_get_200_response_inner:
       example:
@@ -846,6 +946,10 @@ components:
             \ ZIP file downloaded"
           example: 68c4008de241ee6f8c17de9162f80c38533b94fc0ee6de2a83740cdc2e0edf64
           type: string
+      required:
+      - name
+      - url
+      - version
       type: object
     _sources_post_request:
       properties:
@@ -861,20 +965,10 @@ components:
           description: The version of the source
           example: 1.0.0
           type: string
-      type: object
-    _sources__name__post_200_response:
-      example:
-        new: false
-        version: v1.0.1
-      properties:
-        version:
-          description: The version of the just downloaded service
-          example: v1.0.1
-          type: string
-        new:
-          description: Whether or not this is the first time this service was downloaded
-          example: false
-          type: boolean
+      required:
+      - name
+      - url
+      - version
       type: object
     _status_get_200_response:
       example:
@@ -920,6 +1014,12 @@ components:
           description: The unique name of the rover
           example: zenith
           type: string
+      required:
+      - os
+      - status
+      - systime
+      - uptime
+      - version
       type: object
     _update_post_200_response:
       example:
@@ -929,6 +1029,8 @@ components:
           description: The version of the roverd daemon updated to
           example: v1.0.1
           type: string
+      required:
+      - version
       type: object
   securitySchemes:
     BasicAuth:

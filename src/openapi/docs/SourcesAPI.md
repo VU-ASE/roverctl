@@ -4,11 +4,72 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**SourcesDelete**](SourcesAPI.md#SourcesDelete) | **Delete** /sources | Delete a source
 [**SourcesGet**](SourcesAPI.md#SourcesGet) | **Get** /sources | Retrieve all sources
-[**SourcesNameDelete**](SourcesAPI.md#SourcesNameDelete) | **Delete** /sources/{name} | Delete a source
-[**SourcesNamePost**](SourcesAPI.md#SourcesNamePost) | **Post** /sources/{name} | Download and install a service from a source
-[**SourcesPost**](SourcesAPI.md#SourcesPost) | **Post** /sources | Add a new source
+[**SourcesPost**](SourcesAPI.md#SourcesPost) | **Post** /sources | Downloads and installs a new source, adds it the &#39;downloaded&#39; in rover.yaml
 
+
+
+## SourcesDelete
+
+> SourcesDelete(ctx).SourcesPostRequest(sourcesPostRequest).Execute()
+
+Delete a source
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+)
+
+func main() {
+	sourcesPostRequest := *openapiclient.NewSourcesPostRequest("imaging", "github.com/VU-ASE/imaging", "1.0.0") // SourcesPostRequest | 
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	r, err := apiClient.SourcesAPI.SourcesDelete(context.Background()).SourcesPostRequest(sourcesPostRequest).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `SourcesAPI.SourcesDelete``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiSourcesDeleteRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **sourcesPostRequest** | [**SourcesPostRequest**](SourcesPostRequest.md) |  | 
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+[BasicAuth](../README.md#BasicAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
 
 ## SourcesGet
@@ -70,145 +131,11 @@ Other parameters are passed through a pointer to a apiSourcesGetRequest struct v
 [[Back to README]](../README.md)
 
 
-## SourcesNameDelete
-
-> SourcesNameDelete(ctx, name).Execute()
-
-Delete a source
-
-### Example
-
-```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
-)
-
-func main() {
-	name := "imaging" // string | The name of the source
-
-	configuration := openapiclient.NewConfiguration()
-	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.SourcesAPI.SourcesNameDelete(context.Background(), name).Execute()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `SourcesAPI.SourcesNameDelete``: %v\n", err)
-		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
-	}
-}
-```
-
-### Path Parameters
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**name** | **string** | The name of the source | 
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiSourcesNameDeleteRequest struct via the builder pattern
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-
-
-### Return type
-
- (empty response body)
-
-### Authorization
-
-[BasicAuth](../README.md#BasicAuth)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
-
-
-## SourcesNamePost
-
-> SourcesNamePost200Response SourcesNamePost(ctx, name).Execute()
-
-Download and install a service from a source
-
-### Example
-
-```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
-)
-
-func main() {
-	name := "imaging" // string | The name of the source
-
-	configuration := openapiclient.NewConfiguration()
-	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.SourcesAPI.SourcesNamePost(context.Background(), name).Execute()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `SourcesAPI.SourcesNamePost``: %v\n", err)
-		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
-	}
-	// response from `SourcesNamePost`: SourcesNamePost200Response
-	fmt.Fprintf(os.Stdout, "Response from `SourcesAPI.SourcesNamePost`: %v\n", resp)
-}
-```
-
-### Path Parameters
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**name** | **string** | The name of the source | 
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiSourcesNamePostRequest struct via the builder pattern
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-
-
-### Return type
-
-[**SourcesNamePost200Response**](SourcesNamePost200Response.md)
-
-### Authorization
-
-[BasicAuth](../README.md#BasicAuth)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
-
-
 ## SourcesPost
 
 > SourcesPost(ctx).SourcesPostRequest(sourcesPostRequest).Execute()
 
-Add a new source
+Downloads and installs a new source, adds it the 'downloaded' in rover.yaml
 
 ### Example
 
@@ -223,7 +150,7 @@ import (
 )
 
 func main() {
-	sourcesPostRequest := *openapiclient.NewSourcesPostRequest() // SourcesPostRequest | 
+	sourcesPostRequest := *openapiclient.NewSourcesPostRequest("imaging", "github.com/VU-ASE/imaging", "1.0.0") // SourcesPostRequest | 
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)

@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Name** | Pointer to **string** | The name of the service | [optional] 
-**Version** | Pointer to **string** | The version of the service | [optional] 
+**Name** | **string** | The name of the service | 
+**Version** | **string** | The version of the service | 
 
 ## Methods
 
 ### NewServicesPost200Response
 
-`func NewServicesPost200Response() *ServicesPost200Response`
+`func NewServicesPost200Response(name string, version string, ) *ServicesPost200Response`
 
 NewServicesPost200Response instantiates a new ServicesPost200Response object
 This constructor will assign default values to properties that have it defined,
@@ -45,11 +45,6 @@ and a boolean to check if the value has been set.
 
 SetName sets Name field to given value.
 
-### HasName
-
-`func (o *ServicesPost200Response) HasName() bool`
-
-HasName returns a boolean if a field has been set.
 
 ### GetVersion
 
@@ -70,11 +65,6 @@ and a boolean to check if the value has been set.
 
 SetVersion sets Version field to given value.
 
-### HasVersion
-
-`func (o *ServicesPost200Response) HasVersion() bool`
-
-HasVersion returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

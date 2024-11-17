@@ -276,6 +276,7 @@ func (m ConnectionsInitPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				// todo: change to 192.168.1 instead of 192.168.0
 				// m.host = fmt.Sprintf("192.168.0.%d", index+100)
 				m.host = "google.com"
+				m.host = "localhost:8070"
 
 				// We are optimistic, start all checks in parallel
 				cmds = append(cmds, m.checkRoute(), m.checkAuth(), m.checkRoverdVersion(), m.checkRoverNumber())
@@ -420,7 +421,8 @@ func (m ConnectionsInitPage) checkRoverdVersion() tea.Cmd {
 			return nil, err
 		}
 
-		return res.Version, nil
+		version := res.Version
+		return &version, nil
 	})
 }
 

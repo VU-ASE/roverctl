@@ -4,20 +4,20 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Name** | Pointer to **string** | The name of the service | [optional] 
-**Version** | Pointer to **string** | The version of the service | [optional] 
-**Status** | Pointer to [**ServiceStatus**](ServiceStatus.md) |  | [optional] 
-**BuiltAt** | Pointer to **int64** | The time this version was last built as milliseconds since epoch | [optional] 
-**Author** | Pointer to **string** | The author of the service | [optional] 
-**Inputs** | Pointer to [**[]ServicesNameVersionGet200ResponseInputsInner**](ServicesNameVersionGet200ResponseInputsInner.md) | The dependencies/inputs of this service version | [optional] 
-**Outputs** | Pointer to **[]string** | The output streams of this service version | [optional] 
-**Errors** | Pointer to **[]string** | The validation errors of this service version (one error per line) | [optional] 
+**Name** | **string** | The name of the service | 
+**Version** | **string** | The version of the service | 
+**Status** | [**ServiceStatus**](ServiceStatus.md) |  | 
+**BuiltAt** | **int64** | The time this version was last built as milliseconds since epoch | 
+**Author** | **string** | The author of the service | 
+**Inputs** | [**[]ServicesNameVersionGet200ResponseInputsInner**](ServicesNameVersionGet200ResponseInputsInner.md) | The dependencies/inputs of this service version | 
+**Outputs** | **[]string** | The output streams of this service version | 
+**Errors** | **[]string** | The validation errors of this service version (one error per line) | 
 
 ## Methods
 
 ### NewServicesNameVersionGet200Response
 
-`func NewServicesNameVersionGet200Response() *ServicesNameVersionGet200Response`
+`func NewServicesNameVersionGet200Response(name string, version string, status ServiceStatus, builtAt int64, author string, inputs []ServicesNameVersionGet200ResponseInputsInner, outputs []string, errors []string, ) *ServicesNameVersionGet200Response`
 
 NewServicesNameVersionGet200Response instantiates a new ServicesNameVersionGet200Response object
 This constructor will assign default values to properties that have it defined,
@@ -51,11 +51,6 @@ and a boolean to check if the value has been set.
 
 SetName sets Name field to given value.
 
-### HasName
-
-`func (o *ServicesNameVersionGet200Response) HasName() bool`
-
-HasName returns a boolean if a field has been set.
 
 ### GetVersion
 
@@ -76,11 +71,6 @@ and a boolean to check if the value has been set.
 
 SetVersion sets Version field to given value.
 
-### HasVersion
-
-`func (o *ServicesNameVersionGet200Response) HasVersion() bool`
-
-HasVersion returns a boolean if a field has been set.
 
 ### GetStatus
 
@@ -101,11 +91,6 @@ and a boolean to check if the value has been set.
 
 SetStatus sets Status field to given value.
 
-### HasStatus
-
-`func (o *ServicesNameVersionGet200Response) HasStatus() bool`
-
-HasStatus returns a boolean if a field has been set.
 
 ### GetBuiltAt
 
@@ -126,11 +111,6 @@ and a boolean to check if the value has been set.
 
 SetBuiltAt sets BuiltAt field to given value.
 
-### HasBuiltAt
-
-`func (o *ServicesNameVersionGet200Response) HasBuiltAt() bool`
-
-HasBuiltAt returns a boolean if a field has been set.
 
 ### GetAuthor
 
@@ -151,11 +131,6 @@ and a boolean to check if the value has been set.
 
 SetAuthor sets Author field to given value.
 
-### HasAuthor
-
-`func (o *ServicesNameVersionGet200Response) HasAuthor() bool`
-
-HasAuthor returns a boolean if a field has been set.
 
 ### GetInputs
 
@@ -176,11 +151,6 @@ and a boolean to check if the value has been set.
 
 SetInputs sets Inputs field to given value.
 
-### HasInputs
-
-`func (o *ServicesNameVersionGet200Response) HasInputs() bool`
-
-HasInputs returns a boolean if a field has been set.
 
 ### GetOutputs
 
@@ -201,11 +171,6 @@ and a boolean to check if the value has been set.
 
 SetOutputs sets Outputs field to given value.
 
-### HasOutputs
-
-`func (o *ServicesNameVersionGet200Response) HasOutputs() bool`
-
-HasOutputs returns a boolean if a field has been set.
 
 ### GetErrors
 
@@ -226,11 +191,6 @@ and a boolean to check if the value has been set.
 
 SetErrors sets Errors field to given value.
 
-### HasErrors
-
-`func (o *ServicesNameVersionGet200Response) HasErrors() bool`
-
-HasErrors returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

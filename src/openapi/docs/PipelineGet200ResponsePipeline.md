@@ -4,16 +4,17 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Status** | Pointer to [**PipelineStatus**](PipelineStatus.md) |  | [optional] 
-**LastStart** | Pointer to **int64** | Milliseconds since epoch when the pipeline was manually started | [optional] 
-**LastStop** | Pointer to **int64** | Milliseconds since epoch when the pipeline was manually stopped | [optional] 
-**LastRestart** | Pointer to **int64** | Milliseconds since epoch when the pipeline was automatically restarted (on process faults) | [optional] 
+**Status** | [**PipelineStatus**](PipelineStatus.md) |  | 
+**LastStart** | **int64** | Milliseconds since epoch when the pipeline was manually started | 
+**LastStop** | **int64** | Milliseconds since epoch when the pipeline was manually stopped | 
+**LastRestart** | **int64** | Milliseconds since epoch when the pipeline was automatically restarted (on process faults) | 
+**ValidationErrors** | Pointer to [**PipelineGet200ResponsePipelineValidationErrors**](PipelineGet200ResponsePipelineValidationErrors.md) |  | [optional] 
 
 ## Methods
 
 ### NewPipelineGet200ResponsePipeline
 
-`func NewPipelineGet200ResponsePipeline() *PipelineGet200ResponsePipeline`
+`func NewPipelineGet200ResponsePipeline(status PipelineStatus, lastStart int64, lastStop int64, lastRestart int64, ) *PipelineGet200ResponsePipeline`
 
 NewPipelineGet200ResponsePipeline instantiates a new PipelineGet200ResponsePipeline object
 This constructor will assign default values to properties that have it defined,
@@ -47,11 +48,6 @@ and a boolean to check if the value has been set.
 
 SetStatus sets Status field to given value.
 
-### HasStatus
-
-`func (o *PipelineGet200ResponsePipeline) HasStatus() bool`
-
-HasStatus returns a boolean if a field has been set.
 
 ### GetLastStart
 
@@ -72,11 +68,6 @@ and a boolean to check if the value has been set.
 
 SetLastStart sets LastStart field to given value.
 
-### HasLastStart
-
-`func (o *PipelineGet200ResponsePipeline) HasLastStart() bool`
-
-HasLastStart returns a boolean if a field has been set.
 
 ### GetLastStop
 
@@ -97,11 +88,6 @@ and a boolean to check if the value has been set.
 
 SetLastStop sets LastStop field to given value.
 
-### HasLastStop
-
-`func (o *PipelineGet200ResponsePipeline) HasLastStop() bool`
-
-HasLastStop returns a boolean if a field has been set.
 
 ### GetLastRestart
 
@@ -122,11 +108,31 @@ and a boolean to check if the value has been set.
 
 SetLastRestart sets LastRestart field to given value.
 
-### HasLastRestart
 
-`func (o *PipelineGet200ResponsePipeline) HasLastRestart() bool`
+### GetValidationErrors
 
-HasLastRestart returns a boolean if a field has been set.
+`func (o *PipelineGet200ResponsePipeline) GetValidationErrors() PipelineGet200ResponsePipelineValidationErrors`
+
+GetValidationErrors returns the ValidationErrors field if non-nil, zero value otherwise.
+
+### GetValidationErrorsOk
+
+`func (o *PipelineGet200ResponsePipeline) GetValidationErrorsOk() (*PipelineGet200ResponsePipelineValidationErrors, bool)`
+
+GetValidationErrorsOk returns a tuple with the ValidationErrors field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetValidationErrors
+
+`func (o *PipelineGet200ResponsePipeline) SetValidationErrors(v PipelineGet200ResponsePipelineValidationErrors)`
+
+SetValidationErrors sets ValidationErrors field to given value.
+
+### HasValidationErrors
+
+`func (o *PipelineGet200ResponsePipeline) HasValidationErrors() bool`
+
+HasValidationErrors returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

@@ -12,6 +12,8 @@ package openapi
 
 import (
 	"encoding/json"
+	"bytes"
+	"fmt"
 )
 
 // checks if the StatusGet200Response type satisfies the MappedNullable interface at compile time
@@ -19,29 +21,36 @@ var _ MappedNullable = &StatusGet200Response{}
 
 // StatusGet200Response struct for StatusGet200Response
 type StatusGet200Response struct {
-	Status *DaemonStatus `json:"status,omitempty"`
+	Status DaemonStatus `json:"status"`
 	// Error message of the daemon status
 	ErrorMessage *string `json:"error_message,omitempty"`
 	// The version of the roverd daemon
-	Version *string `json:"version,omitempty"`
+	Version string `json:"version"`
 	// The number of milliseconds the roverd daemon process has been running
-	Uptime *int64 `json:"uptime,omitempty"`
+	Uptime int64 `json:"uptime"`
 	// The operating system of the rover
-	Os *string `json:"os,omitempty"`
+	Os string `json:"os"`
 	// The system time of the rover as milliseconds since epoch
-	Systime *int64 `json:"systime,omitempty"`
+	Systime int64 `json:"systime"`
 	// The unique identifier of the rover
 	RoverId *int32 `json:"rover_id,omitempty"`
 	// The unique name of the rover
 	RoverName *string `json:"rover_name,omitempty"`
 }
 
+type _StatusGet200Response StatusGet200Response
+
 // NewStatusGet200Response instantiates a new StatusGet200Response object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewStatusGet200Response() *StatusGet200Response {
+func NewStatusGet200Response(status DaemonStatus, version string, uptime int64, os string, systime int64) *StatusGet200Response {
 	this := StatusGet200Response{}
+	this.Status = status
+	this.Version = version
+	this.Uptime = uptime
+	this.Os = os
+	this.Systime = systime
 	return &this
 }
 
@@ -53,36 +62,28 @@ func NewStatusGet200ResponseWithDefaults() *StatusGet200Response {
 	return &this
 }
 
-// GetStatus returns the Status field value if set, zero value otherwise.
+// GetStatus returns the Status field value
 func (o *StatusGet200Response) GetStatus() DaemonStatus {
-	if o == nil || IsNil(o.Status) {
+	if o == nil {
 		var ret DaemonStatus
 		return ret
 	}
-	return *o.Status
+
+	return o.Status
 }
 
-// GetStatusOk returns a tuple with the Status field value if set, nil otherwise
+// GetStatusOk returns a tuple with the Status field value
 // and a boolean to check if the value has been set.
 func (o *StatusGet200Response) GetStatusOk() (*DaemonStatus, bool) {
-	if o == nil || IsNil(o.Status) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Status, true
+	return &o.Status, true
 }
 
-// HasStatus returns a boolean if a field has been set.
-func (o *StatusGet200Response) HasStatus() bool {
-	if o != nil && !IsNil(o.Status) {
-		return true
-	}
-
-	return false
-}
-
-// SetStatus gets a reference to the given DaemonStatus and assigns it to the Status field.
+// SetStatus sets field value
 func (o *StatusGet200Response) SetStatus(v DaemonStatus) {
-	o.Status = &v
+	o.Status = v
 }
 
 // GetErrorMessage returns the ErrorMessage field value if set, zero value otherwise.
@@ -117,132 +118,100 @@ func (o *StatusGet200Response) SetErrorMessage(v string) {
 	o.ErrorMessage = &v
 }
 
-// GetVersion returns the Version field value if set, zero value otherwise.
+// GetVersion returns the Version field value
 func (o *StatusGet200Response) GetVersion() string {
-	if o == nil || IsNil(o.Version) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.Version
+
+	return o.Version
 }
 
-// GetVersionOk returns a tuple with the Version field value if set, nil otherwise
+// GetVersionOk returns a tuple with the Version field value
 // and a boolean to check if the value has been set.
 func (o *StatusGet200Response) GetVersionOk() (*string, bool) {
-	if o == nil || IsNil(o.Version) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Version, true
+	return &o.Version, true
 }
 
-// HasVersion returns a boolean if a field has been set.
-func (o *StatusGet200Response) HasVersion() bool {
-	if o != nil && !IsNil(o.Version) {
-		return true
-	}
-
-	return false
-}
-
-// SetVersion gets a reference to the given string and assigns it to the Version field.
+// SetVersion sets field value
 func (o *StatusGet200Response) SetVersion(v string) {
-	o.Version = &v
+	o.Version = v
 }
 
-// GetUptime returns the Uptime field value if set, zero value otherwise.
+// GetUptime returns the Uptime field value
 func (o *StatusGet200Response) GetUptime() int64 {
-	if o == nil || IsNil(o.Uptime) {
+	if o == nil {
 		var ret int64
 		return ret
 	}
-	return *o.Uptime
+
+	return o.Uptime
 }
 
-// GetUptimeOk returns a tuple with the Uptime field value if set, nil otherwise
+// GetUptimeOk returns a tuple with the Uptime field value
 // and a boolean to check if the value has been set.
 func (o *StatusGet200Response) GetUptimeOk() (*int64, bool) {
-	if o == nil || IsNil(o.Uptime) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Uptime, true
+	return &o.Uptime, true
 }
 
-// HasUptime returns a boolean if a field has been set.
-func (o *StatusGet200Response) HasUptime() bool {
-	if o != nil && !IsNil(o.Uptime) {
-		return true
-	}
-
-	return false
-}
-
-// SetUptime gets a reference to the given int64 and assigns it to the Uptime field.
+// SetUptime sets field value
 func (o *StatusGet200Response) SetUptime(v int64) {
-	o.Uptime = &v
+	o.Uptime = v
 }
 
-// GetOs returns the Os field value if set, zero value otherwise.
+// GetOs returns the Os field value
 func (o *StatusGet200Response) GetOs() string {
-	if o == nil || IsNil(o.Os) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.Os
+
+	return o.Os
 }
 
-// GetOsOk returns a tuple with the Os field value if set, nil otherwise
+// GetOsOk returns a tuple with the Os field value
 // and a boolean to check if the value has been set.
 func (o *StatusGet200Response) GetOsOk() (*string, bool) {
-	if o == nil || IsNil(o.Os) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Os, true
+	return &o.Os, true
 }
 
-// HasOs returns a boolean if a field has been set.
-func (o *StatusGet200Response) HasOs() bool {
-	if o != nil && !IsNil(o.Os) {
-		return true
-	}
-
-	return false
-}
-
-// SetOs gets a reference to the given string and assigns it to the Os field.
+// SetOs sets field value
 func (o *StatusGet200Response) SetOs(v string) {
-	o.Os = &v
+	o.Os = v
 }
 
-// GetSystime returns the Systime field value if set, zero value otherwise.
+// GetSystime returns the Systime field value
 func (o *StatusGet200Response) GetSystime() int64 {
-	if o == nil || IsNil(o.Systime) {
+	if o == nil {
 		var ret int64
 		return ret
 	}
-	return *o.Systime
+
+	return o.Systime
 }
 
-// GetSystimeOk returns a tuple with the Systime field value if set, nil otherwise
+// GetSystimeOk returns a tuple with the Systime field value
 // and a boolean to check if the value has been set.
 func (o *StatusGet200Response) GetSystimeOk() (*int64, bool) {
-	if o == nil || IsNil(o.Systime) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Systime, true
+	return &o.Systime, true
 }
 
-// HasSystime returns a boolean if a field has been set.
-func (o *StatusGet200Response) HasSystime() bool {
-	if o != nil && !IsNil(o.Systime) {
-		return true
-	}
-
-	return false
-}
-
-// SetSystime gets a reference to the given int64 and assigns it to the Systime field.
+// SetSystime sets field value
 func (o *StatusGet200Response) SetSystime(v int64) {
-	o.Systime = &v
+	o.Systime = v
 }
 
 // GetRoverId returns the RoverId field value if set, zero value otherwise.
@@ -319,24 +288,14 @@ func (o StatusGet200Response) MarshalJSON() ([]byte, error) {
 
 func (o StatusGet200Response) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.Status) {
-		toSerialize["status"] = o.Status
-	}
+	toSerialize["status"] = o.Status
 	if !IsNil(o.ErrorMessage) {
 		toSerialize["error_message"] = o.ErrorMessage
 	}
-	if !IsNil(o.Version) {
-		toSerialize["version"] = o.Version
-	}
-	if !IsNil(o.Uptime) {
-		toSerialize["uptime"] = o.Uptime
-	}
-	if !IsNil(o.Os) {
-		toSerialize["os"] = o.Os
-	}
-	if !IsNil(o.Systime) {
-		toSerialize["systime"] = o.Systime
-	}
+	toSerialize["version"] = o.Version
+	toSerialize["uptime"] = o.Uptime
+	toSerialize["os"] = o.Os
+	toSerialize["systime"] = o.Systime
 	if !IsNil(o.RoverId) {
 		toSerialize["rover_id"] = o.RoverId
 	}
@@ -344,6 +303,47 @@ func (o StatusGet200Response) ToMap() (map[string]interface{}, error) {
 		toSerialize["rover_name"] = o.RoverName
 	}
 	return toSerialize, nil
+}
+
+func (o *StatusGet200Response) UnmarshalJSON(data []byte) (err error) {
+	// This validates that all required properties are included in the JSON object
+	// by unmarshalling the object into a generic map with string keys and checking
+	// that every required field exists as a key in the generic map.
+	requiredProperties := []string{
+		"status",
+		"version",
+		"uptime",
+		"os",
+		"systime",
+	}
+
+	allProperties := make(map[string]interface{})
+
+	err = json.Unmarshal(data, &allProperties)
+
+	if err != nil {
+		return err;
+	}
+
+	for _, requiredProperty := range(requiredProperties) {
+		if _, exists := allProperties[requiredProperty]; !exists {
+			return fmt.Errorf("no value given for required property %v", requiredProperty)
+		}
+	}
+
+	varStatusGet200Response := _StatusGet200Response{}
+
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&varStatusGet200Response)
+
+	if err != nil {
+		return err
+	}
+
+	*o = StatusGet200Response(varStatusGet200Response)
+
+	return err
 }
 
 type NullableStatusGet200Response struct {

@@ -12,6 +12,8 @@ package openapi
 
 import (
 	"encoding/json"
+	"bytes"
+	"fmt"
 )
 
 // checks if the ServicesNameVersionGet200Response type satisfies the MappedNullable interface at compile time
@@ -20,28 +22,38 @@ var _ MappedNullable = &ServicesNameVersionGet200Response{}
 // ServicesNameVersionGet200Response struct for ServicesNameVersionGet200Response
 type ServicesNameVersionGet200Response struct {
 	// The name of the service
-	Name *string `json:"name,omitempty"`
+	Name string `json:"name"`
 	// The version of the service
-	Version *string `json:"version,omitempty"`
-	Status *ServiceStatus `json:"status,omitempty"`
+	Version string `json:"version"`
+	Status ServiceStatus `json:"status"`
 	// The time this version was last built as milliseconds since epoch
-	BuiltAt *int64 `json:"built_at,omitempty"`
+	BuiltAt int64 `json:"built_at"`
 	// The author of the service
-	Author *string `json:"author,omitempty"`
+	Author string `json:"author"`
 	// The dependencies/inputs of this service version
-	Inputs []ServicesNameVersionGet200ResponseInputsInner `json:"inputs,omitempty"`
+	Inputs []ServicesNameVersionGet200ResponseInputsInner `json:"inputs"`
 	// The output streams of this service version
-	Outputs []string `json:"outputs,omitempty"`
+	Outputs []string `json:"outputs"`
 	// The validation errors of this service version (one error per line)
-	Errors []string `json:"errors,omitempty"`
+	Errors []string `json:"errors"`
 }
+
+type _ServicesNameVersionGet200Response ServicesNameVersionGet200Response
 
 // NewServicesNameVersionGet200Response instantiates a new ServicesNameVersionGet200Response object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewServicesNameVersionGet200Response() *ServicesNameVersionGet200Response {
+func NewServicesNameVersionGet200Response(name string, version string, status ServiceStatus, builtAt int64, author string, inputs []ServicesNameVersionGet200ResponseInputsInner, outputs []string, errors []string) *ServicesNameVersionGet200Response {
 	this := ServicesNameVersionGet200Response{}
+	this.Name = name
+	this.Version = version
+	this.Status = status
+	this.BuiltAt = builtAt
+	this.Author = author
+	this.Inputs = inputs
+	this.Outputs = outputs
+	this.Errors = errors
 	return &this
 }
 
@@ -53,258 +65,194 @@ func NewServicesNameVersionGet200ResponseWithDefaults() *ServicesNameVersionGet2
 	return &this
 }
 
-// GetName returns the Name field value if set, zero value otherwise.
+// GetName returns the Name field value
 func (o *ServicesNameVersionGet200Response) GetName() string {
-	if o == nil || IsNil(o.Name) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.Name
+
+	return o.Name
 }
 
-// GetNameOk returns a tuple with the Name field value if set, nil otherwise
+// GetNameOk returns a tuple with the Name field value
 // and a boolean to check if the value has been set.
 func (o *ServicesNameVersionGet200Response) GetNameOk() (*string, bool) {
-	if o == nil || IsNil(o.Name) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Name, true
+	return &o.Name, true
 }
 
-// HasName returns a boolean if a field has been set.
-func (o *ServicesNameVersionGet200Response) HasName() bool {
-	if o != nil && !IsNil(o.Name) {
-		return true
-	}
-
-	return false
-}
-
-// SetName gets a reference to the given string and assigns it to the Name field.
+// SetName sets field value
 func (o *ServicesNameVersionGet200Response) SetName(v string) {
-	o.Name = &v
+	o.Name = v
 }
 
-// GetVersion returns the Version field value if set, zero value otherwise.
+// GetVersion returns the Version field value
 func (o *ServicesNameVersionGet200Response) GetVersion() string {
-	if o == nil || IsNil(o.Version) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.Version
+
+	return o.Version
 }
 
-// GetVersionOk returns a tuple with the Version field value if set, nil otherwise
+// GetVersionOk returns a tuple with the Version field value
 // and a boolean to check if the value has been set.
 func (o *ServicesNameVersionGet200Response) GetVersionOk() (*string, bool) {
-	if o == nil || IsNil(o.Version) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Version, true
+	return &o.Version, true
 }
 
-// HasVersion returns a boolean if a field has been set.
-func (o *ServicesNameVersionGet200Response) HasVersion() bool {
-	if o != nil && !IsNil(o.Version) {
-		return true
-	}
-
-	return false
-}
-
-// SetVersion gets a reference to the given string and assigns it to the Version field.
+// SetVersion sets field value
 func (o *ServicesNameVersionGet200Response) SetVersion(v string) {
-	o.Version = &v
+	o.Version = v
 }
 
-// GetStatus returns the Status field value if set, zero value otherwise.
+// GetStatus returns the Status field value
 func (o *ServicesNameVersionGet200Response) GetStatus() ServiceStatus {
-	if o == nil || IsNil(o.Status) {
+	if o == nil {
 		var ret ServiceStatus
 		return ret
 	}
-	return *o.Status
+
+	return o.Status
 }
 
-// GetStatusOk returns a tuple with the Status field value if set, nil otherwise
+// GetStatusOk returns a tuple with the Status field value
 // and a boolean to check if the value has been set.
 func (o *ServicesNameVersionGet200Response) GetStatusOk() (*ServiceStatus, bool) {
-	if o == nil || IsNil(o.Status) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Status, true
+	return &o.Status, true
 }
 
-// HasStatus returns a boolean if a field has been set.
-func (o *ServicesNameVersionGet200Response) HasStatus() bool {
-	if o != nil && !IsNil(o.Status) {
-		return true
-	}
-
-	return false
-}
-
-// SetStatus gets a reference to the given ServiceStatus and assigns it to the Status field.
+// SetStatus sets field value
 func (o *ServicesNameVersionGet200Response) SetStatus(v ServiceStatus) {
-	o.Status = &v
+	o.Status = v
 }
 
-// GetBuiltAt returns the BuiltAt field value if set, zero value otherwise.
+// GetBuiltAt returns the BuiltAt field value
 func (o *ServicesNameVersionGet200Response) GetBuiltAt() int64 {
-	if o == nil || IsNil(o.BuiltAt) {
+	if o == nil {
 		var ret int64
 		return ret
 	}
-	return *o.BuiltAt
+
+	return o.BuiltAt
 }
 
-// GetBuiltAtOk returns a tuple with the BuiltAt field value if set, nil otherwise
+// GetBuiltAtOk returns a tuple with the BuiltAt field value
 // and a boolean to check if the value has been set.
 func (o *ServicesNameVersionGet200Response) GetBuiltAtOk() (*int64, bool) {
-	if o == nil || IsNil(o.BuiltAt) {
+	if o == nil {
 		return nil, false
 	}
-	return o.BuiltAt, true
+	return &o.BuiltAt, true
 }
 
-// HasBuiltAt returns a boolean if a field has been set.
-func (o *ServicesNameVersionGet200Response) HasBuiltAt() bool {
-	if o != nil && !IsNil(o.BuiltAt) {
-		return true
-	}
-
-	return false
-}
-
-// SetBuiltAt gets a reference to the given int64 and assigns it to the BuiltAt field.
+// SetBuiltAt sets field value
 func (o *ServicesNameVersionGet200Response) SetBuiltAt(v int64) {
-	o.BuiltAt = &v
+	o.BuiltAt = v
 }
 
-// GetAuthor returns the Author field value if set, zero value otherwise.
+// GetAuthor returns the Author field value
 func (o *ServicesNameVersionGet200Response) GetAuthor() string {
-	if o == nil || IsNil(o.Author) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.Author
+
+	return o.Author
 }
 
-// GetAuthorOk returns a tuple with the Author field value if set, nil otherwise
+// GetAuthorOk returns a tuple with the Author field value
 // and a boolean to check if the value has been set.
 func (o *ServicesNameVersionGet200Response) GetAuthorOk() (*string, bool) {
-	if o == nil || IsNil(o.Author) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Author, true
+	return &o.Author, true
 }
 
-// HasAuthor returns a boolean if a field has been set.
-func (o *ServicesNameVersionGet200Response) HasAuthor() bool {
-	if o != nil && !IsNil(o.Author) {
-		return true
-	}
-
-	return false
-}
-
-// SetAuthor gets a reference to the given string and assigns it to the Author field.
+// SetAuthor sets field value
 func (o *ServicesNameVersionGet200Response) SetAuthor(v string) {
-	o.Author = &v
+	o.Author = v
 }
 
-// GetInputs returns the Inputs field value if set, zero value otherwise.
+// GetInputs returns the Inputs field value
 func (o *ServicesNameVersionGet200Response) GetInputs() []ServicesNameVersionGet200ResponseInputsInner {
-	if o == nil || IsNil(o.Inputs) {
+	if o == nil {
 		var ret []ServicesNameVersionGet200ResponseInputsInner
 		return ret
 	}
+
 	return o.Inputs
 }
 
-// GetInputsOk returns a tuple with the Inputs field value if set, nil otherwise
+// GetInputsOk returns a tuple with the Inputs field value
 // and a boolean to check if the value has been set.
 func (o *ServicesNameVersionGet200Response) GetInputsOk() ([]ServicesNameVersionGet200ResponseInputsInner, bool) {
-	if o == nil || IsNil(o.Inputs) {
+	if o == nil {
 		return nil, false
 	}
 	return o.Inputs, true
 }
 
-// HasInputs returns a boolean if a field has been set.
-func (o *ServicesNameVersionGet200Response) HasInputs() bool {
-	if o != nil && !IsNil(o.Inputs) {
-		return true
-	}
-
-	return false
-}
-
-// SetInputs gets a reference to the given []ServicesNameVersionGet200ResponseInputsInner and assigns it to the Inputs field.
+// SetInputs sets field value
 func (o *ServicesNameVersionGet200Response) SetInputs(v []ServicesNameVersionGet200ResponseInputsInner) {
 	o.Inputs = v
 }
 
-// GetOutputs returns the Outputs field value if set, zero value otherwise.
+// GetOutputs returns the Outputs field value
 func (o *ServicesNameVersionGet200Response) GetOutputs() []string {
-	if o == nil || IsNil(o.Outputs) {
+	if o == nil {
 		var ret []string
 		return ret
 	}
+
 	return o.Outputs
 }
 
-// GetOutputsOk returns a tuple with the Outputs field value if set, nil otherwise
+// GetOutputsOk returns a tuple with the Outputs field value
 // and a boolean to check if the value has been set.
 func (o *ServicesNameVersionGet200Response) GetOutputsOk() ([]string, bool) {
-	if o == nil || IsNil(o.Outputs) {
+	if o == nil {
 		return nil, false
 	}
 	return o.Outputs, true
 }
 
-// HasOutputs returns a boolean if a field has been set.
-func (o *ServicesNameVersionGet200Response) HasOutputs() bool {
-	if o != nil && !IsNil(o.Outputs) {
-		return true
-	}
-
-	return false
-}
-
-// SetOutputs gets a reference to the given []string and assigns it to the Outputs field.
+// SetOutputs sets field value
 func (o *ServicesNameVersionGet200Response) SetOutputs(v []string) {
 	o.Outputs = v
 }
 
-// GetErrors returns the Errors field value if set, zero value otherwise.
+// GetErrors returns the Errors field value
 func (o *ServicesNameVersionGet200Response) GetErrors() []string {
-	if o == nil || IsNil(o.Errors) {
+	if o == nil {
 		var ret []string
 		return ret
 	}
+
 	return o.Errors
 }
 
-// GetErrorsOk returns a tuple with the Errors field value if set, nil otherwise
+// GetErrorsOk returns a tuple with the Errors field value
 // and a boolean to check if the value has been set.
 func (o *ServicesNameVersionGet200Response) GetErrorsOk() ([]string, bool) {
-	if o == nil || IsNil(o.Errors) {
+	if o == nil {
 		return nil, false
 	}
 	return o.Errors, true
 }
 
-// HasErrors returns a boolean if a field has been set.
-func (o *ServicesNameVersionGet200Response) HasErrors() bool {
-	if o != nil && !IsNil(o.Errors) {
-		return true
-	}
-
-	return false
-}
-
-// SetErrors gets a reference to the given []string and assigns it to the Errors field.
+// SetErrors sets field value
 func (o *ServicesNameVersionGet200Response) SetErrors(v []string) {
 	o.Errors = v
 }
@@ -319,31 +267,59 @@ func (o ServicesNameVersionGet200Response) MarshalJSON() ([]byte, error) {
 
 func (o ServicesNameVersionGet200Response) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.Name) {
-		toSerialize["name"] = o.Name
-	}
-	if !IsNil(o.Version) {
-		toSerialize["version"] = o.Version
-	}
-	if !IsNil(o.Status) {
-		toSerialize["status"] = o.Status
-	}
-	if !IsNil(o.BuiltAt) {
-		toSerialize["built_at"] = o.BuiltAt
-	}
-	if !IsNil(o.Author) {
-		toSerialize["author"] = o.Author
-	}
-	if !IsNil(o.Inputs) {
-		toSerialize["inputs"] = o.Inputs
-	}
-	if !IsNil(o.Outputs) {
-		toSerialize["outputs"] = o.Outputs
-	}
-	if !IsNil(o.Errors) {
-		toSerialize["errors"] = o.Errors
-	}
+	toSerialize["name"] = o.Name
+	toSerialize["version"] = o.Version
+	toSerialize["status"] = o.Status
+	toSerialize["built_at"] = o.BuiltAt
+	toSerialize["author"] = o.Author
+	toSerialize["inputs"] = o.Inputs
+	toSerialize["outputs"] = o.Outputs
+	toSerialize["errors"] = o.Errors
 	return toSerialize, nil
+}
+
+func (o *ServicesNameVersionGet200Response) UnmarshalJSON(data []byte) (err error) {
+	// This validates that all required properties are included in the JSON object
+	// by unmarshalling the object into a generic map with string keys and checking
+	// that every required field exists as a key in the generic map.
+	requiredProperties := []string{
+		"name",
+		"version",
+		"status",
+		"built_at",
+		"author",
+		"inputs",
+		"outputs",
+		"errors",
+	}
+
+	allProperties := make(map[string]interface{})
+
+	err = json.Unmarshal(data, &allProperties)
+
+	if err != nil {
+		return err;
+	}
+
+	for _, requiredProperty := range(requiredProperties) {
+		if _, exists := allProperties[requiredProperty]; !exists {
+			return fmt.Errorf("no value given for required property %v", requiredProperty)
+		}
+	}
+
+	varServicesNameVersionGet200Response := _ServicesNameVersionGet200Response{}
+
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&varServicesNameVersionGet200Response)
+
+	if err != nil {
+		return err
+	}
+
+	*o = ServicesNameVersionGet200Response(varServicesNameVersionGet200Response)
+
+	return err
 }
 
 type NullableServicesNameVersionGet200Response struct {

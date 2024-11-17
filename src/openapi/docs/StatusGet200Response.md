@@ -4,12 +4,12 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Status** | Pointer to [**DaemonStatus**](DaemonStatus.md) |  | [optional] 
+**Status** | [**DaemonStatus**](DaemonStatus.md) |  | 
 **ErrorMessage** | Pointer to **string** | Error message of the daemon status | [optional] 
-**Version** | Pointer to **string** | The version of the roverd daemon | [optional] 
-**Uptime** | Pointer to **int64** | The number of milliseconds the roverd daemon process has been running | [optional] 
-**Os** | Pointer to **string** | The operating system of the rover | [optional] 
-**Systime** | Pointer to **int64** | The system time of the rover as milliseconds since epoch | [optional] 
+**Version** | **string** | The version of the roverd daemon | 
+**Uptime** | **int64** | The number of milliseconds the roverd daemon process has been running | 
+**Os** | **string** | The operating system of the rover | 
+**Systime** | **int64** | The system time of the rover as milliseconds since epoch | 
 **RoverId** | Pointer to **int32** | The unique identifier of the rover | [optional] 
 **RoverName** | Pointer to **string** | The unique name of the rover | [optional] 
 
@@ -17,7 +17,7 @@ Name | Type | Description | Notes
 
 ### NewStatusGet200Response
 
-`func NewStatusGet200Response() *StatusGet200Response`
+`func NewStatusGet200Response(status DaemonStatus, version string, uptime int64, os string, systime int64, ) *StatusGet200Response`
 
 NewStatusGet200Response instantiates a new StatusGet200Response object
 This constructor will assign default values to properties that have it defined,
@@ -51,11 +51,6 @@ and a boolean to check if the value has been set.
 
 SetStatus sets Status field to given value.
 
-### HasStatus
-
-`func (o *StatusGet200Response) HasStatus() bool`
-
-HasStatus returns a boolean if a field has been set.
 
 ### GetErrorMessage
 
@@ -101,11 +96,6 @@ and a boolean to check if the value has been set.
 
 SetVersion sets Version field to given value.
 
-### HasVersion
-
-`func (o *StatusGet200Response) HasVersion() bool`
-
-HasVersion returns a boolean if a field has been set.
 
 ### GetUptime
 
@@ -126,11 +116,6 @@ and a boolean to check if the value has been set.
 
 SetUptime sets Uptime field to given value.
 
-### HasUptime
-
-`func (o *StatusGet200Response) HasUptime() bool`
-
-HasUptime returns a boolean if a field has been set.
 
 ### GetOs
 
@@ -151,11 +136,6 @@ and a boolean to check if the value has been set.
 
 SetOs sets Os field to given value.
 
-### HasOs
-
-`func (o *StatusGet200Response) HasOs() bool`
-
-HasOs returns a boolean if a field has been set.
 
 ### GetSystime
 
@@ -176,11 +156,6 @@ and a boolean to check if the value has been set.
 
 SetSystime sets Systime field to given value.
 
-### HasSystime
-
-`func (o *StatusGet200Response) HasSystime() bool`
-
-HasSystime returns a boolean if a field has been set.
 
 ### GetRoverId
 

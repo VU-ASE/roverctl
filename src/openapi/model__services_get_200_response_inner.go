@@ -12,6 +12,8 @@ package openapi
 
 import (
 	"encoding/json"
+	"bytes"
+	"fmt"
 )
 
 // checks if the ServicesGet200ResponseInner type satisfies the MappedNullable interface at compile time
@@ -20,18 +22,23 @@ var _ MappedNullable = &ServicesGet200ResponseInner{}
 // ServicesGet200ResponseInner struct for ServicesGet200ResponseInner
 type ServicesGet200ResponseInner struct {
 	// The name of the service
-	Name *string `json:"name,omitempty"`
-	Status *ServiceStatus `json:"status,omitempty"`
+	Name string `json:"name"`
+	Status ServiceStatus `json:"status"`
 	// The version that is enabled for this service (if any)
-	EnabledVersion *string `json:"enabled_version,omitempty"`
+	EnabledVersion string `json:"enabled_version"`
 }
+
+type _ServicesGet200ResponseInner ServicesGet200ResponseInner
 
 // NewServicesGet200ResponseInner instantiates a new ServicesGet200ResponseInner object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewServicesGet200ResponseInner() *ServicesGet200ResponseInner {
+func NewServicesGet200ResponseInner(name string, status ServiceStatus, enabledVersion string) *ServicesGet200ResponseInner {
 	this := ServicesGet200ResponseInner{}
+	this.Name = name
+	this.Status = status
+	this.EnabledVersion = enabledVersion
 	return &this
 }
 
@@ -43,100 +50,76 @@ func NewServicesGet200ResponseInnerWithDefaults() *ServicesGet200ResponseInner {
 	return &this
 }
 
-// GetName returns the Name field value if set, zero value otherwise.
+// GetName returns the Name field value
 func (o *ServicesGet200ResponseInner) GetName() string {
-	if o == nil || IsNil(o.Name) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.Name
+
+	return o.Name
 }
 
-// GetNameOk returns a tuple with the Name field value if set, nil otherwise
+// GetNameOk returns a tuple with the Name field value
 // and a boolean to check if the value has been set.
 func (o *ServicesGet200ResponseInner) GetNameOk() (*string, bool) {
-	if o == nil || IsNil(o.Name) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Name, true
+	return &o.Name, true
 }
 
-// HasName returns a boolean if a field has been set.
-func (o *ServicesGet200ResponseInner) HasName() bool {
-	if o != nil && !IsNil(o.Name) {
-		return true
-	}
-
-	return false
-}
-
-// SetName gets a reference to the given string and assigns it to the Name field.
+// SetName sets field value
 func (o *ServicesGet200ResponseInner) SetName(v string) {
-	o.Name = &v
+	o.Name = v
 }
 
-// GetStatus returns the Status field value if set, zero value otherwise.
+// GetStatus returns the Status field value
 func (o *ServicesGet200ResponseInner) GetStatus() ServiceStatus {
-	if o == nil || IsNil(o.Status) {
+	if o == nil {
 		var ret ServiceStatus
 		return ret
 	}
-	return *o.Status
+
+	return o.Status
 }
 
-// GetStatusOk returns a tuple with the Status field value if set, nil otherwise
+// GetStatusOk returns a tuple with the Status field value
 // and a boolean to check if the value has been set.
 func (o *ServicesGet200ResponseInner) GetStatusOk() (*ServiceStatus, bool) {
-	if o == nil || IsNil(o.Status) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Status, true
+	return &o.Status, true
 }
 
-// HasStatus returns a boolean if a field has been set.
-func (o *ServicesGet200ResponseInner) HasStatus() bool {
-	if o != nil && !IsNil(o.Status) {
-		return true
-	}
-
-	return false
-}
-
-// SetStatus gets a reference to the given ServiceStatus and assigns it to the Status field.
+// SetStatus sets field value
 func (o *ServicesGet200ResponseInner) SetStatus(v ServiceStatus) {
-	o.Status = &v
+	o.Status = v
 }
 
-// GetEnabledVersion returns the EnabledVersion field value if set, zero value otherwise.
+// GetEnabledVersion returns the EnabledVersion field value
 func (o *ServicesGet200ResponseInner) GetEnabledVersion() string {
-	if o == nil || IsNil(o.EnabledVersion) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.EnabledVersion
+
+	return o.EnabledVersion
 }
 
-// GetEnabledVersionOk returns a tuple with the EnabledVersion field value if set, nil otherwise
+// GetEnabledVersionOk returns a tuple with the EnabledVersion field value
 // and a boolean to check if the value has been set.
 func (o *ServicesGet200ResponseInner) GetEnabledVersionOk() (*string, bool) {
-	if o == nil || IsNil(o.EnabledVersion) {
+	if o == nil {
 		return nil, false
 	}
-	return o.EnabledVersion, true
+	return &o.EnabledVersion, true
 }
 
-// HasEnabledVersion returns a boolean if a field has been set.
-func (o *ServicesGet200ResponseInner) HasEnabledVersion() bool {
-	if o != nil && !IsNil(o.EnabledVersion) {
-		return true
-	}
-
-	return false
-}
-
-// SetEnabledVersion gets a reference to the given string and assigns it to the EnabledVersion field.
+// SetEnabledVersion sets field value
 func (o *ServicesGet200ResponseInner) SetEnabledVersion(v string) {
-	o.EnabledVersion = &v
+	o.EnabledVersion = v
 }
 
 func (o ServicesGet200ResponseInner) MarshalJSON() ([]byte, error) {
@@ -149,16 +132,49 @@ func (o ServicesGet200ResponseInner) MarshalJSON() ([]byte, error) {
 
 func (o ServicesGet200ResponseInner) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.Name) {
-		toSerialize["name"] = o.Name
-	}
-	if !IsNil(o.Status) {
-		toSerialize["status"] = o.Status
-	}
-	if !IsNil(o.EnabledVersion) {
-		toSerialize["enabled_version"] = o.EnabledVersion
-	}
+	toSerialize["name"] = o.Name
+	toSerialize["status"] = o.Status
+	toSerialize["enabled_version"] = o.EnabledVersion
 	return toSerialize, nil
+}
+
+func (o *ServicesGet200ResponseInner) UnmarshalJSON(data []byte) (err error) {
+	// This validates that all required properties are included in the JSON object
+	// by unmarshalling the object into a generic map with string keys and checking
+	// that every required field exists as a key in the generic map.
+	requiredProperties := []string{
+		"name",
+		"status",
+		"enabled_version",
+	}
+
+	allProperties := make(map[string]interface{})
+
+	err = json.Unmarshal(data, &allProperties)
+
+	if err != nil {
+		return err;
+	}
+
+	for _, requiredProperty := range(requiredProperties) {
+		if _, exists := allProperties[requiredProperty]; !exists {
+			return fmt.Errorf("no value given for required property %v", requiredProperty)
+		}
+	}
+
+	varServicesGet200ResponseInner := _ServicesGet200ResponseInner{}
+
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&varServicesGet200ResponseInner)
+
+	if err != nil {
+		return err
+	}
+
+	*o = ServicesGet200ResponseInner(varServicesGet200ResponseInner)
+
+	return err
 }
 
 type NullableServicesGet200ResponseInner struct {

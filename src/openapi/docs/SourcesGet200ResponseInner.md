@@ -4,16 +4,16 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Name** | Pointer to **string** | The name of the source | [optional] 
-**Url** | Pointer to **string** | The URL of the source (without scheme) | [optional] 
-**Version** | Pointer to **string** |  | [optional] 
+**Name** | **string** | The name of the source | 
+**Url** | **string** | The URL of the source (without scheme) | 
+**Version** | **string** |  | 
 **Sha** | Pointer to **string** | The SHA256 hash of the source download, computed over the ZIP file downloaded | [optional] 
 
 ## Methods
 
 ### NewSourcesGet200ResponseInner
 
-`func NewSourcesGet200ResponseInner() *SourcesGet200ResponseInner`
+`func NewSourcesGet200ResponseInner(name string, url string, version string, ) *SourcesGet200ResponseInner`
 
 NewSourcesGet200ResponseInner instantiates a new SourcesGet200ResponseInner object
 This constructor will assign default values to properties that have it defined,
@@ -47,11 +47,6 @@ and a boolean to check if the value has been set.
 
 SetName sets Name field to given value.
 
-### HasName
-
-`func (o *SourcesGet200ResponseInner) HasName() bool`
-
-HasName returns a boolean if a field has been set.
 
 ### GetUrl
 
@@ -72,11 +67,6 @@ and a boolean to check if the value has been set.
 
 SetUrl sets Url field to given value.
 
-### HasUrl
-
-`func (o *SourcesGet200ResponseInner) HasUrl() bool`
-
-HasUrl returns a boolean if a field has been set.
 
 ### GetVersion
 
@@ -97,11 +87,6 @@ and a boolean to check if the value has been set.
 
 SetVersion sets Version field to given value.
 
-### HasVersion
-
-`func (o *SourcesGet200ResponseInner) HasVersion() bool`
-
-HasVersion returns a boolean if a field has been set.
 
 ### GetSha
 

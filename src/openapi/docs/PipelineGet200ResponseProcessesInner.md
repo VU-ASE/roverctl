@@ -4,19 +4,19 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Name** | Pointer to **string** | The name of the service running as a process | [optional] 
-**Status** | Pointer to [**ProcessStatus**](ProcessStatus.md) |  | [optional] 
-**Pid** | Pointer to **int32** | The process ID | [optional] 
-**Uptime** | Pointer to **int64** | The number of milliseconds the process has been running | [optional] 
-**Memory** | Pointer to **int32** | The amount of memory used by the process in megabytes | [optional] 
-**Cpu** | Pointer to **int32** | The percentage of CPU used by the process | [optional] 
-**Faults** | Pointer to **int32** | The number of faults that have occurred (causing the pipeline to restart) since last_start | [optional] 
+**Name** | **string** | The name of the service running as a process | 
+**Status** | [**ProcessStatus**](ProcessStatus.md) |  | 
+**Pid** | **int32** | The process ID | 
+**Uptime** | **int64** | The number of milliseconds the process has been running | 
+**Memory** | **int32** | The amount of memory used by the process in megabytes | 
+**Cpu** | **int32** | The percentage of CPU used by the process | 
+**Faults** | **int32** | The number of faults that have occurred (causing the pipeline to restart) since last_start | 
 
 ## Methods
 
 ### NewPipelineGet200ResponseProcessesInner
 
-`func NewPipelineGet200ResponseProcessesInner() *PipelineGet200ResponseProcessesInner`
+`func NewPipelineGet200ResponseProcessesInner(name string, status ProcessStatus, pid int32, uptime int64, memory int32, cpu int32, faults int32, ) *PipelineGet200ResponseProcessesInner`
 
 NewPipelineGet200ResponseProcessesInner instantiates a new PipelineGet200ResponseProcessesInner object
 This constructor will assign default values to properties that have it defined,
@@ -50,11 +50,6 @@ and a boolean to check if the value has been set.
 
 SetName sets Name field to given value.
 
-### HasName
-
-`func (o *PipelineGet200ResponseProcessesInner) HasName() bool`
-
-HasName returns a boolean if a field has been set.
 
 ### GetStatus
 
@@ -75,11 +70,6 @@ and a boolean to check if the value has been set.
 
 SetStatus sets Status field to given value.
 
-### HasStatus
-
-`func (o *PipelineGet200ResponseProcessesInner) HasStatus() bool`
-
-HasStatus returns a boolean if a field has been set.
 
 ### GetPid
 
@@ -100,11 +90,6 @@ and a boolean to check if the value has been set.
 
 SetPid sets Pid field to given value.
 
-### HasPid
-
-`func (o *PipelineGet200ResponseProcessesInner) HasPid() bool`
-
-HasPid returns a boolean if a field has been set.
 
 ### GetUptime
 
@@ -125,11 +110,6 @@ and a boolean to check if the value has been set.
 
 SetUptime sets Uptime field to given value.
 
-### HasUptime
-
-`func (o *PipelineGet200ResponseProcessesInner) HasUptime() bool`
-
-HasUptime returns a boolean if a field has been set.
 
 ### GetMemory
 
@@ -150,11 +130,6 @@ and a boolean to check if the value has been set.
 
 SetMemory sets Memory field to given value.
 
-### HasMemory
-
-`func (o *PipelineGet200ResponseProcessesInner) HasMemory() bool`
-
-HasMemory returns a boolean if a field has been set.
 
 ### GetCpu
 
@@ -175,11 +150,6 @@ and a boolean to check if the value has been set.
 
 SetCpu sets Cpu field to given value.
 
-### HasCpu
-
-`func (o *PipelineGet200ResponseProcessesInner) HasCpu() bool`
-
-HasCpu returns a boolean if a field has been set.
 
 ### GetFaults
 
@@ -200,11 +170,6 @@ and a boolean to check if the value has been set.
 
 SetFaults sets Faults field to given value.
 
-### HasFaults
-
-`func (o *PipelineGet200ResponseProcessesInner) HasFaults() bool`
-
-HasFaults returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

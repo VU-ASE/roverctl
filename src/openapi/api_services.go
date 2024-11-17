@@ -34,7 +34,7 @@ func (r ApiServicesGetRequest) Execute() ([]ServicesGet200ResponseInner, *http.R
 }
 
 /*
-ServicesGet Retrieve all services and their status
+ServicesGet Retrieve all parsable services and their status from disk.
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiServicesGetRequest

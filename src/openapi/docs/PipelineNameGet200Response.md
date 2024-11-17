@@ -4,22 +4,22 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Name** | Pointer to **string** | The name of the service running as a process | [optional] 
-**Status** | Pointer to [**ProcessStatus**](ProcessStatus.md) |  | [optional] 
-**Pid** | Pointer to **int32** | The process ID | [optional] 
-**Uptime** | Pointer to **int64** | The number of milliseconds the process has been running | [optional] 
-**Memory** | Pointer to **int32** | The amount of memory used by the process in megabytes | [optional] 
-**Cpu** | Pointer to **int32** | The percentage of CPU used by the process | [optional] 
-**Faults** | Pointer to **int32** | The number of faults that have occurred (causing the pipeline to restart) since last_start | [optional] 
-**ServiceName** | Pointer to **string** | The name of the service that this process is running | [optional] 
-**ServiceVersion** | Pointer to **string** | The version of the service that this process is running | [optional] 
+**Name** | **string** | The name of the service running as a process | 
+**Status** | [**ProcessStatus**](ProcessStatus.md) |  | 
+**Pid** | **int32** | The process ID | 
+**Uptime** | **int64** | The number of milliseconds the process has been running | 
+**Memory** | **int32** | The amount of memory used by the process in megabytes | 
+**Cpu** | **int32** | The percentage of CPU used by the process | 
+**Faults** | **int32** | The number of faults that have occurred (causing the pipeline to restart) since last_start | 
+**ServiceName** | **string** | The name of the service that this process is running | 
+**ServiceVersion** | **string** | The version of the service that this process is running | 
 **Logs** | Pointer to **[]string** | The latest &lt;log_lines&gt; log lines of the process | [optional] 
 
 ## Methods
 
 ### NewPipelineNameGet200Response
 
-`func NewPipelineNameGet200Response() *PipelineNameGet200Response`
+`func NewPipelineNameGet200Response(name string, status ProcessStatus, pid int32, uptime int64, memory int32, cpu int32, faults int32, serviceName string, serviceVersion string, ) *PipelineNameGet200Response`
 
 NewPipelineNameGet200Response instantiates a new PipelineNameGet200Response object
 This constructor will assign default values to properties that have it defined,
@@ -53,11 +53,6 @@ and a boolean to check if the value has been set.
 
 SetName sets Name field to given value.
 
-### HasName
-
-`func (o *PipelineNameGet200Response) HasName() bool`
-
-HasName returns a boolean if a field has been set.
 
 ### GetStatus
 
@@ -78,11 +73,6 @@ and a boolean to check if the value has been set.
 
 SetStatus sets Status field to given value.
 
-### HasStatus
-
-`func (o *PipelineNameGet200Response) HasStatus() bool`
-
-HasStatus returns a boolean if a field has been set.
 
 ### GetPid
 
@@ -103,11 +93,6 @@ and a boolean to check if the value has been set.
 
 SetPid sets Pid field to given value.
 
-### HasPid
-
-`func (o *PipelineNameGet200Response) HasPid() bool`
-
-HasPid returns a boolean if a field has been set.
 
 ### GetUptime
 
@@ -128,11 +113,6 @@ and a boolean to check if the value has been set.
 
 SetUptime sets Uptime field to given value.
 
-### HasUptime
-
-`func (o *PipelineNameGet200Response) HasUptime() bool`
-
-HasUptime returns a boolean if a field has been set.
 
 ### GetMemory
 
@@ -153,11 +133,6 @@ and a boolean to check if the value has been set.
 
 SetMemory sets Memory field to given value.
 
-### HasMemory
-
-`func (o *PipelineNameGet200Response) HasMemory() bool`
-
-HasMemory returns a boolean if a field has been set.
 
 ### GetCpu
 
@@ -178,11 +153,6 @@ and a boolean to check if the value has been set.
 
 SetCpu sets Cpu field to given value.
 
-### HasCpu
-
-`func (o *PipelineNameGet200Response) HasCpu() bool`
-
-HasCpu returns a boolean if a field has been set.
 
 ### GetFaults
 
@@ -203,11 +173,6 @@ and a boolean to check if the value has been set.
 
 SetFaults sets Faults field to given value.
 
-### HasFaults
-
-`func (o *PipelineNameGet200Response) HasFaults() bool`
-
-HasFaults returns a boolean if a field has been set.
 
 ### GetServiceName
 
@@ -228,11 +193,6 @@ and a boolean to check if the value has been set.
 
 SetServiceName sets ServiceName field to given value.
 
-### HasServiceName
-
-`func (o *PipelineNameGet200Response) HasServiceName() bool`
-
-HasServiceName returns a boolean if a field has been set.
 
 ### GetServiceVersion
 
@@ -253,11 +213,6 @@ and a boolean to check if the value has been set.
 
 SetServiceVersion sets ServiceVersion field to given value.
 
-### HasServiceVersion
-
-`func (o *PipelineNameGet200Response) HasServiceVersion() bool`
-
-HasServiceVersion returns a boolean if a field has been set.
 
 ### GetLogs
 

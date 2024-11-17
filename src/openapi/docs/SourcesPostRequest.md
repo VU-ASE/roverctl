@@ -4,15 +4,15 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Name** | Pointer to **string** | The name of the source | [optional] 
-**Url** | Pointer to **string** | The URL of the source (without scheme) | [optional] 
-**Version** | Pointer to **string** | The version of the source | [optional] 
+**Name** | **string** | The name of the source | 
+**Url** | **string** | The URL of the source (without scheme) | 
+**Version** | **string** | The version of the source | 
 
 ## Methods
 
 ### NewSourcesPostRequest
 
-`func NewSourcesPostRequest() *SourcesPostRequest`
+`func NewSourcesPostRequest(name string, url string, version string, ) *SourcesPostRequest`
 
 NewSourcesPostRequest instantiates a new SourcesPostRequest object
 This constructor will assign default values to properties that have it defined,
@@ -46,11 +46,6 @@ and a boolean to check if the value has been set.
 
 SetName sets Name field to given value.
 
-### HasName
-
-`func (o *SourcesPostRequest) HasName() bool`
-
-HasName returns a boolean if a field has been set.
 
 ### GetUrl
 
@@ -71,11 +66,6 @@ and a boolean to check if the value has been set.
 
 SetUrl sets Url field to given value.
 
-### HasUrl
-
-`func (o *SourcesPostRequest) HasUrl() bool`
-
-HasUrl returns a boolean if a field has been set.
 
 ### GetVersion
 
@@ -96,11 +86,6 @@ and a boolean to check if the value has been set.
 
 SetVersion sets Version field to given value.
 
-### HasVersion
-
-`func (o *SourcesPostRequest) HasVersion() bool`
-
-HasVersion returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

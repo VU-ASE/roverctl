@@ -83,16 +83,15 @@ Class | Method | HTTP request | Description
 *PipelineAPI* | [**PipelineGet**](docs/PipelineAPI.md#pipelineget) | **Get** /pipeline | Retrieve pipeline status and process execution information
 *PipelineAPI* | [**PipelineNameGet**](docs/PipelineAPI.md#pipelinenameget) | **Get** /pipeline/{name} | Retrieve the status of a service running as a process in the pipeline
 *PipelineAPI* | [**PipelinePost**](docs/PipelineAPI.md#pipelinepost) | **Post** /pipeline | Start or stop the pipeline of all enabled services
-*ServicesAPI* | [**ServicesGet**](docs/ServicesAPI.md#servicesget) | **Get** /services | Retrieve all services and their status
+*ServicesAPI* | [**ServicesGet**](docs/ServicesAPI.md#servicesget) | **Get** /services | Retrieve all parsable services and their status from disk.
 *ServicesAPI* | [**ServicesNameGet**](docs/ServicesAPI.md#servicesnameget) | **Get** /services/{name} | Retrieve the status and versions of a service
 *ServicesAPI* | [**ServicesNameVersionDelete**](docs/ServicesAPI.md#servicesnameversiondelete) | **Delete** /services/{name}/{version} | Delete a specific version of a service
 *ServicesAPI* | [**ServicesNameVersionGet**](docs/ServicesAPI.md#servicesnameversionget) | **Get** /services/{name}/{version} | Retrieve the status of a specific version of a service
 *ServicesAPI* | [**ServicesNameVersionPost**](docs/ServicesAPI.md#servicesnameversionpost) | **Post** /services/{name}/{version} | Enable, disable or build a specific version of a service in the pipeline
 *ServicesAPI* | [**ServicesPost**](docs/ServicesAPI.md#servicespost) | **Post** /services | Upload a new service or new version to the rover by uploading a ZIP file
+*SourcesAPI* | [**SourcesDelete**](docs/SourcesAPI.md#sourcesdelete) | **Delete** /sources | Delete a source
 *SourcesAPI* | [**SourcesGet**](docs/SourcesAPI.md#sourcesget) | **Get** /sources | Retrieve all sources
-*SourcesAPI* | [**SourcesNameDelete**](docs/SourcesAPI.md#sourcesnamedelete) | **Delete** /sources/{name} | Delete a source
-*SourcesAPI* | [**SourcesNamePost**](docs/SourcesAPI.md#sourcesnamepost) | **Post** /sources/{name} | Download and install a service from a source
-*SourcesAPI* | [**SourcesPost**](docs/SourcesAPI.md#sourcespost) | **Post** /sources | Add a new source
+*SourcesAPI* | [**SourcesPost**](docs/SourcesAPI.md#sourcespost) | **Post** /sources | Downloads and installs a new source, adds it the &#39;downloaded&#39; in rover.yaml
 
 
 ## Documentation For Models
@@ -101,6 +100,7 @@ Class | Method | HTTP request | Description
  - [GenericError](docs/GenericError.md)
  - [PipelineGet200Response](docs/PipelineGet200Response.md)
  - [PipelineGet200ResponsePipeline](docs/PipelineGet200ResponsePipeline.md)
+ - [PipelineGet200ResponsePipelineValidationErrors](docs/PipelineGet200ResponsePipelineValidationErrors.md)
  - [PipelineGet200ResponseProcessesInner](docs/PipelineGet200ResponseProcessesInner.md)
  - [PipelineNameGet200Response](docs/PipelineNameGet200Response.md)
  - [PipelineStatus](docs/PipelineStatus.md)
@@ -112,9 +112,10 @@ Class | Method | HTTP request | Description
  - [ServicesNameVersionGet200ResponseInputsInner](docs/ServicesNameVersionGet200ResponseInputsInner.md)
  - [ServicesPost200Response](docs/ServicesPost200Response.md)
  - [SourcesGet200ResponseInner](docs/SourcesGet200ResponseInner.md)
- - [SourcesNamePost200Response](docs/SourcesNamePost200Response.md)
  - [SourcesPostRequest](docs/SourcesPostRequest.md)
  - [StatusGet200Response](docs/StatusGet200Response.md)
+ - [UnmetServiceError](docs/UnmetServiceError.md)
+ - [UnmetStreamError](docs/UnmetStreamError.md)
  - [UpdatePost200Response](docs/UpdatePost200Response.md)
 
 

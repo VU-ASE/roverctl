@@ -4,7 +4,7 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**ServicesGet**](ServicesAPI.md#ServicesGet) | **Get** /services | Retrieve all services and their status
+[**ServicesGet**](ServicesAPI.md#ServicesGet) | **Get** /services | Retrieve all parsable services and their status from disk.
 [**ServicesNameGet**](ServicesAPI.md#ServicesNameGet) | **Get** /services/{name} | Retrieve the status and versions of a service
 [**ServicesNameVersionDelete**](ServicesAPI.md#ServicesNameVersionDelete) | **Delete** /services/{name}/{version} | Delete a specific version of a service
 [**ServicesNameVersionGet**](ServicesAPI.md#ServicesNameVersionGet) | **Get** /services/{name}/{version} | Retrieve the status of a specific version of a service
@@ -17,7 +17,7 @@ Method | HTTP request | Description
 
 > []ServicesGet200ResponseInner ServicesGet(ctx).Execute()
 
-Retrieve all services and their status
+Retrieve all parsable services and their status from disk.
 
 ### Example
 

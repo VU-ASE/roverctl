@@ -12,6 +12,8 @@ package openapi
 
 import (
 	"encoding/json"
+	"bytes"
+	"fmt"
 )
 
 // checks if the SourcesPostRequest type satisfies the MappedNullable interface at compile time
@@ -20,19 +22,24 @@ var _ MappedNullable = &SourcesPostRequest{}
 // SourcesPostRequest struct for SourcesPostRequest
 type SourcesPostRequest struct {
 	// The name of the source
-	Name *string `json:"name,omitempty"`
+	Name string `json:"name"`
 	// The URL of the source (without scheme)
-	Url *string `json:"url,omitempty"`
+	Url string `json:"url"`
 	// The version of the source
-	Version *string `json:"version,omitempty"`
+	Version string `json:"version"`
 }
+
+type _SourcesPostRequest SourcesPostRequest
 
 // NewSourcesPostRequest instantiates a new SourcesPostRequest object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSourcesPostRequest() *SourcesPostRequest {
+func NewSourcesPostRequest(name string, url string, version string) *SourcesPostRequest {
 	this := SourcesPostRequest{}
+	this.Name = name
+	this.Url = url
+	this.Version = version
 	return &this
 }
 
@@ -44,100 +51,76 @@ func NewSourcesPostRequestWithDefaults() *SourcesPostRequest {
 	return &this
 }
 
-// GetName returns the Name field value if set, zero value otherwise.
+// GetName returns the Name field value
 func (o *SourcesPostRequest) GetName() string {
-	if o == nil || IsNil(o.Name) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.Name
+
+	return o.Name
 }
 
-// GetNameOk returns a tuple with the Name field value if set, nil otherwise
+// GetNameOk returns a tuple with the Name field value
 // and a boolean to check if the value has been set.
 func (o *SourcesPostRequest) GetNameOk() (*string, bool) {
-	if o == nil || IsNil(o.Name) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Name, true
+	return &o.Name, true
 }
 
-// HasName returns a boolean if a field has been set.
-func (o *SourcesPostRequest) HasName() bool {
-	if o != nil && !IsNil(o.Name) {
-		return true
-	}
-
-	return false
-}
-
-// SetName gets a reference to the given string and assigns it to the Name field.
+// SetName sets field value
 func (o *SourcesPostRequest) SetName(v string) {
-	o.Name = &v
+	o.Name = v
 }
 
-// GetUrl returns the Url field value if set, zero value otherwise.
+// GetUrl returns the Url field value
 func (o *SourcesPostRequest) GetUrl() string {
-	if o == nil || IsNil(o.Url) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.Url
+
+	return o.Url
 }
 
-// GetUrlOk returns a tuple with the Url field value if set, nil otherwise
+// GetUrlOk returns a tuple with the Url field value
 // and a boolean to check if the value has been set.
 func (o *SourcesPostRequest) GetUrlOk() (*string, bool) {
-	if o == nil || IsNil(o.Url) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Url, true
+	return &o.Url, true
 }
 
-// HasUrl returns a boolean if a field has been set.
-func (o *SourcesPostRequest) HasUrl() bool {
-	if o != nil && !IsNil(o.Url) {
-		return true
-	}
-
-	return false
-}
-
-// SetUrl gets a reference to the given string and assigns it to the Url field.
+// SetUrl sets field value
 func (o *SourcesPostRequest) SetUrl(v string) {
-	o.Url = &v
+	o.Url = v
 }
 
-// GetVersion returns the Version field value if set, zero value otherwise.
+// GetVersion returns the Version field value
 func (o *SourcesPostRequest) GetVersion() string {
-	if o == nil || IsNil(o.Version) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.Version
+
+	return o.Version
 }
 
-// GetVersionOk returns a tuple with the Version field value if set, nil otherwise
+// GetVersionOk returns a tuple with the Version field value
 // and a boolean to check if the value has been set.
 func (o *SourcesPostRequest) GetVersionOk() (*string, bool) {
-	if o == nil || IsNil(o.Version) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Version, true
+	return &o.Version, true
 }
 
-// HasVersion returns a boolean if a field has been set.
-func (o *SourcesPostRequest) HasVersion() bool {
-	if o != nil && !IsNil(o.Version) {
-		return true
-	}
-
-	return false
-}
-
-// SetVersion gets a reference to the given string and assigns it to the Version field.
+// SetVersion sets field value
 func (o *SourcesPostRequest) SetVersion(v string) {
-	o.Version = &v
+	o.Version = v
 }
 
 func (o SourcesPostRequest) MarshalJSON() ([]byte, error) {
@@ -150,16 +133,49 @@ func (o SourcesPostRequest) MarshalJSON() ([]byte, error) {
 
 func (o SourcesPostRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.Name) {
-		toSerialize["name"] = o.Name
-	}
-	if !IsNil(o.Url) {
-		toSerialize["url"] = o.Url
-	}
-	if !IsNil(o.Version) {
-		toSerialize["version"] = o.Version
-	}
+	toSerialize["name"] = o.Name
+	toSerialize["url"] = o.Url
+	toSerialize["version"] = o.Version
 	return toSerialize, nil
+}
+
+func (o *SourcesPostRequest) UnmarshalJSON(data []byte) (err error) {
+	// This validates that all required properties are included in the JSON object
+	// by unmarshalling the object into a generic map with string keys and checking
+	// that every required field exists as a key in the generic map.
+	requiredProperties := []string{
+		"name",
+		"url",
+		"version",
+	}
+
+	allProperties := make(map[string]interface{})
+
+	err = json.Unmarshal(data, &allProperties)
+
+	if err != nil {
+		return err;
+	}
+
+	for _, requiredProperty := range(requiredProperties) {
+		if _, exists := allProperties[requiredProperty]; !exists {
+			return fmt.Errorf("no value given for required property %v", requiredProperty)
+		}
+	}
+
+	varSourcesPostRequest := _SourcesPostRequest{}
+
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&varSourcesPostRequest)
+
+	if err != nil {
+		return err
+	}
+
+	*o = SourcesPostRequest(varSourcesPostRequest)
+
+	return err
 }
 
 type NullableSourcesPostRequest struct {

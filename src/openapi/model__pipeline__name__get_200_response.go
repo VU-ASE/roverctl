@@ -12,6 +12,8 @@ package openapi
 
 import (
 	"encoding/json"
+	"bytes"
+	"fmt"
 )
 
 // checks if the PipelineNameGet200Response type satisfies the MappedNullable interface at compile time
@@ -20,32 +22,43 @@ var _ MappedNullable = &PipelineNameGet200Response{}
 // PipelineNameGet200Response struct for PipelineNameGet200Response
 type PipelineNameGet200Response struct {
 	// The name of the service running as a process
-	Name *string `json:"name,omitempty"`
-	Status *ProcessStatus `json:"status,omitempty"`
+	Name string `json:"name"`
+	Status ProcessStatus `json:"status"`
 	// The process ID
-	Pid *int32 `json:"pid,omitempty"`
+	Pid int32 `json:"pid"`
 	// The number of milliseconds the process has been running
-	Uptime *int64 `json:"uptime,omitempty"`
+	Uptime int64 `json:"uptime"`
 	// The amount of memory used by the process in megabytes
-	Memory *int32 `json:"memory,omitempty"`
+	Memory int32 `json:"memory"`
 	// The percentage of CPU used by the process
-	Cpu *int32 `json:"cpu,omitempty"`
+	Cpu int32 `json:"cpu"`
 	// The number of faults that have occurred (causing the pipeline to restart) since last_start
-	Faults *int32 `json:"faults,omitempty"`
+	Faults int32 `json:"faults"`
 	// The name of the service that this process is running
-	ServiceName *string `json:"service_name,omitempty"`
+	ServiceName string `json:"service_name"`
 	// The version of the service that this process is running
-	ServiceVersion *string `json:"service_version,omitempty"`
+	ServiceVersion string `json:"service_version"`
 	// The latest <log_lines> log lines of the process
 	Logs []string `json:"logs,omitempty"`
 }
+
+type _PipelineNameGet200Response PipelineNameGet200Response
 
 // NewPipelineNameGet200Response instantiates a new PipelineNameGet200Response object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewPipelineNameGet200Response() *PipelineNameGet200Response {
+func NewPipelineNameGet200Response(name string, status ProcessStatus, pid int32, uptime int64, memory int32, cpu int32, faults int32, serviceName string, serviceVersion string) *PipelineNameGet200Response {
 	this := PipelineNameGet200Response{}
+	this.Name = name
+	this.Status = status
+	this.Pid = pid
+	this.Uptime = uptime
+	this.Memory = memory
+	this.Cpu = cpu
+	this.Faults = faults
+	this.ServiceName = serviceName
+	this.ServiceVersion = serviceVersion
 	return &this
 }
 
@@ -57,292 +70,220 @@ func NewPipelineNameGet200ResponseWithDefaults() *PipelineNameGet200Response {
 	return &this
 }
 
-// GetName returns the Name field value if set, zero value otherwise.
+// GetName returns the Name field value
 func (o *PipelineNameGet200Response) GetName() string {
-	if o == nil || IsNil(o.Name) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.Name
+
+	return o.Name
 }
 
-// GetNameOk returns a tuple with the Name field value if set, nil otherwise
+// GetNameOk returns a tuple with the Name field value
 // and a boolean to check if the value has been set.
 func (o *PipelineNameGet200Response) GetNameOk() (*string, bool) {
-	if o == nil || IsNil(o.Name) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Name, true
+	return &o.Name, true
 }
 
-// HasName returns a boolean if a field has been set.
-func (o *PipelineNameGet200Response) HasName() bool {
-	if o != nil && !IsNil(o.Name) {
-		return true
-	}
-
-	return false
-}
-
-// SetName gets a reference to the given string and assigns it to the Name field.
+// SetName sets field value
 func (o *PipelineNameGet200Response) SetName(v string) {
-	o.Name = &v
+	o.Name = v
 }
 
-// GetStatus returns the Status field value if set, zero value otherwise.
+// GetStatus returns the Status field value
 func (o *PipelineNameGet200Response) GetStatus() ProcessStatus {
-	if o == nil || IsNil(o.Status) {
+	if o == nil {
 		var ret ProcessStatus
 		return ret
 	}
-	return *o.Status
+
+	return o.Status
 }
 
-// GetStatusOk returns a tuple with the Status field value if set, nil otherwise
+// GetStatusOk returns a tuple with the Status field value
 // and a boolean to check if the value has been set.
 func (o *PipelineNameGet200Response) GetStatusOk() (*ProcessStatus, bool) {
-	if o == nil || IsNil(o.Status) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Status, true
+	return &o.Status, true
 }
 
-// HasStatus returns a boolean if a field has been set.
-func (o *PipelineNameGet200Response) HasStatus() bool {
-	if o != nil && !IsNil(o.Status) {
-		return true
-	}
-
-	return false
-}
-
-// SetStatus gets a reference to the given ProcessStatus and assigns it to the Status field.
+// SetStatus sets field value
 func (o *PipelineNameGet200Response) SetStatus(v ProcessStatus) {
-	o.Status = &v
+	o.Status = v
 }
 
-// GetPid returns the Pid field value if set, zero value otherwise.
+// GetPid returns the Pid field value
 func (o *PipelineNameGet200Response) GetPid() int32 {
-	if o == nil || IsNil(o.Pid) {
+	if o == nil {
 		var ret int32
 		return ret
 	}
-	return *o.Pid
+
+	return o.Pid
 }
 
-// GetPidOk returns a tuple with the Pid field value if set, nil otherwise
+// GetPidOk returns a tuple with the Pid field value
 // and a boolean to check if the value has been set.
 func (o *PipelineNameGet200Response) GetPidOk() (*int32, bool) {
-	if o == nil || IsNil(o.Pid) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Pid, true
+	return &o.Pid, true
 }
 
-// HasPid returns a boolean if a field has been set.
-func (o *PipelineNameGet200Response) HasPid() bool {
-	if o != nil && !IsNil(o.Pid) {
-		return true
-	}
-
-	return false
-}
-
-// SetPid gets a reference to the given int32 and assigns it to the Pid field.
+// SetPid sets field value
 func (o *PipelineNameGet200Response) SetPid(v int32) {
-	o.Pid = &v
+	o.Pid = v
 }
 
-// GetUptime returns the Uptime field value if set, zero value otherwise.
+// GetUptime returns the Uptime field value
 func (o *PipelineNameGet200Response) GetUptime() int64 {
-	if o == nil || IsNil(o.Uptime) {
+	if o == nil {
 		var ret int64
 		return ret
 	}
-	return *o.Uptime
+
+	return o.Uptime
 }
 
-// GetUptimeOk returns a tuple with the Uptime field value if set, nil otherwise
+// GetUptimeOk returns a tuple with the Uptime field value
 // and a boolean to check if the value has been set.
 func (o *PipelineNameGet200Response) GetUptimeOk() (*int64, bool) {
-	if o == nil || IsNil(o.Uptime) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Uptime, true
+	return &o.Uptime, true
 }
 
-// HasUptime returns a boolean if a field has been set.
-func (o *PipelineNameGet200Response) HasUptime() bool {
-	if o != nil && !IsNil(o.Uptime) {
-		return true
-	}
-
-	return false
-}
-
-// SetUptime gets a reference to the given int64 and assigns it to the Uptime field.
+// SetUptime sets field value
 func (o *PipelineNameGet200Response) SetUptime(v int64) {
-	o.Uptime = &v
+	o.Uptime = v
 }
 
-// GetMemory returns the Memory field value if set, zero value otherwise.
+// GetMemory returns the Memory field value
 func (o *PipelineNameGet200Response) GetMemory() int32 {
-	if o == nil || IsNil(o.Memory) {
+	if o == nil {
 		var ret int32
 		return ret
 	}
-	return *o.Memory
+
+	return o.Memory
 }
 
-// GetMemoryOk returns a tuple with the Memory field value if set, nil otherwise
+// GetMemoryOk returns a tuple with the Memory field value
 // and a boolean to check if the value has been set.
 func (o *PipelineNameGet200Response) GetMemoryOk() (*int32, bool) {
-	if o == nil || IsNil(o.Memory) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Memory, true
+	return &o.Memory, true
 }
 
-// HasMemory returns a boolean if a field has been set.
-func (o *PipelineNameGet200Response) HasMemory() bool {
-	if o != nil && !IsNil(o.Memory) {
-		return true
-	}
-
-	return false
-}
-
-// SetMemory gets a reference to the given int32 and assigns it to the Memory field.
+// SetMemory sets field value
 func (o *PipelineNameGet200Response) SetMemory(v int32) {
-	o.Memory = &v
+	o.Memory = v
 }
 
-// GetCpu returns the Cpu field value if set, zero value otherwise.
+// GetCpu returns the Cpu field value
 func (o *PipelineNameGet200Response) GetCpu() int32 {
-	if o == nil || IsNil(o.Cpu) {
+	if o == nil {
 		var ret int32
 		return ret
 	}
-	return *o.Cpu
+
+	return o.Cpu
 }
 
-// GetCpuOk returns a tuple with the Cpu field value if set, nil otherwise
+// GetCpuOk returns a tuple with the Cpu field value
 // and a boolean to check if the value has been set.
 func (o *PipelineNameGet200Response) GetCpuOk() (*int32, bool) {
-	if o == nil || IsNil(o.Cpu) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Cpu, true
+	return &o.Cpu, true
 }
 
-// HasCpu returns a boolean if a field has been set.
-func (o *PipelineNameGet200Response) HasCpu() bool {
-	if o != nil && !IsNil(o.Cpu) {
-		return true
-	}
-
-	return false
-}
-
-// SetCpu gets a reference to the given int32 and assigns it to the Cpu field.
+// SetCpu sets field value
 func (o *PipelineNameGet200Response) SetCpu(v int32) {
-	o.Cpu = &v
+	o.Cpu = v
 }
 
-// GetFaults returns the Faults field value if set, zero value otherwise.
+// GetFaults returns the Faults field value
 func (o *PipelineNameGet200Response) GetFaults() int32 {
-	if o == nil || IsNil(o.Faults) {
+	if o == nil {
 		var ret int32
 		return ret
 	}
-	return *o.Faults
+
+	return o.Faults
 }
 
-// GetFaultsOk returns a tuple with the Faults field value if set, nil otherwise
+// GetFaultsOk returns a tuple with the Faults field value
 // and a boolean to check if the value has been set.
 func (o *PipelineNameGet200Response) GetFaultsOk() (*int32, bool) {
-	if o == nil || IsNil(o.Faults) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Faults, true
+	return &o.Faults, true
 }
 
-// HasFaults returns a boolean if a field has been set.
-func (o *PipelineNameGet200Response) HasFaults() bool {
-	if o != nil && !IsNil(o.Faults) {
-		return true
-	}
-
-	return false
-}
-
-// SetFaults gets a reference to the given int32 and assigns it to the Faults field.
+// SetFaults sets field value
 func (o *PipelineNameGet200Response) SetFaults(v int32) {
-	o.Faults = &v
+	o.Faults = v
 }
 
-// GetServiceName returns the ServiceName field value if set, zero value otherwise.
+// GetServiceName returns the ServiceName field value
 func (o *PipelineNameGet200Response) GetServiceName() string {
-	if o == nil || IsNil(o.ServiceName) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.ServiceName
+
+	return o.ServiceName
 }
 
-// GetServiceNameOk returns a tuple with the ServiceName field value if set, nil otherwise
+// GetServiceNameOk returns a tuple with the ServiceName field value
 // and a boolean to check if the value has been set.
 func (o *PipelineNameGet200Response) GetServiceNameOk() (*string, bool) {
-	if o == nil || IsNil(o.ServiceName) {
+	if o == nil {
 		return nil, false
 	}
-	return o.ServiceName, true
+	return &o.ServiceName, true
 }
 
-// HasServiceName returns a boolean if a field has been set.
-func (o *PipelineNameGet200Response) HasServiceName() bool {
-	if o != nil && !IsNil(o.ServiceName) {
-		return true
-	}
-
-	return false
-}
-
-// SetServiceName gets a reference to the given string and assigns it to the ServiceName field.
+// SetServiceName sets field value
 func (o *PipelineNameGet200Response) SetServiceName(v string) {
-	o.ServiceName = &v
+	o.ServiceName = v
 }
 
-// GetServiceVersion returns the ServiceVersion field value if set, zero value otherwise.
+// GetServiceVersion returns the ServiceVersion field value
 func (o *PipelineNameGet200Response) GetServiceVersion() string {
-	if o == nil || IsNil(o.ServiceVersion) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.ServiceVersion
+
+	return o.ServiceVersion
 }
 
-// GetServiceVersionOk returns a tuple with the ServiceVersion field value if set, nil otherwise
+// GetServiceVersionOk returns a tuple with the ServiceVersion field value
 // and a boolean to check if the value has been set.
 func (o *PipelineNameGet200Response) GetServiceVersionOk() (*string, bool) {
-	if o == nil || IsNil(o.ServiceVersion) {
+	if o == nil {
 		return nil, false
 	}
-	return o.ServiceVersion, true
+	return &o.ServiceVersion, true
 }
 
-// HasServiceVersion returns a boolean if a field has been set.
-func (o *PipelineNameGet200Response) HasServiceVersion() bool {
-	if o != nil && !IsNil(o.ServiceVersion) {
-		return true
-	}
-
-	return false
-}
-
-// SetServiceVersion gets a reference to the given string and assigns it to the ServiceVersion field.
+// SetServiceVersion sets field value
 func (o *PipelineNameGet200Response) SetServiceVersion(v string) {
-	o.ServiceVersion = &v
+	o.ServiceVersion = v
 }
 
 // GetLogs returns the Logs field value if set, zero value otherwise.
@@ -387,37 +328,64 @@ func (o PipelineNameGet200Response) MarshalJSON() ([]byte, error) {
 
 func (o PipelineNameGet200Response) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.Name) {
-		toSerialize["name"] = o.Name
-	}
-	if !IsNil(o.Status) {
-		toSerialize["status"] = o.Status
-	}
-	if !IsNil(o.Pid) {
-		toSerialize["pid"] = o.Pid
-	}
-	if !IsNil(o.Uptime) {
-		toSerialize["uptime"] = o.Uptime
-	}
-	if !IsNil(o.Memory) {
-		toSerialize["memory"] = o.Memory
-	}
-	if !IsNil(o.Cpu) {
-		toSerialize["cpu"] = o.Cpu
-	}
-	if !IsNil(o.Faults) {
-		toSerialize["faults"] = o.Faults
-	}
-	if !IsNil(o.ServiceName) {
-		toSerialize["service_name"] = o.ServiceName
-	}
-	if !IsNil(o.ServiceVersion) {
-		toSerialize["service_version"] = o.ServiceVersion
-	}
+	toSerialize["name"] = o.Name
+	toSerialize["status"] = o.Status
+	toSerialize["pid"] = o.Pid
+	toSerialize["uptime"] = o.Uptime
+	toSerialize["memory"] = o.Memory
+	toSerialize["cpu"] = o.Cpu
+	toSerialize["faults"] = o.Faults
+	toSerialize["service_name"] = o.ServiceName
+	toSerialize["service_version"] = o.ServiceVersion
 	if !IsNil(o.Logs) {
 		toSerialize["logs"] = o.Logs
 	}
 	return toSerialize, nil
+}
+
+func (o *PipelineNameGet200Response) UnmarshalJSON(data []byte) (err error) {
+	// This validates that all required properties are included in the JSON object
+	// by unmarshalling the object into a generic map with string keys and checking
+	// that every required field exists as a key in the generic map.
+	requiredProperties := []string{
+		"name",
+		"status",
+		"pid",
+		"uptime",
+		"memory",
+		"cpu",
+		"faults",
+		"service_name",
+		"service_version",
+	}
+
+	allProperties := make(map[string]interface{})
+
+	err = json.Unmarshal(data, &allProperties)
+
+	if err != nil {
+		return err;
+	}
+
+	for _, requiredProperty := range(requiredProperties) {
+		if _, exists := allProperties[requiredProperty]; !exists {
+			return fmt.Errorf("no value given for required property %v", requiredProperty)
+		}
+	}
+
+	varPipelineNameGet200Response := _PipelineNameGet200Response{}
+
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&varPipelineNameGet200Response)
+
+	if err != nil {
+		return err
+	}
+
+	*o = PipelineNameGet200Response(varPipelineNameGet200Response)
+
+	return err
 }
 
 type NullablePipelineNameGet200Response struct {

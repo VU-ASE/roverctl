@@ -21,7 +21,7 @@ type UtilitiesPage struct {
 func NewUtilitiesPage() UtilitiesPage {
 	l := list.New([]list.Item{
 		components.ActionItem{Name: "SSH", Desc: "Open an SSH terminal to your Rover"},
-		components.ActionItem{Name: "Info", Desc: "Info about roverctl on your local system"},
+		components.ActionItem{Name: "Info", Desc: "Information about roverctl and roverd installations"},
 	}, list.NewDefaultDelegate(), 0, 0)
 	// If there are connections available, add the connected actions
 	l.Title = lipgloss.NewStyle().Foreground(style.AsePrimary).Padding(0, 0).Render("Utilities")

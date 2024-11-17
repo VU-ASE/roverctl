@@ -4,16 +4,16 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Name** | Pointer to **string** | The name of the service | [optional] 
-**Status** | Pointer to [**ServiceStatus**](ServiceStatus.md) |  | [optional] 
-**Versions** | Pointer to **[]string** |  | [optional] 
+**Name** | **string** | The name of the service | 
+**Status** | [**ServiceStatus**](ServiceStatus.md) |  | 
+**Versions** | **[]string** |  | 
 **EnabledVersion** | Pointer to **string** | The version that is enabled for this service (if any) | [optional] 
 
 ## Methods
 
 ### NewServicesNameGet200Response
 
-`func NewServicesNameGet200Response() *ServicesNameGet200Response`
+`func NewServicesNameGet200Response(name string, status ServiceStatus, versions []string, ) *ServicesNameGet200Response`
 
 NewServicesNameGet200Response instantiates a new ServicesNameGet200Response object
 This constructor will assign default values to properties that have it defined,
@@ -47,11 +47,6 @@ and a boolean to check if the value has been set.
 
 SetName sets Name field to given value.
 
-### HasName
-
-`func (o *ServicesNameGet200Response) HasName() bool`
-
-HasName returns a boolean if a field has been set.
 
 ### GetStatus
 
@@ -72,11 +67,6 @@ and a boolean to check if the value has been set.
 
 SetStatus sets Status field to given value.
 
-### HasStatus
-
-`func (o *ServicesNameGet200Response) HasStatus() bool`
-
-HasStatus returns a boolean if a field has been set.
 
 ### GetVersions
 
@@ -97,11 +87,6 @@ and a boolean to check if the value has been set.
 
 SetVersions sets Versions field to given value.
 
-### HasVersions
-
-`func (o *ServicesNameGet200Response) HasVersions() bool`
-
-HasVersions returns a boolean if a field has been set.
 
 ### GetEnabledVersion
 

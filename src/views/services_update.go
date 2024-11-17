@@ -111,8 +111,8 @@ func (m ServicesUpdatePage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.sourceList.IsSuccess() && len(m.serviceUpdates) <= 0 {
 				cmds := []tea.Cmd{}
 				for _, source := range *m.sourceList.Data {
-					m.serviceUpdates[*source.Name] = tui.NewAction[openapi.SourcesNamePost200Response](*source.Name)
-					cmds = append(cmds, updateService(m, *source.Name))
+					m.serviceUpdates[source.Name] = tui.NewAction[openapi.SourcesNamePost200Response](source.Name)
+					cmds = append(cmds, updateService(m, source.Name))
 				}
 				return m, tea.Batch(cmds...)
 			}
@@ -205,7 +205,7 @@ func (m ServicesUpdatePage) fetchSourcesView() string {
 			}() + " will be updated:\n"
 
 			for _, source := range *m.sourceList.Data {
-				s += "\n - " + lipgloss.NewStyle().Bold(true).Render(*source.Name) + " " + lipgloss.NewStyle().Foreground(style.AsePrimary).Render(*source.Url) + " " + lipgloss.NewStyle().Foreground(style.GrayPrimary).Render("(now at v"+*source.Version+")")
+				s += "\n - " + lipgloss.NewStyle().Bold(true).Render(source.Name) + " " + lipgloss.NewStyle().Foreground(style.AsePrimary).Render(source.Url) + " " + lipgloss.NewStyle().Foreground(style.GrayPrimary).Render("(now at v"+source.Version+")")
 			}
 
 			s += "\n\n" + m.help.View(successFetchSourcesKeys)
@@ -244,8 +244,8 @@ func (m ServicesUpdatePage) testConnectionView() string {
 			oldVersion := "unknown"
 			if source := m.sourceList.Data; source != nil {
 				for _, s := range *source {
-					if *s.Name == name {
-						oldVersion = *s.Version
+					if s.Name == name {
+						oldVersion = s.Version
 						break
 					}
 				}
@@ -296,21 +296,21 @@ func fetchSources(m ServicesUpdatePage) tea.Cmd {
 
 		sources := []openapi.SourcesGet200ResponseInner{
 			{
-				Name:    openapi.PtrString("source1"),
-				Version: openapi.PtrString("1.0.0"),
-				Url:     openapi.PtrString("https://example.com/source1"),
+				Name:    ("source1"),
+				Version: ("1.0.0"),
+				Url:     ("https://example.com/source1"),
 				Sha:     openapi.PtrString("1234567890"),
 			},
 			{
-				Name:    openapi.PtrString("source2a"),
-				Version: openapi.PtrString("1.0.0"),
-				Url:     openapi.PtrString("https://example.com/source2"),
+				Name:    ("source2a"),
+				Version: ("1.0.0"),
+				Url:     ("https://example.com/source2"),
 				Sha:     openapi.PtrString("1234567890"),
 			},
 			{
-				Name:    openapi.PtrString("source3"),
-				Version: openapi.PtrString("1.0.1"),
-				Url:     openapi.PtrString("https://example.com/source1"),
+				Name:    ("source3"),
+				Version: ("1.0.1"),
+				Url:     ("https://example.com/source1"),
 				Sha:     openapi.PtrString("1234567890"),
 			},
 		}

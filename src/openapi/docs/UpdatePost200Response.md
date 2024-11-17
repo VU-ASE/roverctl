@@ -4,13 +4,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Version** | Pointer to **string** | The version of the roverd daemon updated to | [optional] 
+**Version** | **string** | The version of the roverd daemon updated to | 
 
 ## Methods
 
 ### NewUpdatePost200Response
 
-`func NewUpdatePost200Response() *UpdatePost200Response`
+`func NewUpdatePost200Response(version string, ) *UpdatePost200Response`
 
 NewUpdatePost200Response instantiates a new UpdatePost200Response object
 This constructor will assign default values to properties that have it defined,
@@ -44,11 +44,6 @@ and a boolean to check if the value has been set.
 
 SetVersion sets Version field to given value.
 
-### HasVersion
-
-`func (o *UpdatePost200Response) HasVersion() bool`
-
-HasVersion returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
