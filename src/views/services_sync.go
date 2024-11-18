@@ -12,6 +12,8 @@ import (
 	"github.com/VU-ASE/rover/src/openapi"
 	"github.com/VU-ASE/rover/src/style"
 	"github.com/VU-ASE/rover/src/tui"
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/radovskyb/watcher"
@@ -28,6 +30,38 @@ type ServicesSyncPage struct {
 	channel       chan fileChangeMsg
 	watchDebounce time.Duration // debounce time for collecting changes
 	spinner       spinner.Model
+	help          help.Model
+}
+
+type ServicesSyncKeyMap struct {
+	Retry key.Binding
+	Quit  key.Binding
+}
+
+func (k ServicesSyncKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{k.Retry, k.Quit}
+}
+
+func (k ServicesSyncKeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{}
+}
+
+var serviceSyncKeysFailure = ServicesSyncKeyMap{
+	Retry: key.NewBinding(
+		key.WithKeys("r"),
+		key.WithHelp("r", "retry"),
+	),
+	Quit: key.NewBinding(
+		key.WithKeys("q"),
+		key.WithHelp("q", "quit"),
+	),
+}
+
+var serviceSyncKeysRegular = ServicesSyncKeyMap{
+	Quit: key.NewBinding(
+		key.WithKeys("q"),
+		key.WithHelp("q", "quit"),
+	),
 }
 
 func NewServicesSyncPage() ServicesSyncPage {
@@ -47,6 +81,7 @@ func NewServicesSyncPage() ServicesSyncPage {
 		watchDebounce: 500 * time.Millisecond,
 		spinner:       sp,
 		uploading:     uploading,
+		help:          help.New(),
 	}
 	go model.watch(".", ch)
 	return model
@@ -60,6 +95,8 @@ func (m ServicesSyncPage) Init() tea.Cmd {
 }
 
 func (m ServicesSyncPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+
 	switch msg := msg.(type) {
 	case tui.ActionInit[openapi.ServicesPost200Response]:
 		m.uploading.ProcessInit(msg)
@@ -68,8 +105,6 @@ func (m ServicesSyncPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.uploading.ProcessResult(msg)
 		if m.uploading.IsSuccess() {
 			return m, m.collectChanges(nil)
-		} else if m.uploading.IsError() {
-			return m, m.collectChanges(m.changes.Data)
 		}
 		return m, nil
 	case tui.ActionInit[[]fileChangeMsg]:
@@ -81,42 +116,20 @@ func (m ServicesSyncPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.uploadChanges()
 		}
 		return m, nil
+	case key.Help:
+		m.help, cmd = m.help.Update(msg)
+		return m, cmd
 	case spinner.TickMsg:
-		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, serviceSyncKeysFailure.Retry):
+			if m.uploading.IsError() {
+				return m, m.uploadChanges()
+			}
+		}
 	}
-
-	// switch msg := msg.(type) {
-	// case tea.WindowSizeMsg:
-	// h, v := style.Docstyle.GetFrameSize()
-
-	// Is it a key press?
-	// case tea.KeyMsg:
-	// 	// Cool, what was the actual key pressed?
-	// 	switch msg.String() {
-	// 	case "enter":
-	// 		value := m.actions.SelectedItem().FilterValue()
-	// 		if value != "" {
-	// 			switch value {
-	// 			case "Initialize":
-	// 				return RootScreen(state.Get()).SwitchScreen(NewServiceInitPage())
-	// 			case "Upload":
-	// 				value = "service upload"
-	// 			case "Update":
-	// 				return RootScreen(state.Get()).SwitchScreen(NewServicesUpdatePage())
-	// 			case "Download":
-	// 				value = "service download"
-	// 			}
-	// 			// state.Get().Route.Push(value)
-	// 			return m, tea.Quit
-	// 		}
-	// 	}
-	// }
-
-	// var cmd tea.Cmd
-	// m.actions, cmd = m.actions.Update(msg)
-	// return m, cmd
 
 	return m, nil
 }
@@ -125,13 +138,15 @@ func (m ServicesSyncPage) View() string {
 	s := style.Title.Render("Synchronize service") + "\n\n"
 
 	if m.uploading.IsLoading() {
-		s += m.spinner.View() + " Syncing files..." + "\n\n"
+		s += m.spinner.View() + " Syncing (uploading files)..." + "\n\n"
 	} else if m.uploading.IsError() {
-		s += style.Error.Render("Failed to upload changes") + style.Gray.Render(" ("+m.uploading.Error.Error()+")") + "\n\n"
+		s += style.Error.Render("✗ Could not sync files") + style.Gray.Render(" ("+m.uploading.Error.Error()+")") + "\n\n"
+	} else if m.uploading.IsSuccess() {
+		s += style.Success.Render("✓ Service is in sync")
 	}
 
-	if m.changes.IsLoading() {
-		s += m.spinner.View() + " Watching changes..." + "\n"
+	if m.changes.IsLoading() && m.uploading.IsSuccess() {
+		s += ", watching changes..." + "\n\n"
 	} else if m.changes.IsSuccess() {
 		for _, change := range *m.changes.Data {
 			if change.action == created {
@@ -145,6 +160,13 @@ func (m ServicesSyncPage) View() string {
 			}
 			s += "\n"
 		}
+		s += "\n"
+	}
+
+	if m.uploading.IsError() {
+		s += m.help.View(serviceSyncKeysFailure)
+	} else {
+		s += m.help.View(serviceSyncKeysRegular)
 	}
 
 	return s
@@ -269,7 +291,7 @@ func (m ServicesSyncPage) uploadChanges() tea.Cmd {
 		// mock remove
 		time.Sleep(2 * time.Second)
 
-		if m.uploading.Attempt > 2 {
+		if m.uploading.Attempt > 2 && m.uploading.Attempt < 5 {
 			return nil, fmt.Errorf("mocking an error here")
 		}
 

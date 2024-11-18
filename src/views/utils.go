@@ -69,7 +69,6 @@ func (m UtilitiesPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
-
 	}
 
 	var cmd tea.Cmd

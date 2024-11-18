@@ -17,7 +17,6 @@ import (
 )
 
 // Persistent global state (ugly, yes) to allow retrying of connection checks by discarding results with an attempt number lower than the current one
-var attemptNumber = 1
 
 type ServiceInitFormValues struct {
 	Name    string
@@ -177,7 +176,6 @@ func (m ServiceInitPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if f, ok := form.(*huh.Form); ok {
 			m.form = f
 			if f.State == huh.StateCompleted && !m.isInitializing {
-				attemptNumber++
 				m.isInitializing = true
 				cmds = append(cmds, m.initializeTemplate())
 			}
