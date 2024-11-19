@@ -19,41 +19,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// connectionsManageKeyMap defines a set of keybindings. To work for help it must satisfy key.Map
-// type connectionsManageKeyMap struct {
-// 	Edit       key.Binding
-// 	Delete     key.Binding
-// 	MarkActive key.Binding
-// 	New        key.Binding
-// }
-
-// // ShortHelp returns keybindings to be shown in the mini help view. It's part
-// // of the key.Map interface.
-// func (k connectionsManageKeyMap) ShortHelp() []key.Binding {
-// 	return []key.Binding{k.New, k.Edit, k.Delete, k.MarkActive}
-// }
-
-// // FullHelp returns keybindings for the expanded help view. It's part of the
-// // key.Map interface.
-// func (k connectionsManageKeyMap) FullHelp() [][]key.Binding {
-// 	return [][]key.Binding{}
-// }
-
-// var connectionsManageKeys = connectionsManageKeyMap{
-// 	New: key.NewBinding(
-// 		key.WithKeys("n"),
-// 		key.WithHelp("n", "new"),
-// 	),
-// 	MarkActive: key.NewBinding(
-// 		key.WithKeys(" "),
-// 		key.WithHelp("space", "set active"),
-// 	),
-// 	Delete: key.NewBinding(
-// 		key.WithKeys("backspace"),
-// 		key.WithHelp("backspace", "delete"),
-// 	),
-// }
-
 func (i UpdatableItem) FilterValue() string { return i.RoverdSource.Name }
 
 type UpdateListItemDelegate struct{}
@@ -113,7 +78,7 @@ type ServicesUpdatePage struct {
 	help           help.Model
 	spinner        spinner.Model
 	sourceList     tui.Action[[]UpdatableItem]
-	serviceUpdates map[string]tui.Action[openapi.SourcesNamePost200Response]
+	serviceUpdates map[string]tui.Action[openapi.SourcesGet200ResponseInner]
 	list           list.Model
 }
 
@@ -184,7 +149,7 @@ func NewServicesUpdatePage() ServicesUpdatePage {
 	s.Spinner = spinner.Line
 
 	sourcesList := tui.NewAction[[]UpdatableItem]("sourcesList")
-	servicesList := map[string]tui.Action[openapi.SourcesNamePost200Response]{}
+	servicesList := map[string]tui.Action[openapi.SourcesGet200ResponseInner]{}
 
 	// List
 	l := list.New([]list.Item{}, UpdateListItemDelegate{}, 0, 14)
@@ -255,7 +220,7 @@ func (m ServicesUpdatePage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				for _, i := range m.list.Items() {
 					source := i.(UpdatableItem)
 					if source.Queued {
-						m.serviceUpdates[source.RoverdSource.Name] = tui.NewAction[openapi.SourcesNamePost200Response](source.RoverdSource.Name)
+						m.serviceUpdates[source.RoverdSource.Name] = tui.NewAction[openapi.SourcesGet200ResponseInner](source.RoverdSource.Name)
 						cmds = append(cmds, updateService(m, source.RoverdSource.Name))
 					}
 				}
@@ -274,7 +239,7 @@ func (m ServicesUpdatePage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if m.sourceList.IsDone() && !updateOngoing {
 				// Clear the service updates
-				m.serviceUpdates = make(map[string]tui.Action[openapi.SourcesNamePost200Response])
+				m.serviceUpdates = make(map[string]tui.Action[openapi.SourcesGet200ResponseInner])
 				return m, fetchSources(m)
 			}
 
@@ -311,8 +276,8 @@ func (m ServicesUpdatePage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.list.SetItems(items)
 		}
 		return m, nil
-	case tui.ActionInit[openapi.SourcesNamePost200Response]:
-		newServiceUpdates := make(map[string]tui.Action[openapi.SourcesNamePost200Response])
+	case tui.ActionInit[openapi.SourcesGet200ResponseInner]:
+		newServiceUpdates := make(map[string]tui.Action[openapi.SourcesGet200ResponseInner])
 		for k, v := range m.serviceUpdates {
 			newServiceUpdates[k] = v
 		}
@@ -324,8 +289,8 @@ func (m ServicesUpdatePage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.serviceUpdates = newServiceUpdates
 		return m, nil
-	case tui.ActionResult[openapi.SourcesNamePost200Response]:
-		newServiceUpdates := make(map[string]tui.Action[openapi.SourcesNamePost200Response])
+	case tui.ActionResult[openapi.SourcesGet200ResponseInner]:
+		newServiceUpdates := make(map[string]tui.Action[openapi.SourcesGet200ResponseInner])
 		for k, v := range m.serviceUpdates {
 			newServiceUpdates[k] = v
 		}
@@ -397,10 +362,10 @@ func (m ServicesUpdatePage) testConnectionView() string {
 				}
 			}
 
-			if oldVersion != *action.Data.Version {
-				s += lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render(" ✓ Updated v" + oldVersion + " -> v" + *action.Data.Version)
+			if oldVersion != action.Data.Version {
+				s += lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render(" ✓ Updated v" + oldVersion + " -> v" + action.Data.Version)
 			} else {
-				s += lipgloss.NewStyle().Foreground(style.AsePrimary).Render(" ✓ Unchanged at v" + *action.Data.Version)
+				s += lipgloss.NewStyle().Foreground(style.AsePrimary).Render(" ✓ Unchanged at v" + action.Data.Version)
 			}
 
 		} else if action.IsError() {
@@ -480,23 +445,21 @@ func fetchSources(m ServicesUpdatePage) tea.Cmd {
 
 func updateService(m ServicesUpdatePage, name string) tea.Cmd {
 	update := m.serviceUpdates[name]
-	return tui.PerformAction(&update, func() (*openapi.SourcesNamePost200Response, error) {
+	return tui.PerformAction(&update, func() (*openapi.SourcesGet200ResponseInner, error) {
 		// Wait for a random duration between 1 and 10 seconds
 		time.Sleep(time.Duration(1+rand.Intn(10)) * time.Second)
 
 		// Mock sources
 		//! remove
 		if len(name)%2 == 0 {
-			res := openapi.SourcesNamePost200Response{
-				Version: openapi.PtrString("1.0.1"),
-				New:     openapi.PtrBool(true),
+			res := openapi.SourcesGet200ResponseInner{
+				Version: ("1.0.1"),
 			}
 			return &res, fmt.Errorf("Failed to update %s", name)
 		}
 
-		res := openapi.SourcesNamePost200Response{
-			Version: openapi.PtrString("1.0.1"),
-			New:     openapi.PtrBool(true),
+		res := openapi.SourcesGet200ResponseInner{
+			Version: ("1.0.1"),
 		}
 		return &res, nil
 	})

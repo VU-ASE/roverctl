@@ -14,35 +14,35 @@ import (
 	"encoding/json"
 )
 
-// checks if the PipelineGet200ResponsePipelineValidationErrors type satisfies the MappedNullable interface at compile time
-var _ MappedNullable = &PipelineGet200ResponsePipelineValidationErrors{}
+// checks if the PipelinePost400ResponseValidationErrors type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &PipelinePost400ResponseValidationErrors{}
 
-// PipelineGet200ResponsePipelineValidationErrors If status is invalid, this array shows the validation errors
-type PipelineGet200ResponsePipelineValidationErrors struct {
+// PipelinePost400ResponseValidationErrors The validation errors that prevent the pipeline from being set
+type PipelinePost400ResponseValidationErrors struct {
 	UnmetStreams []UnmetStreamError `json:"unmet_streams,omitempty"`
 	UnmetServices []UnmetServiceError `json:"unmet_services,omitempty"`
 	DuplicateService []string `json:"duplicate_service,omitempty"`
 }
 
-// NewPipelineGet200ResponsePipelineValidationErrors instantiates a new PipelineGet200ResponsePipelineValidationErrors object
+// NewPipelinePost400ResponseValidationErrors instantiates a new PipelinePost400ResponseValidationErrors object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewPipelineGet200ResponsePipelineValidationErrors() *PipelineGet200ResponsePipelineValidationErrors {
-	this := PipelineGet200ResponsePipelineValidationErrors{}
+func NewPipelinePost400ResponseValidationErrors() *PipelinePost400ResponseValidationErrors {
+	this := PipelinePost400ResponseValidationErrors{}
 	return &this
 }
 
-// NewPipelineGet200ResponsePipelineValidationErrorsWithDefaults instantiates a new PipelineGet200ResponsePipelineValidationErrors object
+// NewPipelinePost400ResponseValidationErrorsWithDefaults instantiates a new PipelinePost400ResponseValidationErrors object
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewPipelineGet200ResponsePipelineValidationErrorsWithDefaults() *PipelineGet200ResponsePipelineValidationErrors {
-	this := PipelineGet200ResponsePipelineValidationErrors{}
+func NewPipelinePost400ResponseValidationErrorsWithDefaults() *PipelinePost400ResponseValidationErrors {
+	this := PipelinePost400ResponseValidationErrors{}
 	return &this
 }
 
 // GetUnmetStreams returns the UnmetStreams field value if set, zero value otherwise.
-func (o *PipelineGet200ResponsePipelineValidationErrors) GetUnmetStreams() []UnmetStreamError {
+func (o *PipelinePost400ResponseValidationErrors) GetUnmetStreams() []UnmetStreamError {
 	if o == nil || IsNil(o.UnmetStreams) {
 		var ret []UnmetStreamError
 		return ret
@@ -52,7 +52,7 @@ func (o *PipelineGet200ResponsePipelineValidationErrors) GetUnmetStreams() []Unm
 
 // GetUnmetStreamsOk returns a tuple with the UnmetStreams field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *PipelineGet200ResponsePipelineValidationErrors) GetUnmetStreamsOk() ([]UnmetStreamError, bool) {
+func (o *PipelinePost400ResponseValidationErrors) GetUnmetStreamsOk() ([]UnmetStreamError, bool) {
 	if o == nil || IsNil(o.UnmetStreams) {
 		return nil, false
 	}
@@ -60,7 +60,7 @@ func (o *PipelineGet200ResponsePipelineValidationErrors) GetUnmetStreamsOk() ([]
 }
 
 // HasUnmetStreams returns a boolean if a field has been set.
-func (o *PipelineGet200ResponsePipelineValidationErrors) HasUnmetStreams() bool {
+func (o *PipelinePost400ResponseValidationErrors) HasUnmetStreams() bool {
 	if o != nil && !IsNil(o.UnmetStreams) {
 		return true
 	}
@@ -69,12 +69,12 @@ func (o *PipelineGet200ResponsePipelineValidationErrors) HasUnmetStreams() bool 
 }
 
 // SetUnmetStreams gets a reference to the given []UnmetStreamError and assigns it to the UnmetStreams field.
-func (o *PipelineGet200ResponsePipelineValidationErrors) SetUnmetStreams(v []UnmetStreamError) {
+func (o *PipelinePost400ResponseValidationErrors) SetUnmetStreams(v []UnmetStreamError) {
 	o.UnmetStreams = v
 }
 
 // GetUnmetServices returns the UnmetServices field value if set, zero value otherwise.
-func (o *PipelineGet200ResponsePipelineValidationErrors) GetUnmetServices() []UnmetServiceError {
+func (o *PipelinePost400ResponseValidationErrors) GetUnmetServices() []UnmetServiceError {
 	if o == nil || IsNil(o.UnmetServices) {
 		var ret []UnmetServiceError
 		return ret
@@ -84,7 +84,7 @@ func (o *PipelineGet200ResponsePipelineValidationErrors) GetUnmetServices() []Un
 
 // GetUnmetServicesOk returns a tuple with the UnmetServices field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *PipelineGet200ResponsePipelineValidationErrors) GetUnmetServicesOk() ([]UnmetServiceError, bool) {
+func (o *PipelinePost400ResponseValidationErrors) GetUnmetServicesOk() ([]UnmetServiceError, bool) {
 	if o == nil || IsNil(o.UnmetServices) {
 		return nil, false
 	}
@@ -92,7 +92,7 @@ func (o *PipelineGet200ResponsePipelineValidationErrors) GetUnmetServicesOk() ([
 }
 
 // HasUnmetServices returns a boolean if a field has been set.
-func (o *PipelineGet200ResponsePipelineValidationErrors) HasUnmetServices() bool {
+func (o *PipelinePost400ResponseValidationErrors) HasUnmetServices() bool {
 	if o != nil && !IsNil(o.UnmetServices) {
 		return true
 	}
@@ -101,12 +101,12 @@ func (o *PipelineGet200ResponsePipelineValidationErrors) HasUnmetServices() bool
 }
 
 // SetUnmetServices gets a reference to the given []UnmetServiceError and assigns it to the UnmetServices field.
-func (o *PipelineGet200ResponsePipelineValidationErrors) SetUnmetServices(v []UnmetServiceError) {
+func (o *PipelinePost400ResponseValidationErrors) SetUnmetServices(v []UnmetServiceError) {
 	o.UnmetServices = v
 }
 
 // GetDuplicateService returns the DuplicateService field value if set, zero value otherwise.
-func (o *PipelineGet200ResponsePipelineValidationErrors) GetDuplicateService() []string {
+func (o *PipelinePost400ResponseValidationErrors) GetDuplicateService() []string {
 	if o == nil || IsNil(o.DuplicateService) {
 		var ret []string
 		return ret
@@ -116,7 +116,7 @@ func (o *PipelineGet200ResponsePipelineValidationErrors) GetDuplicateService() [
 
 // GetDuplicateServiceOk returns a tuple with the DuplicateService field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *PipelineGet200ResponsePipelineValidationErrors) GetDuplicateServiceOk() ([]string, bool) {
+func (o *PipelinePost400ResponseValidationErrors) GetDuplicateServiceOk() ([]string, bool) {
 	if o == nil || IsNil(o.DuplicateService) {
 		return nil, false
 	}
@@ -124,7 +124,7 @@ func (o *PipelineGet200ResponsePipelineValidationErrors) GetDuplicateServiceOk()
 }
 
 // HasDuplicateService returns a boolean if a field has been set.
-func (o *PipelineGet200ResponsePipelineValidationErrors) HasDuplicateService() bool {
+func (o *PipelinePost400ResponseValidationErrors) HasDuplicateService() bool {
 	if o != nil && !IsNil(o.DuplicateService) {
 		return true
 	}
@@ -133,11 +133,11 @@ func (o *PipelineGet200ResponsePipelineValidationErrors) HasDuplicateService() b
 }
 
 // SetDuplicateService gets a reference to the given []string and assigns it to the DuplicateService field.
-func (o *PipelineGet200ResponsePipelineValidationErrors) SetDuplicateService(v []string) {
+func (o *PipelinePost400ResponseValidationErrors) SetDuplicateService(v []string) {
 	o.DuplicateService = v
 }
 
-func (o PipelineGet200ResponsePipelineValidationErrors) MarshalJSON() ([]byte, error) {
+func (o PipelinePost400ResponseValidationErrors) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
@@ -145,7 +145,7 @@ func (o PipelineGet200ResponsePipelineValidationErrors) MarshalJSON() ([]byte, e
 	return json.Marshal(toSerialize)
 }
 
-func (o PipelineGet200ResponsePipelineValidationErrors) ToMap() (map[string]interface{}, error) {
+func (o PipelinePost400ResponseValidationErrors) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	if !IsNil(o.UnmetStreams) {
 		toSerialize["unmet_streams"] = o.UnmetStreams
@@ -159,38 +159,38 @@ func (o PipelineGet200ResponsePipelineValidationErrors) ToMap() (map[string]inte
 	return toSerialize, nil
 }
 
-type NullablePipelineGet200ResponsePipelineValidationErrors struct {
-	value *PipelineGet200ResponsePipelineValidationErrors
+type NullablePipelinePost400ResponseValidationErrors struct {
+	value *PipelinePost400ResponseValidationErrors
 	isSet bool
 }
 
-func (v NullablePipelineGet200ResponsePipelineValidationErrors) Get() *PipelineGet200ResponsePipelineValidationErrors {
+func (v NullablePipelinePost400ResponseValidationErrors) Get() *PipelinePost400ResponseValidationErrors {
 	return v.value
 }
 
-func (v *NullablePipelineGet200ResponsePipelineValidationErrors) Set(val *PipelineGet200ResponsePipelineValidationErrors) {
+func (v *NullablePipelinePost400ResponseValidationErrors) Set(val *PipelinePost400ResponseValidationErrors) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullablePipelineGet200ResponsePipelineValidationErrors) IsSet() bool {
+func (v NullablePipelinePost400ResponseValidationErrors) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullablePipelineGet200ResponsePipelineValidationErrors) Unset() {
+func (v *NullablePipelinePost400ResponseValidationErrors) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullablePipelineGet200ResponsePipelineValidationErrors(val *PipelineGet200ResponsePipelineValidationErrors) *NullablePipelineGet200ResponsePipelineValidationErrors {
-	return &NullablePipelineGet200ResponsePipelineValidationErrors{value: val, isSet: true}
+func NewNullablePipelinePost400ResponseValidationErrors(val *PipelinePost400ResponseValidationErrors) *NullablePipelinePost400ResponseValidationErrors {
+	return &NullablePipelinePost400ResponseValidationErrors{value: val, isSet: true}
 }
 
-func (v NullablePipelineGet200ResponsePipelineValidationErrors) MarshalJSON() ([]byte, error) {
+func (v NullablePipelinePost400ResponseValidationErrors) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullablePipelineGet200ResponsePipelineValidationErrors) UnmarshalJSON(src []byte) error {
+func (v *NullablePipelinePost400ResponseValidationErrors) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

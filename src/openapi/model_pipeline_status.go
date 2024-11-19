@@ -20,18 +20,16 @@ type PipelineStatus string
 
 // List of PipelineStatus
 const (
+	STARTABLE PipelineStatus = "startable"
 	STARTED PipelineStatus = "started"
 	RESTARTING PipelineStatus = "restarting"
-	INVALID PipelineStatus = "invalid"
-	VALID PipelineStatus = "valid"
 )
 
 // All allowed values of PipelineStatus enum
 var AllowedPipelineStatusEnumValues = []PipelineStatus{
+	"startable",
 	"started",
 	"restarting",
-	"invalid",
-	"valid",
 }
 
 func (v *PipelineStatus) UnmarshalJSON(src []byte) error {

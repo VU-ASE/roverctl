@@ -25,6 +25,10 @@ type ServicesPost200Response struct {
 	Name string `json:"name"`
 	// The version of the service
 	Version string `json:"version"`
+	// The author of the service
+	Author string `json:"author"`
+	// Whether the pipeline was invalidated by this service upload
+	InvalidatedPipeline bool `json:"invalidated_pipeline"`
 }
 
 type _ServicesPost200Response ServicesPost200Response
@@ -33,10 +37,12 @@ type _ServicesPost200Response ServicesPost200Response
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewServicesPost200Response(name string, version string) *ServicesPost200Response {
+func NewServicesPost200Response(name string, version string, author string, invalidatedPipeline bool) *ServicesPost200Response {
 	this := ServicesPost200Response{}
 	this.Name = name
 	this.Version = version
+	this.Author = author
+	this.InvalidatedPipeline = invalidatedPipeline
 	return &this
 }
 
@@ -96,6 +102,54 @@ func (o *ServicesPost200Response) SetVersion(v string) {
 	o.Version = v
 }
 
+// GetAuthor returns the Author field value
+func (o *ServicesPost200Response) GetAuthor() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Author
+}
+
+// GetAuthorOk returns a tuple with the Author field value
+// and a boolean to check if the value has been set.
+func (o *ServicesPost200Response) GetAuthorOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Author, true
+}
+
+// SetAuthor sets field value
+func (o *ServicesPost200Response) SetAuthor(v string) {
+	o.Author = v
+}
+
+// GetInvalidatedPipeline returns the InvalidatedPipeline field value
+func (o *ServicesPost200Response) GetInvalidatedPipeline() bool {
+	if o == nil {
+		var ret bool
+		return ret
+	}
+
+	return o.InvalidatedPipeline
+}
+
+// GetInvalidatedPipelineOk returns a tuple with the InvalidatedPipeline field value
+// and a boolean to check if the value has been set.
+func (o *ServicesPost200Response) GetInvalidatedPipelineOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.InvalidatedPipeline, true
+}
+
+// SetInvalidatedPipeline sets field value
+func (o *ServicesPost200Response) SetInvalidatedPipeline(v bool) {
+	o.InvalidatedPipeline = v
+}
+
 func (o ServicesPost200Response) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -108,6 +162,8 @@ func (o ServicesPost200Response) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["name"] = o.Name
 	toSerialize["version"] = o.Version
+	toSerialize["author"] = o.Author
+	toSerialize["invalidated_pipeline"] = o.InvalidatedPipeline
 	return toSerialize, nil
 }
 
@@ -118,6 +174,8 @@ func (o *ServicesPost200Response) UnmarshalJSON(data []byte) (err error) {
 	requiredProperties := []string{
 		"name",
 		"version",
+		"author",
+		"invalidated_pipeline",
 	}
 
 	allProperties := make(map[string]interface{})

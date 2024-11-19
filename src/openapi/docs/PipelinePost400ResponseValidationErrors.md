@@ -1,4 +1,4 @@
-# PipelineGet200ResponsePipelineValidationErrors
+# PipelinePost400ResponseValidationErrors
 
 ## Properties
 
@@ -10,95 +10,95 @@ Name | Type | Description | Notes
 
 ## Methods
 
-### NewPipelineGet200ResponsePipelineValidationErrors
+### NewPipelinePost400ResponseValidationErrors
 
-`func NewPipelineGet200ResponsePipelineValidationErrors() *PipelineGet200ResponsePipelineValidationErrors`
+`func NewPipelinePost400ResponseValidationErrors() *PipelinePost400ResponseValidationErrors`
 
-NewPipelineGet200ResponsePipelineValidationErrors instantiates a new PipelineGet200ResponsePipelineValidationErrors object
+NewPipelinePost400ResponseValidationErrors instantiates a new PipelinePost400ResponseValidationErrors object
 This constructor will assign default values to properties that have it defined,
 and makes sure properties required by API are set, but the set of arguments
 will change when the set of required properties is changed
 
-### NewPipelineGet200ResponsePipelineValidationErrorsWithDefaults
+### NewPipelinePost400ResponseValidationErrorsWithDefaults
 
-`func NewPipelineGet200ResponsePipelineValidationErrorsWithDefaults() *PipelineGet200ResponsePipelineValidationErrors`
+`func NewPipelinePost400ResponseValidationErrorsWithDefaults() *PipelinePost400ResponseValidationErrors`
 
-NewPipelineGet200ResponsePipelineValidationErrorsWithDefaults instantiates a new PipelineGet200ResponsePipelineValidationErrors object
+NewPipelinePost400ResponseValidationErrorsWithDefaults instantiates a new PipelinePost400ResponseValidationErrors object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
 ### GetUnmetStreams
 
-`func (o *PipelineGet200ResponsePipelineValidationErrors) GetUnmetStreams() []UnmetStreamError`
+`func (o *PipelinePost400ResponseValidationErrors) GetUnmetStreams() []UnmetStreamError`
 
 GetUnmetStreams returns the UnmetStreams field if non-nil, zero value otherwise.
 
 ### GetUnmetStreamsOk
 
-`func (o *PipelineGet200ResponsePipelineValidationErrors) GetUnmetStreamsOk() (*[]UnmetStreamError, bool)`
+`func (o *PipelinePost400ResponseValidationErrors) GetUnmetStreamsOk() (*[]UnmetStreamError, bool)`
 
 GetUnmetStreamsOk returns a tuple with the UnmetStreams field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetUnmetStreams
 
-`func (o *PipelineGet200ResponsePipelineValidationErrors) SetUnmetStreams(v []UnmetStreamError)`
+`func (o *PipelinePost400ResponseValidationErrors) SetUnmetStreams(v []UnmetStreamError)`
 
 SetUnmetStreams sets UnmetStreams field to given value.
 
 ### HasUnmetStreams
 
-`func (o *PipelineGet200ResponsePipelineValidationErrors) HasUnmetStreams() bool`
+`func (o *PipelinePost400ResponseValidationErrors) HasUnmetStreams() bool`
 
 HasUnmetStreams returns a boolean if a field has been set.
 
 ### GetUnmetServices
 
-`func (o *PipelineGet200ResponsePipelineValidationErrors) GetUnmetServices() []UnmetServiceError`
+`func (o *PipelinePost400ResponseValidationErrors) GetUnmetServices() []UnmetServiceError`
 
 GetUnmetServices returns the UnmetServices field if non-nil, zero value otherwise.
 
 ### GetUnmetServicesOk
 
-`func (o *PipelineGet200ResponsePipelineValidationErrors) GetUnmetServicesOk() (*[]UnmetServiceError, bool)`
+`func (o *PipelinePost400ResponseValidationErrors) GetUnmetServicesOk() (*[]UnmetServiceError, bool)`
 
 GetUnmetServicesOk returns a tuple with the UnmetServices field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetUnmetServices
 
-`func (o *PipelineGet200ResponsePipelineValidationErrors) SetUnmetServices(v []UnmetServiceError)`
+`func (o *PipelinePost400ResponseValidationErrors) SetUnmetServices(v []UnmetServiceError)`
 
 SetUnmetServices sets UnmetServices field to given value.
 
 ### HasUnmetServices
 
-`func (o *PipelineGet200ResponsePipelineValidationErrors) HasUnmetServices() bool`
+`func (o *PipelinePost400ResponseValidationErrors) HasUnmetServices() bool`
 
 HasUnmetServices returns a boolean if a field has been set.
 
 ### GetDuplicateService
 
-`func (o *PipelineGet200ResponsePipelineValidationErrors) GetDuplicateService() []string`
+`func (o *PipelinePost400ResponseValidationErrors) GetDuplicateService() []string`
 
 GetDuplicateService returns the DuplicateService field if non-nil, zero value otherwise.
 
 ### GetDuplicateServiceOk
 
-`func (o *PipelineGet200ResponsePipelineValidationErrors) GetDuplicateServiceOk() (*[]string, bool)`
+`func (o *PipelinePost400ResponseValidationErrors) GetDuplicateServiceOk() (*[]string, bool)`
 
 GetDuplicateServiceOk returns a tuple with the DuplicateService field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetDuplicateService
 
-`func (o *PipelineGet200ResponsePipelineValidationErrors) SetDuplicateService(v []string)`
+`func (o *PipelinePost400ResponseValidationErrors) SetDuplicateService(v []string)`
 
 SetDuplicateService sets DuplicateService field to given value.
 
 ### HasDuplicateService
 
-`func (o *PipelineGet200ResponsePipelineValidationErrors) HasDuplicateService() bool`
+`func (o *PipelinePost400ResponseValidationErrors) HasDuplicateService() bool`
 
 HasDuplicateService returns a boolean if a field has been set.
 

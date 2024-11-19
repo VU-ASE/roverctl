@@ -254,7 +254,7 @@ func (r ApiSourcesPostRequest) Execute() (*http.Response, error) {
 }
 
 /*
-SourcesPost Downloads and installs a new source, adds it the 'downloaded' in rover.yaml
+SourcesPost Downloads and installs a new source, overwriting the prior version (if any) and adding it to the 'downloaded' section in rover.yaml (checks for duplicate source names)
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiSourcesPostRequest

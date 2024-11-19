@@ -71,8 +71,6 @@ func (m ServicesOverviewPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return RootScreen(state.Get()).SwitchScreen(NewServicesSyncPage())
 				case "Update":
 					return RootScreen(state.Get()).SwitchScreen(NewServicesUpdatePage())
-				case "Download":
-					value = "service download"
 				}
 				// state.Get().Route.Push(value)
 				return m, tea.Quit

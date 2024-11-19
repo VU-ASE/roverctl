@@ -12,6 +12,8 @@ package openapi
 
 import (
 	"encoding/json"
+	"bytes"
+	"fmt"
 )
 
 // checks if the PipelineGet200Response type satisfies the MappedNullable interface at compile time
@@ -19,16 +21,27 @@ var _ MappedNullable = &PipelineGet200Response{}
 
 // PipelineGet200Response struct for PipelineGet200Response
 type PipelineGet200Response struct {
-	Pipeline *PipelineGet200ResponsePipeline `json:"pipeline,omitempty"`
-	Processes []PipelineGet200ResponseProcessesInner `json:"processes,omitempty"`
+	Status PipelineStatus `json:"status"`
+	// Milliseconds since epoch when the pipeline was manually started
+	LastStart *int64 `json:"last_start,omitempty"`
+	// Milliseconds since epoch when the pipeline was manually stopped
+	LastStop *int64 `json:"last_stop,omitempty"`
+	// Milliseconds since epoch when the pipeline was automatically restarted (on process faults)
+	LastRestart *int64 `json:"last_restart,omitempty"`
+	// The list of fully qualified services that are enabled in this pipeline. If the pipeline was started, this includes a process for each service
+	Enabled []PipelineGet200ResponseEnabledInner `json:"enabled"`
 }
+
+type _PipelineGet200Response PipelineGet200Response
 
 // NewPipelineGet200Response instantiates a new PipelineGet200Response object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewPipelineGet200Response() *PipelineGet200Response {
+func NewPipelineGet200Response(status PipelineStatus, enabled []PipelineGet200ResponseEnabledInner) *PipelineGet200Response {
 	this := PipelineGet200Response{}
+	this.Status = status
+	this.Enabled = enabled
 	return &this
 }
 
@@ -40,68 +53,148 @@ func NewPipelineGet200ResponseWithDefaults() *PipelineGet200Response {
 	return &this
 }
 
-// GetPipeline returns the Pipeline field value if set, zero value otherwise.
-func (o *PipelineGet200Response) GetPipeline() PipelineGet200ResponsePipeline {
-	if o == nil || IsNil(o.Pipeline) {
-		var ret PipelineGet200ResponsePipeline
+// GetStatus returns the Status field value
+func (o *PipelineGet200Response) GetStatus() PipelineStatus {
+	if o == nil {
+		var ret PipelineStatus
 		return ret
 	}
-	return *o.Pipeline
+
+	return o.Status
 }
 
-// GetPipelineOk returns a tuple with the Pipeline field value if set, nil otherwise
+// GetStatusOk returns a tuple with the Status field value
 // and a boolean to check if the value has been set.
-func (o *PipelineGet200Response) GetPipelineOk() (*PipelineGet200ResponsePipeline, bool) {
-	if o == nil || IsNil(o.Pipeline) {
+func (o *PipelineGet200Response) GetStatusOk() (*PipelineStatus, bool) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Pipeline, true
+	return &o.Status, true
 }
 
-// HasPipeline returns a boolean if a field has been set.
-func (o *PipelineGet200Response) HasPipeline() bool {
-	if o != nil && !IsNil(o.Pipeline) {
+// SetStatus sets field value
+func (o *PipelineGet200Response) SetStatus(v PipelineStatus) {
+	o.Status = v
+}
+
+// GetLastStart returns the LastStart field value if set, zero value otherwise.
+func (o *PipelineGet200Response) GetLastStart() int64 {
+	if o == nil || IsNil(o.LastStart) {
+		var ret int64
+		return ret
+	}
+	return *o.LastStart
+}
+
+// GetLastStartOk returns a tuple with the LastStart field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *PipelineGet200Response) GetLastStartOk() (*int64, bool) {
+	if o == nil || IsNil(o.LastStart) {
+		return nil, false
+	}
+	return o.LastStart, true
+}
+
+// HasLastStart returns a boolean if a field has been set.
+func (o *PipelineGet200Response) HasLastStart() bool {
+	if o != nil && !IsNil(o.LastStart) {
 		return true
 	}
 
 	return false
 }
 
-// SetPipeline gets a reference to the given PipelineGet200ResponsePipeline and assigns it to the Pipeline field.
-func (o *PipelineGet200Response) SetPipeline(v PipelineGet200ResponsePipeline) {
-	o.Pipeline = &v
+// SetLastStart gets a reference to the given int64 and assigns it to the LastStart field.
+func (o *PipelineGet200Response) SetLastStart(v int64) {
+	o.LastStart = &v
 }
 
-// GetProcesses returns the Processes field value if set, zero value otherwise.
-func (o *PipelineGet200Response) GetProcesses() []PipelineGet200ResponseProcessesInner {
-	if o == nil || IsNil(o.Processes) {
-		var ret []PipelineGet200ResponseProcessesInner
+// GetLastStop returns the LastStop field value if set, zero value otherwise.
+func (o *PipelineGet200Response) GetLastStop() int64 {
+	if o == nil || IsNil(o.LastStop) {
+		var ret int64
 		return ret
 	}
-	return o.Processes
+	return *o.LastStop
 }
 
-// GetProcessesOk returns a tuple with the Processes field value if set, nil otherwise
+// GetLastStopOk returns a tuple with the LastStop field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *PipelineGet200Response) GetProcessesOk() ([]PipelineGet200ResponseProcessesInner, bool) {
-	if o == nil || IsNil(o.Processes) {
+func (o *PipelineGet200Response) GetLastStopOk() (*int64, bool) {
+	if o == nil || IsNil(o.LastStop) {
 		return nil, false
 	}
-	return o.Processes, true
+	return o.LastStop, true
 }
 
-// HasProcesses returns a boolean if a field has been set.
-func (o *PipelineGet200Response) HasProcesses() bool {
-	if o != nil && !IsNil(o.Processes) {
+// HasLastStop returns a boolean if a field has been set.
+func (o *PipelineGet200Response) HasLastStop() bool {
+	if o != nil && !IsNil(o.LastStop) {
 		return true
 	}
 
 	return false
 }
 
-// SetProcesses gets a reference to the given []PipelineGet200ResponseProcessesInner and assigns it to the Processes field.
-func (o *PipelineGet200Response) SetProcesses(v []PipelineGet200ResponseProcessesInner) {
-	o.Processes = v
+// SetLastStop gets a reference to the given int64 and assigns it to the LastStop field.
+func (o *PipelineGet200Response) SetLastStop(v int64) {
+	o.LastStop = &v
+}
+
+// GetLastRestart returns the LastRestart field value if set, zero value otherwise.
+func (o *PipelineGet200Response) GetLastRestart() int64 {
+	if o == nil || IsNil(o.LastRestart) {
+		var ret int64
+		return ret
+	}
+	return *o.LastRestart
+}
+
+// GetLastRestartOk returns a tuple with the LastRestart field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *PipelineGet200Response) GetLastRestartOk() (*int64, bool) {
+	if o == nil || IsNil(o.LastRestart) {
+		return nil, false
+	}
+	return o.LastRestart, true
+}
+
+// HasLastRestart returns a boolean if a field has been set.
+func (o *PipelineGet200Response) HasLastRestart() bool {
+	if o != nil && !IsNil(o.LastRestart) {
+		return true
+	}
+
+	return false
+}
+
+// SetLastRestart gets a reference to the given int64 and assigns it to the LastRestart field.
+func (o *PipelineGet200Response) SetLastRestart(v int64) {
+	o.LastRestart = &v
+}
+
+// GetEnabled returns the Enabled field value
+func (o *PipelineGet200Response) GetEnabled() []PipelineGet200ResponseEnabledInner {
+	if o == nil {
+		var ret []PipelineGet200ResponseEnabledInner
+		return ret
+	}
+
+	return o.Enabled
+}
+
+// GetEnabledOk returns a tuple with the Enabled field value
+// and a boolean to check if the value has been set.
+func (o *PipelineGet200Response) GetEnabledOk() ([]PipelineGet200ResponseEnabledInner, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Enabled, true
+}
+
+// SetEnabled sets field value
+func (o *PipelineGet200Response) SetEnabled(v []PipelineGet200ResponseEnabledInner) {
+	o.Enabled = v
 }
 
 func (o PipelineGet200Response) MarshalJSON() ([]byte, error) {
@@ -114,13 +207,56 @@ func (o PipelineGet200Response) MarshalJSON() ([]byte, error) {
 
 func (o PipelineGet200Response) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.Pipeline) {
-		toSerialize["pipeline"] = o.Pipeline
+	toSerialize["status"] = o.Status
+	if !IsNil(o.LastStart) {
+		toSerialize["last_start"] = o.LastStart
 	}
-	if !IsNil(o.Processes) {
-		toSerialize["processes"] = o.Processes
+	if !IsNil(o.LastStop) {
+		toSerialize["last_stop"] = o.LastStop
 	}
+	if !IsNil(o.LastRestart) {
+		toSerialize["last_restart"] = o.LastRestart
+	}
+	toSerialize["enabled"] = o.Enabled
 	return toSerialize, nil
+}
+
+func (o *PipelineGet200Response) UnmarshalJSON(data []byte) (err error) {
+	// This validates that all required properties are included in the JSON object
+	// by unmarshalling the object into a generic map with string keys and checking
+	// that every required field exists as a key in the generic map.
+	requiredProperties := []string{
+		"status",
+		"enabled",
+	}
+
+	allProperties := make(map[string]interface{})
+
+	err = json.Unmarshal(data, &allProperties)
+
+	if err != nil {
+		return err;
+	}
+
+	for _, requiredProperty := range(requiredProperties) {
+		if _, exists := allProperties[requiredProperty]; !exists {
+			return fmt.Errorf("no value given for required property %v", requiredProperty)
+		}
+	}
+
+	varPipelineGet200Response := _PipelineGet200Response{}
+
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&varPipelineGet200Response)
+
+	if err != nil {
+		return err
+	}
+
+	*o = PipelineGet200Response(varPipelineGet200Response)
+
+	return err
 }
 
 type NullablePipelineGet200Response struct {

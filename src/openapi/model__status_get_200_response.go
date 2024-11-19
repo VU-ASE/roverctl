@@ -36,6 +36,9 @@ type StatusGet200Response struct {
 	RoverId *int32 `json:"rover_id,omitempty"`
 	// The unique name of the rover
 	RoverName *string `json:"rover_name,omitempty"`
+	Memory StatusGet200ResponseMemory `json:"memory"`
+	// The CPU usage of the roverd process
+	Cpu []StatusGet200ResponseCpuInner `json:"cpu"`
 }
 
 type _StatusGet200Response StatusGet200Response
@@ -44,13 +47,15 @@ type _StatusGet200Response StatusGet200Response
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewStatusGet200Response(status DaemonStatus, version string, uptime int64, os string, systime int64) *StatusGet200Response {
+func NewStatusGet200Response(status DaemonStatus, version string, uptime int64, os string, systime int64, memory StatusGet200ResponseMemory, cpu []StatusGet200ResponseCpuInner) *StatusGet200Response {
 	this := StatusGet200Response{}
 	this.Status = status
 	this.Version = version
 	this.Uptime = uptime
 	this.Os = os
 	this.Systime = systime
+	this.Memory = memory
+	this.Cpu = cpu
 	return &this
 }
 
@@ -278,6 +283,54 @@ func (o *StatusGet200Response) SetRoverName(v string) {
 	o.RoverName = &v
 }
 
+// GetMemory returns the Memory field value
+func (o *StatusGet200Response) GetMemory() StatusGet200ResponseMemory {
+	if o == nil {
+		var ret StatusGet200ResponseMemory
+		return ret
+	}
+
+	return o.Memory
+}
+
+// GetMemoryOk returns a tuple with the Memory field value
+// and a boolean to check if the value has been set.
+func (o *StatusGet200Response) GetMemoryOk() (*StatusGet200ResponseMemory, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Memory, true
+}
+
+// SetMemory sets field value
+func (o *StatusGet200Response) SetMemory(v StatusGet200ResponseMemory) {
+	o.Memory = v
+}
+
+// GetCpu returns the Cpu field value
+func (o *StatusGet200Response) GetCpu() []StatusGet200ResponseCpuInner {
+	if o == nil {
+		var ret []StatusGet200ResponseCpuInner
+		return ret
+	}
+
+	return o.Cpu
+}
+
+// GetCpuOk returns a tuple with the Cpu field value
+// and a boolean to check if the value has been set.
+func (o *StatusGet200Response) GetCpuOk() ([]StatusGet200ResponseCpuInner, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Cpu, true
+}
+
+// SetCpu sets field value
+func (o *StatusGet200Response) SetCpu(v []StatusGet200ResponseCpuInner) {
+	o.Cpu = v
+}
+
 func (o StatusGet200Response) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -302,6 +355,8 @@ func (o StatusGet200Response) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.RoverName) {
 		toSerialize["rover_name"] = o.RoverName
 	}
+	toSerialize["memory"] = o.Memory
+	toSerialize["cpu"] = o.Cpu
 	return toSerialize, nil
 }
 
@@ -315,6 +370,8 @@ func (o *StatusGet200Response) UnmarshalJSON(data []byte) (err error) {
 		"uptime",
 		"os",
 		"systime",
+		"memory",
+		"cpu",
 	}
 
 	allProperties := make(map[string]interface{})

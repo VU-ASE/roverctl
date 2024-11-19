@@ -11,10 +11,11 @@ package openapi
 
 import (
 	"context"
+	"testing"
+
+	openapiclient "github.com/VU-ASE/roverctl"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
 )
 
 func Test_openapi_PipelineAPIService(t *testing.T) {
@@ -22,9 +23,23 @@ func Test_openapi_PipelineAPIService(t *testing.T) {
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
 
+	t.Run("Test PipelineAPIService LogsNameGet", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var name string
+
+		resp, httpRes, err := apiClient.PipelineAPI.LogsNameGet(context.Background(), name).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
 	t.Run("Test PipelineAPIService PipelineGet", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		resp, httpRes, err := apiClient.PipelineAPI.PipelineGet(context.Background()).Execute()
 
@@ -34,25 +49,33 @@ func Test_openapi_PipelineAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test PipelineAPIService PipelineNameGet", func(t *testing.T) {
+	t.Run("Test PipelineAPIService PipelinePost", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
-		var name string
-
-		resp, httpRes, err := apiClient.PipelineAPI.PipelineNameGet(context.Background(), name).Execute()
+		httpRes, err := apiClient.PipelineAPI.PipelinePost(context.Background()).Execute()
 
 		require.Nil(t, err)
-		require.NotNil(t, resp)
 		assert.Equal(t, 200, httpRes.StatusCode)
 
 	})
 
-	t.Run("Test PipelineAPIService PipelinePost", func(t *testing.T) {
+	t.Run("Test PipelineAPIService PipelineStartPost", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
-		httpRes, err := apiClient.PipelineAPI.PipelinePost(context.Background()).Execute()
+		httpRes, err := apiClient.PipelineAPI.PipelineStartPost(context.Background()).Execute()
+
+		require.Nil(t, err)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test PipelineAPIService PipelineStopPost", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		httpRes, err := apiClient.PipelineAPI.PipelineStopPost(context.Background()).Execute()
 
 		require.Nil(t, err)
 		assert.Equal(t, 200, httpRes.StatusCode)

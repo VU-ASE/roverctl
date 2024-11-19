@@ -11,10 +11,11 @@ package openapi
 
 import (
 	"context"
+	"testing"
+
+	openapiclient "github.com/VU-ASE/roverctl"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
 )
 
 func Test_openapi_ServicesAPIService(t *testing.T) {
@@ -22,9 +23,85 @@ func Test_openapi_ServicesAPIService(t *testing.T) {
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
 
+	t.Run("Test ServicesAPIService ServicesAuthorGet", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var author string
+
+		resp, httpRes, err := apiClient.ServicesAPI.ServicesAuthorGet(context.Background(), author).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test ServicesAPIService ServicesAuthorServiceGet", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var author string
+		var service string
+
+		resp, httpRes, err := apiClient.ServicesAPI.ServicesAuthorServiceGet(context.Background(), author, service).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test ServicesAPIService ServicesAuthorServiceVersionDelete", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var author string
+		var service string
+		var version string
+
+		resp, httpRes, err := apiClient.ServicesAPI.ServicesAuthorServiceVersionDelete(context.Background(), author, service, version).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test ServicesAPIService ServicesAuthorServiceVersionGet", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var author string
+		var service string
+		var version string
+
+		resp, httpRes, err := apiClient.ServicesAPI.ServicesAuthorServiceVersionGet(context.Background(), author, service, version).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test ServicesAPIService ServicesAuthorServiceVersionPost", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		var author string
+		var service string
+		var version string
+
+		httpRes, err := apiClient.ServicesAPI.ServicesAuthorServiceVersionPost(context.Background(), author, service, version).Execute()
+
+		require.Nil(t, err)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
 	t.Run("Test ServicesAPIService ServicesGet", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		resp, httpRes, err := apiClient.ServicesAPI.ServicesGet(context.Background()).Execute()
 
@@ -34,66 +111,9 @@ func Test_openapi_ServicesAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test ServicesAPIService ServicesNameGet", func(t *testing.T) {
-
-		t.Skip("skip test")  // remove to run test
-
-		var name string
-
-		resp, httpRes, err := apiClient.ServicesAPI.ServicesNameGet(context.Background(), name).Execute()
-
-		require.Nil(t, err)
-		require.NotNil(t, resp)
-		assert.Equal(t, 200, httpRes.StatusCode)
-
-	})
-
-	t.Run("Test ServicesAPIService ServicesNameVersionDelete", func(t *testing.T) {
-
-		t.Skip("skip test")  // remove to run test
-
-		var name string
-		var version string
-
-		httpRes, err := apiClient.ServicesAPI.ServicesNameVersionDelete(context.Background(), name, version).Execute()
-
-		require.Nil(t, err)
-		assert.Equal(t, 200, httpRes.StatusCode)
-
-	})
-
-	t.Run("Test ServicesAPIService ServicesNameVersionGet", func(t *testing.T) {
-
-		t.Skip("skip test")  // remove to run test
-
-		var name string
-		var version string
-
-		resp, httpRes, err := apiClient.ServicesAPI.ServicesNameVersionGet(context.Background(), name, version).Execute()
-
-		require.Nil(t, err)
-		require.NotNil(t, resp)
-		assert.Equal(t, 200, httpRes.StatusCode)
-
-	})
-
-	t.Run("Test ServicesAPIService ServicesNameVersionPost", func(t *testing.T) {
-
-		t.Skip("skip test")  // remove to run test
-
-		var name string
-		var version string
-
-		httpRes, err := apiClient.ServicesAPI.ServicesNameVersionPost(context.Background(), name, version).Execute()
-
-		require.Nil(t, err)
-		assert.Equal(t, 200, httpRes.StatusCode)
-
-	})
-
 	t.Run("Test ServicesAPIService ServicesPost", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		resp, httpRes, err := apiClient.ServicesAPI.ServicesPost(context.Background()).Execute()
 

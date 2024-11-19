@@ -6,7 +6,7 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**SourcesDelete**](SourcesAPI.md#SourcesDelete) | **Delete** /sources | Delete a source
 [**SourcesGet**](SourcesAPI.md#SourcesGet) | **Get** /sources | Retrieve all sources
-[**SourcesPost**](SourcesAPI.md#SourcesPost) | **Post** /sources | Downloads and installs a new source, adds it the &#39;downloaded&#39; in rover.yaml
+[**SourcesPost**](SourcesAPI.md#SourcesPost) | **Post** /sources | Downloads and installs a new source, overwriting the prior version (if any) and adding it to the &#39;downloaded&#39; section in rover.yaml (checks for duplicate source names)
 
 
 
@@ -25,7 +25,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/VU-ASE/roverctl"
 )
 
 func main() {
@@ -87,7 +87,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/VU-ASE/roverctl"
 )
 
 func main() {
@@ -135,7 +135,7 @@ Other parameters are passed through a pointer to a apiSourcesGetRequest struct v
 
 > SourcesPost(ctx).SourcesPostRequest(sourcesPostRequest).Execute()
 
-Downloads and installs a new source, adds it the 'downloaded' in rover.yaml
+Downloads and installs a new source, overwriting the prior version (if any) and adding it to the 'downloaded' section in rover.yaml (checks for duplicate source names)
 
 ### Example
 
@@ -146,7 +146,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/VU-ASE/roverctl"
 )
 
 func main() {

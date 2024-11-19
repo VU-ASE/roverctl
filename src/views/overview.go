@@ -69,6 +69,8 @@ func (m StartPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			value := m.actions.SelectedItem().FilterValue()
 			if value != "" {
 				switch value {
+				case "Pipeline":
+					return RootScreen(state.Get()).SwitchScreen(NewPipelineOverviewPage())
 				case "Connect":
 					return RootScreen(state.Get()).SwitchScreen(NewConnectionsInitPage(nil))
 				case "Utilities":

@@ -1,453 +1,381 @@
 package views
 
-// import (
-// 	"fmt"
-// 	"slices"
-// 	"strings"
-
-// 	"github.com/VU-ASE/rover/src/openapi"
-// 	"github.com/VU-ASE/rover/src/state"
-// 	"github.com/VU-ASE/rover/src/style"
-// 	"github.com/VU-ASE/rover/src/tui"
-// 	"github.com/charmbracelet/bubbles/list"
-// 	"github.com/charmbracelet/bubbles/spinner"
-// 	tea "github.com/charmbracelet/bubbletea"
-// 	"github.com/charmbracelet/lipgloss"
-// 	"github.com/lempiy/dgraph"
-// 	"github.com/lempiy/dgraph/core"
-// )
-
-// type PipelineOverviewPage struct {
-// 	keys                     keyMap
-// 	spinner                  spinner.Model
-// 	list                     list.Model
-// 	fetchConfigurationAction tui.Action[openapi.PipelineGet200Response]
-// 	saveConfigurationAction  tui.Action[any]
-// 	error                    error // Can be shown to the user
-// }
-
-// // // keyMap defines a set of keybindings. To work for help it must satisfy key.Map
-// // type keyMap struct {
-// // 	MarkActive key.Binding
-// // 	Save       key.Binding
-// // 	Reload     key.Binding
-// // }
-
-// // // ShortHelp returns keybindings to be shown in the mini help view. It's part
-// // // of the key.Map interface.
-// // func (k keyMap) ShortHelp() []key.Binding {
-// // 	return []key.Binding{k.MarkActive, k.Save, k.Reload}
-// // }
-
-// // // FullHelp returns keybindings for the expanded help view. It's part of the
-// // // key.Map interface.
-// // func (k keyMap) FullHelp() [][]key.Binding {
-// // 	return [][]key.Binding{}
-// // }
-
-// // var keys = keyMap{
-// // 	MarkActive: key.NewBinding(
-// // 		key.WithKeys(" "),
-// // 		key.WithHelp("space", "toggle service"),
-// // 	),
-// // 	Save: key.NewBinding(
-// // 		key.WithKeys("s"),
-// // 		key.WithHelp("s", "save to Rover"),
-// // 	),
-// // 	Reload: key.NewBinding(
-// // 		key.WithKeys("r"),
-// // 		key.WithHelp("r", "reload"),
-// // 	),
-// // }
-
-// // // List item to render
-// // type item struct {
-// // 	service services.FoundService
-// // 	active  bool
-// // }
-
-// // func (i item) FilterValue() string { return i.service.Service.Name }
-
-// // type itemDelegate struct{}
-
-// // func (d itemDelegate) Height() int                             { return 1 }
-// // func (d itemDelegate) Spacing() int                            { return 0 }
-// // func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
-// // func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-// // 	i, ok := listItem.(item)
-// // 	if !ok {
-// // 		return
-// // 	}
-
-// // 	shortPath := strings.Replace(i.service.Path, configuration.RemoteServiceDir+"/", "", 1)
-
-// // 	str := i.service.Service.Name + " " + lipgloss.NewStyle().Foreground(style.AsePrimary).Render(i.service.Service.Version) + " " + lipgloss.NewStyle().Foreground(style.GrayPrimary).Render("("+shortPath+")")
-
-// // 	fn := lipgloss.NewStyle().Render
-// // 	if index == m.Index() {
-// // 		fn = func(s ...string) string {
-// // 			if i.active {
-// // 				return lipgloss.NewStyle().Bold(true).Foreground(style.SuccessPrimary).Render("> " + strings.Join(s, " "))
-// // 			} else {
-// // 				return lipgloss.NewStyle().Bold(true).Render("> " + strings.Join(s, " "))
-// // 			}
-// // 		}
-// // 	} else if i.active {
-// // 		str = style.RenderColor("✓ ", style.SuccessPrimary) + str
-// // 	} else {
-// // 		str = "- " + str
-// // 	}
-
-// // 	fmt.Fprint(w, fn(str))
-// // }
-
-// // type serviceDependency struct {
-// // 	service string
-// // 	stream  string
-// // }
-
-// // func getUnmetDependencies(service services.FoundService, enabled []services.FoundService) []serviceDependency {
-// // 	dependencies := make([]serviceDependency, 0)
-// // 	for _, dependency := range service.Service.Inputs {
-// // 		for _, stream := range dependency.Streams {
-// // 			dependencies = append(dependencies, serviceDependency{
-// // 				service: dependency.Service,
-// // 				stream:  stream,
-// // 			})
-// // 		}
-// // 	}
-
-// // 	for _, dependency := range service.Service.Inputs {
-// // 		// Go over all other service
-// // 		for _, other := range enabled {
-// // 			// Is this the service we are looking for?
-// // 			if dependency.Service == other.Service.Name {
-// // 				// Are all the streams available?
-// // 				for _, stream := range dependency.Streams {
-// // 					if slices.Contains(other.Service.Outputs, stream) {
-// // 						// Remove the dependency
-// // 						dependencies = slices.DeleteFunc(dependencies, func(d serviceDependency) bool {
-// // 							return d.service == dependency.Service && d.stream == stream
-// // 						})
-// // 					}
-// // 				}
-// // 			}
-// // 		}
-// // 	}
-
-// // 	return dependencies
-// // }
-
-// // // Returns the errors in the configuration, if none are found, the configuration is valid
-// // func configurationValid(config *roveryaml.RoverConfig, allservices []services.FoundService) []error {
-// // 	enabledServices := make([]services.FoundService, 0)
-// // 	for _, service := range allservices {
-// // 		if config.HasEnabled(service.Path) {
-// // 			enabledServices = append(enabledServices, service)
-// // 		}
-// // 	}
-
-// // 	errors := make([]error, 0)
-// // 	for _, service := range enabledServices {
-// // 		unmet := getUnmetDependencies(service, enabledServices)
-// // 		for _, dep := range unmet {
-// // 			errors = append(errors, fmt.Errorf("Service '%s' depends on service '%s' for stream '%s' which is not enabled", service.Service.Name, dep.service, dep.stream))
-// // 		}
-// // 	}
-
-// // 	return errors
-// // }
-
-// // func servicesToListItem(services []services.FoundService, config *roveryaml.RoverConfig) []list.Item {
-// // 	items := make([]list.Item, 0)
-
-// // 	if services == nil {
-// // 		return items
-// // 	}
-
-// // 	for _, service := range services {
-// // 		items = append(items, item{
-// // 			service: service,
-// // 			active:  config.HasEnabled(service.Path),
-// // 		})
-// // 	}
-
-// // 	return items
-// // }
-
-// func NewPipelineOverviewPage() PipelineOverviewPage {
-// 	l := list.New([]list.Item{}, itemDelegate{}, 0, 14)
-// 	l.Title = "Configure Rover pipeline"
-// 	l.SetShowStatusBar(false)
-// 	l.SetFilteringEnabled(false)
-// 	l.Styles.Title = style.TitleStyle
-// 	l.Styles.PaginationStyle = style.PaginationStyle
-// 	l.Styles.HelpStyle = style.HelpStyle
-// 	l.AdditionalShortHelpKeys = keys.ShortHelp
-
-// 	spin := spinner.New()
-// 	spin.Spinner = spinner.Line
-
-// 	fetchConfigAction := tui.NewAction[openapi.PipelineGet200Response]("getConfig")
-
-// 	return PipelineOverviewPage{
-// 		keys:    keys,
-// 		list:    l,
-// 		spinner: spin,
-// 		// fetchServicesAction:      fetchServicesAction,
-// 		fetchConfigurationAction: fetchConfigAction,
-// 		saveConfigurationAction:  tui.NewAction[any]("saveConfig"),
-// 		error:                    nil,
-// 	}
-// }
-
-// func (m PipelineOverviewPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-// 	switch msg := msg.(type) {
-// 	case tea.WindowSizeMsg:
-// 		h, _ := style.Docstyle.GetFrameSize()
-// 		m.list.SetSize(msg.Width-h, msg.Height/3)
-
-// 	case spinner.TickMsg:
-// 		var cmd tea.Cmd
-// 		m.spinner, cmd = m.spinner.Update(msg)
-// 		return m, cmd
-
-// 	}
-// 	var cmd tea.Cmd
-// 	m.list, cmd = m.list.Update(msg)
-// 	return m, cmd
-// }
-
-// func (m PipelineOverviewPage) Init() tea.Cmd {
-// 	return tea.Batch(m.spinner.Tick, getServices(m), getConfiguration(m))
-// }
-
-// func configureView(m PipelineOverviewPage) string {
-// 	// s := m.list.View()
-// 	// if m.error != nil {
-// 	// 	s += "\n" + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render(m.error.Error()) + "\n"
-// 	// }
-
-// 	// if m.saveConfigurationAction.IsSuccess() {
-// 	// 	s += "\n" + lipgloss.NewStyle().Foreground(style.SuccessPrimary).Render("Configuration saved successfully to Rover") + "\n"
-// 	// }
-
-// 	// From all the services, create a dot graph of the pipeline
-// 	nodes := make([]core.NodeInput, 0)
-
-// 	// Shorthands
-// 	config := m.fetchConfigurationAction.Data
-// 	allservices := *m.fetchServicesAction.Data
-// 	enabledservices := make([]services.FoundService, 0)
-// 	for _, service := range allservices {
-// 		if config.HasEnabled(service.Path) {
-// 			enabledservices = append(enabledservices, service)
-// 		}
-// 	}
-
-// 	// For every service, add a connection if there is a service that depends on it
-// 	for _, found := range enabledservices {
-// 		newNode := core.NodeInput{
-// 			Id:   found.Service.Name,
-// 			Next: make([]string, 0),
-// 		}
-
-// 		for _, outputStream := range found.Service.Outputs {
-// 			// Go over all other services
-// 			for _, other := range enabledservices {
-// 				if found.Path == other.Path {
-// 					continue
-// 				}
-
-// 				// Does this service depend on the current service?
-// 				for _, input := range other.Service.Inputs {
-// 					for _, inputStream := range input.Streams {
-// 						if inputStream == outputStream && input.Service == found.Service.Name {
-// 							// Add a connection
-// 							newNode.Next = append(newNode.Next, other.Service.Name)
-// 						}
-// 					}
-// 				}
-// 			}
-// 		}
-
-// 		nodes = append(nodes, newNode)
-// 	}
-
-// 	// Draw the pipeline
-// 	canvas, err := dgraph.DrawGraph(nodes)
-// 	canvasView := ""
-// 	if err != nil {
-// 		canvasView += "Failed to draw pipeline"
-// 	} else if len(nodes) > 0 {
-// 		canvasView += fmt.Sprintf("\n%s\n", canvas)
-// 	}
-
-// 	// Add arrows
-// 	canvasView = strings.ReplaceAll(canvasView, "─┤", ">┤")
-
-// 	// Show unmet dependencies in the pipeline with a red > symbol
-// 	for _, service := range enabledservices {
-// 		unmet := getUnmetDependencies(service, enabledservices)
-// 		if len(unmet) > 0 {
-// 			canvasView = strings.Replace(canvasView, ">┤ "+service.Service.Name, style.RenderColor(">┤ ", style.ErrorPrimary)+service.Service.Name, -1)
-// 			canvasView = strings.Replace(canvasView, "│ "+service.Service.Name, style.RenderColor("> ", style.ErrorPrimary)+service.Service.Name, -1)
-// 		}
-// 	}
-
-// 	// If the current list item is active, highlight it
-// 	currItem := m.list.Items()[m.list.Index()].(item)
-// 	if currItem.active {
-// 		unmet := getUnmetDependencies(currItem.service, enabledservices)
-// 		color := style.SuccessPrimary
-// 		if len(unmet) > 0 {
-// 			color = style.ErrorPrimary
-// 		}
-// 		canvasView = strings.Replace(canvasView, currItem.service.Service.Name, lipgloss.NewStyle().Foreground(color).Bold(true).Render(currItem.service.Service.Name), -1)
-// 	}
-
-// 	s += lipgloss.NewStyle().Margin(0, 1).Render(canvasView)
-// 	return s
-// }
-
-// func loadErrorView(m PipelineOverviewPage) string {
-// 	s := ""
-
-// 	if m.fetchServicesAction.IsError() {
-// 		s += "Failed to fetch services"
-// 		if m.fetchServicesAction.Error != nil {
-// 			s += "\n > " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render(m.fetchServicesAction.Error.Error())
-// 		}
-// 	} else if m.fetchConfigurationAction.IsError() {
-// 		s += "Failed to fetch configuration"
-// 		if m.fetchConfigurationAction.Error != nil {
-// 			s += "\n > " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render(m.fetchConfigurationAction.Error.Error())
-// 		}
-// 	}
-
-// 	return s
-// }
-
-// func loadindView(m PipelineOverviewPage) string {
-// 	s := ""
-
-// 	if m.fetchServicesAction.IsLoading() {
-// 		s += m.spinner.View() + " Fetching services...\n"
-// 	}
-
-// 	if m.fetchConfigurationAction.IsLoading() {
-// 		s += m.spinner.View() + " Fetching configuration..."
-// 	}
-
-// 	return s
-// }
-
-// func saveErrorView(m PipelineOverviewPage) string {
-// 	s := ""
-
-// 	if m.saveConfigurationAction.IsError() {
-// 		s += "Failed to save configuration"
-// 		if m.saveConfigurationAction.Error != nil {
-// 			s += "\n > " + lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render(m.saveConfigurationAction.Error.Error())
-// 		}
-// 	}
-
-// 	s += "\n\n" + style.RenderColor("Press 'r' to reload the configuration or press 'q' to quit", style.GrayPrimary)
-
-// 	return s
-// }
-
-// func savingView(m PipelineOverviewPage) string {
-// 	return m.spinner.View() + " Saving configuration..."
-// }
-
-// func (m PipelineOverviewPage) View() string {
-// 	s := ""
-
-// 	if m.fetchServicesAction.IsLoading() || m.fetchConfigurationAction.IsLoading() {
-// 		s = loadindView(m)
-// 	} else if m.fetchServicesAction.IsError() || m.fetchConfigurationAction.IsError() {
-// 		s = loadErrorView(m)
-// 	} else if m.saveConfigurationAction.IsLoading() {
-// 		s = savingView(m)
-// 	} else if m.saveConfigurationAction.IsError() {
-// 		s = saveErrorView(m)
-// 	} else {
-// 		s = configureView(m)
-// 	}
-
-// 	return style.Docstyle.Render(s)
-// }
-
-// func getServices(m PipelineOverviewPage) tea.Cmd {
-// 	return tui.PerformAction(&m.fetchServicesAction, func() (*[]services.FoundService, error) {
-// 		conn := state.Get().RoverConnections.GetActive()
-// 		if conn == nil {
-// 			return nil, fmt.Errorf("Not connected to an active Rover")
-// 		}
-
-// 		found := []services.FoundService{}
-// 		err := roverlock.WithLock(*conn, func() error {
-// 			var err error
-// 			// Get all the services
-// 			found, err = services.Scan(*conn)
-// 			return err
-// 		})
-
-// 		return &found, err
-// 	})
-// }
-
-// func getConfiguration(m PipelineOverviewPage) tea.Cmd {
-// 	return tui.PerformAction(&m.fetchConfigurationAction, func() (*roveryaml.RoverConfig, error) {
-// 		conn := state.Get().RoverConnections.GetActive()
-// 		if conn == nil {
-// 			return nil, fmt.Errorf("Not connected to an active Rover")
-// 		}
-
-// 		found := &roveryaml.RoverConfig{}
-// 		err := roverlock.WithLock(*conn, func() error {
-// 			var err error
-// 			// Get the configuration
-// 			found, err = roveryaml.Load(*conn)
-// 			return err
-// 		})
-
-// 		return found, err
-// 	})
-// }
-
-// func saveConfiguration(m PipelineOverviewPage) tea.Cmd {
-// 	return tui.PerformAction(&m.saveConfigurationAction, func() (*any, error) {
-// 		// Shorthand
-// 		config := m.fetchConfigurationAction.Data
-// 		if config == nil {
-// 			return nil, fmt.Errorf("No configuration loaded")
-// 		}
-
-// 		conn := state.Get().RoverConnections.GetActive()
-// 		if conn == nil {
-// 			return nil, fmt.Errorf("Not connected to an active Rover")
-// 		}
-
-// 		err := roverlock.WithLock(*conn, func() error {
-// 			// Check if all enabled services still exist
-// 			current, err := services.Scan(*conn)
-// 			if err != nil {
-// 				return err
-// 			}
-// 			for _, enabled := range config.Enabled {
-// 				if !slices.ContainsFunc(current, func(f services.FoundService) bool {
-// 					return f.Path == enabled
-// 				}) {
-// 					return fmt.Errorf("Service '%s' does not exist anymore", enabled)
-// 				}
-// 			}
-
-// 			// Try to save the configuration
-// 			return config.Save(*conn)
-// 		})
-
-// 		return nil, err
-// 	})
-// }
+import (
+	"fmt"
+	"regexp"
+	"time"
+
+	"github.com/VU-ASE/rover/src/openapi"
+	"github.com/VU-ASE/rover/src/state"
+	"github.com/VU-ASE/rover/src/style"
+	"github.com/VU-ASE/rover/src/tui"
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/progress"
+	"github.com/charmbracelet/bubbles/spinner"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/lempiy/dgraph"
+	"github.com/lempiy/dgraph/core"
+)
+
+//
+// Action responses
+//
+
+type PipelineOverviewServiceInfo struct {
+	Name          string
+	Version       string
+	Author        string
+	Configuration openapi.ServicesAuthorServiceVersionGet200Response
+}
+
+type PipelineOverviewSummary struct {
+	// Basic pipeline GET request
+	Pipeline openapi.PipelineGet200Response
+	// Information about services specifically
+	Services []PipelineOverviewServiceInfo
+	// Status from roverd (for CPU and memory usage)
+	Status openapi.StatusGet200Response
+}
+
+//
+// All keys
+//
+
+// Keys to navigate
+type PipelineOverviewKeyMap struct {
+	Retry   key.Binding
+	Confirm key.Binding
+	Quit    key.Binding
+}
+
+// Shown when the services are being updated
+var pipelineOverviewKeysRegular = PipelineOverviewKeyMap{
+	Retry: key.NewBinding(
+		key.WithKeys("r"),
+		key.WithHelp("r", "retry"),
+	),
+	Quit: key.NewBinding(
+		key.WithKeys("q"),
+		key.WithHelp("q", "quit"),
+	),
+}
+
+func (k PipelineOverviewKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{k.Retry, k.Confirm, k.Quit}
+}
+
+func (k PipelineOverviewKeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{}
+}
+
+//
+// The page model
+//
+
+type PipelineOverviewPage struct {
+	help          help.Model
+	spinner       spinner.Model
+	pipeline      tui.Action[PipelineOverviewSummary]
+	pipelineGraph string // preserved in the model to avoid re-rendering in .View()
+	progress      progress.Model
+}
+
+func NewPipelineOverviewPage() PipelineOverviewPage {
+	// todo
+
+	return PipelineOverviewPage{
+		spinner:       spinner.New(),
+		help:          help.New(),
+		pipeline:      tui.NewAction[PipelineOverviewSummary]("pipelineFetch"),
+		pipelineGraph: "",
+		progress:      progress.New(progress.WithScaledGradient(string(style.AsePrimary), "#FFF")),
+	}
+}
+
+//
+// Page model methods
+//
+
+func (m PipelineOverviewPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case spinner.TickMsg:
+		m.spinner, cmd = m.spinner.Update(msg)
+		return m, cmd
+	case tui.ActionInit[PipelineOverviewSummary]:
+		m.pipeline.ProcessInit(msg)
+		return m, nil
+	case tui.ActionResult[PipelineOverviewSummary]:
+		m.pipeline.ProcessResult(msg)
+		if m.pipeline.IsSuccess() {
+			// Create the pipeline graph based on enabled services
+			nodes := make([]core.NodeInput, 0)
+			for _, service := range m.pipeline.Data.Pipeline.Enabled {
+				nodes = append(nodes, core.NodeInput{
+					Id: service.Service.Name,
+					Next: func() []string {
+						// Find services that depend on an output of this service
+						found := make([]string, 0)
+						for _, s := range m.pipeline.Data.Services {
+							if s.Name != service.Service.Name {
+								for _, input := range s.Configuration.Inputs {
+									if input.Service == service.Service.Name {
+										found = append(found, s.Name)
+									}
+								}
+							}
+						}
+
+						return found
+					}(),
+				})
+
+				canvas, err := dgraph.DrawGraph(nodes)
+				if err != nil {
+					m.pipelineGraph = "Failed to draw pipeline\n"
+				} else if len(nodes) > 0 {
+					m.pipelineGraph = m.postProcessGraph(fmt.Sprintf("%s\n", canvas))
+				}
+			}
+		}
+
+		return m, nil
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, pipelineOverviewKeysRegular.Quit):
+			return m, tea.Quit
+		case key.Matches(msg, pipelineOverviewKeysRegular.Retry):
+			// todo:
+			return m, nil
+		case key.Matches(msg, pipelineOverviewKeysRegular.Confirm):
+			// todo:
+			return m, nil
+		}
+	case tea.WindowSizeMsg:
+		m.progress.Width = (msg.Width - 4 - 6 - 6) / 3 // padding
+	}
+
+	return m, nil
+}
+
+func (m PipelineOverviewPage) Init() tea.Cmd {
+	return tea.Batch(m.spinner.Tick, m.fetchPipeline())
+}
+
+// Rendered when the pipeline is successfully fetched
+func (m PipelineOverviewPage) pipelineView() string {
+	if len(m.pipeline.Data.Services) <= 0 {
+		return style.Gray.Render("Your pipeline is empty. Start by adding services to it.")
+	}
+
+	status := style.Error.Bold(true).Render("Unknown")
+	if m.pipeline.Data.Pipeline.Status == openapi.STARTABLE {
+		status = style.Color(style.SuccessLight).Bold(true).Render("Startable")
+	} else if m.pipeline.Data.Pipeline.Status == openapi.STARTED {
+		status = style.Success.Bold(true).Render("Running")
+	} else if m.pipeline.Data.Pipeline.Status == openapi.RESTARTING {
+		status = style.Warning.Bold(true).Render("Restarting")
+	}
+	s := m.pipelineGraph
+	status = status + "\n"
+	if m.pipeline.Data.Pipeline.LastStart != nil {
+		status += style.Gray.Render("last started at: ") + time.Unix(*m.pipeline.Data.Pipeline.LastStart, 0).Format("2006-01-02 15:04:05") + "\n"
+	}
+	if m.pipeline.Data.Pipeline.LastStop != nil {
+		status += style.Gray.Render("last stopped at: ") + time.Unix(*m.pipeline.Data.Pipeline.LastStop, 0).Format("2006-01-02 15:04:05") + "\n"
+	}
+	if m.pipeline.Data.Pipeline.LastRestart != nil {
+		status += style.Gray.Render("last restarted at: ") + time.Unix(*m.pipeline.Data.Pipeline.LastRestart, 0).Format("2006-01-02 15:04:05") + "\n"
+	}
+
+	cpu := ""
+	if len(m.pipeline.Data.Status.Cpu) > 0 {
+		cpu += style.Gray.Render("CPU") + "\n"
+		for _, c := range m.pipeline.Data.Status.Cpu {
+			cpu += m.progress.ViewAs(float64(c.Used)/float64(c.Total)) + "\n"
+		}
+	}
+	mem := "\n" + style.Gray.Render("Memory") + "\n" + m.progress.ViewAs(float64(m.pipeline.Data.Status.Memory.Used)/float64(m.pipeline.Data.Status.Memory.Total)) + "\n"
+
+	enabled := style.Gray.Render("Services") + "\n"
+	for _, service := range m.pipeline.Data.Services {
+		enabled += service.Author + "/" + style.Primary.Render(service.Name) + style.Gray.Render(""+service.Version) + "\n"
+	}
+
+	// Calculate column width (subtract padding and borders)
+	columnWidth := (state.Get().WindowWidth - 4 - 6) / 3 // Adjust for padding and borders
+
+	// Define styles for each column
+	columnStyle := lipgloss.NewStyle().
+		// BorderStyle(lipgloss.NormalBorder()).
+		// Padding(1, 1).
+		Width(columnWidth)
+
+	// Join columns horizontally
+	row := lipgloss.JoinHorizontal(lipgloss.Top,
+		columnStyle.Render(status),
+		columnStyle.Render(enabled),
+		columnStyle.Render(cpu+mem),
+	)
+
+	return s + "\n\n" + row
+}
+
+func (m PipelineOverviewPage) View() string {
+	s := style.Title.Render("Pipeline") + "\n\n"
+	if m.pipeline.IsLoading() {
+		s += m.spinner.View() + " Loading pipeline..."
+	} else if m.pipeline.IsError() {
+		s += style.Error.Render("Error loading pipeline") + " (" + m.pipeline.Error.Error() + ")"
+	} else if m.pipeline.IsSuccess() {
+		s += m.pipelineView()
+	}
+	s += "\n"
+
+	return s
+}
+
+//
+// Actions
+//
+
+func (m PipelineOverviewPage) fetchPipeline() tea.Cmd {
+	return tui.PerformAction(&m.pipeline, func() (*PipelineOverviewSummary, error) {
+		// mock fetch
+		// ! remove
+
+		time.Sleep(100 * time.Millisecond)
+		// First roverd tells us what services are enabled, by reference (FQN)
+		pipeline := openapi.PipelineGet200Response{
+			Status:    openapi.STARTABLE,
+			LastStart: openapi.PtrInt64(123456),
+			LastStop:  openapi.PtrInt64(123456),
+			Enabled: []openapi.PipelineGet200ResponseEnabledInner{
+				{
+					Service: openapi.PipelineGet200ResponseEnabledInnerService{
+						Name:    "imaging",
+						Version: "1.0.0",
+						Author:  "vu-ase",
+					},
+				},
+
+				{
+					Service: openapi.PipelineGet200ResponseEnabledInnerService{
+						Name:    "controller",
+						Version: "1.0.0",
+						Author:  "vu-ase",
+					},
+				},
+				{
+					Service: openapi.PipelineGet200ResponseEnabledInnerService{
+						Name:    "transceiver",
+						Version: "1.0.0",
+						Author:  "vu-ase",
+					},
+				},
+			},
+		}
+
+		// Then, for each service, we need to query the service for its actual configuration (inputs, outputs)
+		services := make([]PipelineOverviewServiceInfo, 0)
+		for _, enabled := range pipeline.Enabled {
+			// mock fetch
+			// ! remove
+
+			if enabled.Service.Name == "imaging" {
+				services = append(services, PipelineOverviewServiceInfo{
+					Name:    enabled.Service.Name,
+					Version: enabled.Service.Version,
+					Author:  enabled.Service.Author,
+					Configuration: openapi.ServicesAuthorServiceVersionGet200Response{
+						Inputs: []openapi.ServicesAuthorServiceVersionGet200ResponseInputsInner{}, // no inputs
+						Outputs: []string{
+							"track",
+						},
+					},
+				})
+			} else if enabled.Service.Name == "controller" {
+				services = append(services, PipelineOverviewServiceInfo{
+					Name:    enabled.Service.Name,
+					Version: enabled.Service.Version,
+					Author:  enabled.Service.Author,
+					Configuration: openapi.ServicesAuthorServiceVersionGet200Response{
+						Inputs: []openapi.ServicesAuthorServiceVersionGet200ResponseInputsInner{
+							{
+								Service: "imaging",
+								Streams: []string{
+									"track",
+								},
+							},
+						},
+						Outputs: []string{}, // no outputs, last service
+					},
+				})
+			} else if enabled.Service.Name == "transceiver" {
+				services = append(services, PipelineOverviewServiceInfo{
+					Name:    enabled.Service.Name,
+					Version: enabled.Service.Version,
+					Author:  enabled.Service.Author,
+					Configuration: openapi.ServicesAuthorServiceVersionGet200Response{
+						Inputs: []openapi.ServicesAuthorServiceVersionGet200ResponseInputsInner{
+							{
+								Service: "imaging",
+								Streams: []string{
+									"track",
+								},
+							},
+							{
+								Service: "controllertje",
+								Streams: []string{
+									"track",
+								},
+							},
+						},
+						Outputs: []string{}, // no outputs, last service
+					},
+				})
+			}
+		}
+
+		// Then the status (mock data)
+		status := openapi.StatusGet200Response{
+			Cpu: []openapi.StatusGet200ResponseCpuInner{
+				{
+					Core:  0,
+					Used:  5,
+					Total: 10,
+				},
+				{
+					Core:  1,
+					Used:  2,
+					Total: 10,
+				},
+			},
+			Memory: openapi.StatusGet200ResponseMemory{
+				Total: 100,
+				Used:  50,
+			},
+		}
+
+		// Combined response
+		res := PipelineOverviewSummary{
+			Pipeline: pipeline,
+			Services: services,
+			Status:   status,
+		}
+
+		return &res, nil
+	})
+}
+
+// Clean up the graph to make it a bit more readable and compressed
+func (m PipelineOverviewPage) postProcessGraph(s string) string {
+	n := s
+
+	// Remove empty lines
+	n = regexp.MustCompile(`\n\s*\n`).ReplaceAllString(n, "\n")
+
+	return n
+}

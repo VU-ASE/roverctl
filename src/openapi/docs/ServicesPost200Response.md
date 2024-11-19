@@ -6,12 +6,14 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Name** | **string** | The name of the service | 
 **Version** | **string** | The version of the service | 
+**Author** | **string** | The author of the service | 
+**InvalidatedPipeline** | **bool** | Whether the pipeline was invalidated by this service upload | 
 
 ## Methods
 
 ### NewServicesPost200Response
 
-`func NewServicesPost200Response(name string, version string, ) *ServicesPost200Response`
+`func NewServicesPost200Response(name string, version string, author string, invalidatedPipeline bool, ) *ServicesPost200Response`
 
 NewServicesPost200Response instantiates a new ServicesPost200Response object
 This constructor will assign default values to properties that have it defined,
@@ -64,6 +66,46 @@ and a boolean to check if the value has been set.
 `func (o *ServicesPost200Response) SetVersion(v string)`
 
 SetVersion sets Version field to given value.
+
+
+### GetAuthor
+
+`func (o *ServicesPost200Response) GetAuthor() string`
+
+GetAuthor returns the Author field if non-nil, zero value otherwise.
+
+### GetAuthorOk
+
+`func (o *ServicesPost200Response) GetAuthorOk() (*string, bool)`
+
+GetAuthorOk returns a tuple with the Author field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetAuthor
+
+`func (o *ServicesPost200Response) SetAuthor(v string)`
+
+SetAuthor sets Author field to given value.
+
+
+### GetInvalidatedPipeline
+
+`func (o *ServicesPost200Response) GetInvalidatedPipeline() bool`
+
+GetInvalidatedPipeline returns the InvalidatedPipeline field if non-nil, zero value otherwise.
+
+### GetInvalidatedPipelineOk
+
+`func (o *ServicesPost200Response) GetInvalidatedPipelineOk() (*bool, bool)`
+
+GetInvalidatedPipelineOk returns a tuple with the InvalidatedPipeline field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetInvalidatedPipeline
+
+`func (o *ServicesPost200Response) SetInvalidatedPipeline(v bool)`
+
+SetInvalidatedPipeline sets InvalidatedPipeline field to given value.
 
 
 

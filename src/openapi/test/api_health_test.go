@@ -11,10 +11,11 @@ package openapi
 
 import (
 	"context"
+	"testing"
+
+	openapiclient "github.com/VU-ASE/roverctl"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
 )
 
 func Test_openapi_HealthAPIService(t *testing.T) {
@@ -24,7 +25,7 @@ func Test_openapi_HealthAPIService(t *testing.T) {
 
 	t.Run("Test HealthAPIService StatusGet", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		resp, httpRes, err := apiClient.HealthAPI.StatusGet(context.Background()).Execute()
 
@@ -36,11 +37,12 @@ func Test_openapi_HealthAPIService(t *testing.T) {
 
 	t.Run("Test HealthAPIService UpdatePost", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
-		httpRes, err := apiClient.HealthAPI.UpdatePost(context.Background()).Execute()
+		resp, httpRes, err := apiClient.HealthAPI.UpdatePost(context.Background()).Execute()
 
 		require.Nil(t, err)
+		require.NotNil(t, resp)
 		assert.Equal(t, 200, httpRes.StatusCode)
 
 	})

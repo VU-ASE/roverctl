@@ -11,10 +11,11 @@ package openapi
 
 import (
 	"context"
+	"testing"
+
+	openapiclient "github.com/VU-ASE/roverctl"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
 )
 
 func Test_openapi_SourcesAPIService(t *testing.T) {
@@ -22,9 +23,20 @@ func Test_openapi_SourcesAPIService(t *testing.T) {
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
 
+	t.Run("Test SourcesAPIService SourcesDelete", func(t *testing.T) {
+
+		t.Skip("skip test") // remove to run test
+
+		httpRes, err := apiClient.SourcesAPI.SourcesDelete(context.Background()).Execute()
+
+		require.Nil(t, err)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
 	t.Run("Test SourcesAPIService SourcesGet", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		resp, httpRes, err := apiClient.SourcesAPI.SourcesGet(context.Background()).Execute()
 
@@ -34,35 +46,9 @@ func Test_openapi_SourcesAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test SourcesAPIService SourcesNameDelete", func(t *testing.T) {
-
-		t.Skip("skip test")  // remove to run test
-
-		var name string
-
-		httpRes, err := apiClient.SourcesAPI.SourcesNameDelete(context.Background(), name).Execute()
-
-		require.Nil(t, err)
-		assert.Equal(t, 200, httpRes.StatusCode)
-
-	})
-
-	t.Run("Test SourcesAPIService SourcesNamePost", func(t *testing.T) {
-
-		t.Skip("skip test")  // remove to run test
-
-		var name string
-
-		httpRes, err := apiClient.SourcesAPI.SourcesNamePost(context.Background(), name).Execute()
-
-		require.Nil(t, err)
-		assert.Equal(t, 200, httpRes.StatusCode)
-
-	})
-
 	t.Run("Test SourcesAPIService SourcesPost", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		httpRes, err := apiClient.SourcesAPI.SourcesPost(context.Background()).Execute()
 

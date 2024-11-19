@@ -41,22 +41,36 @@ paths:
       tags:
       - Pipeline
     post:
-      parameters:
-      - description: The action to perform on the pipeline
-        example: start
-        explode: true
-        in: query
-        name: action
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/_pipeline_post_request_inner'
+              type: array
         required: true
-        schema:
-          enum:
-          - start
-          - stop
-          type: string
-        style: form
       responses:
         "200":
-          description: The pipeline action was performed successfully
+          description: The pipeline was updated successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_pipeline_post_400_response'
+          description: The pipeline was not valid and could not be set
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: "Set the services that are enabled in this pipeline, by specifying\
+        \ the fully qualified services"
+      tags:
+      - Pipeline
+  /pipeline/start:
+    post:
+      responses:
+        "200":
+          description: The pipeline was started successfully. You can view its information
+            with GET /pipeline
         "400":
           content:
             application/json:
@@ -66,10 +80,28 @@ paths:
         "401":
           description: Unauthorized access (you need to set the Authorization header
             with a valid username and password)
-      summary: Start or stop the pipeline of all enabled services
+      summary: Start the pipeline
       tags:
       - Pipeline
-  /pipeline/{name}:
+  /pipeline/stop:
+    post:
+      responses:
+        "200":
+          description: The pipeline was stopped successfully. You can view its information
+            with GET /pipeline
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: Stop the pipeline
+      tags:
+      - Pipeline
+  /logs/{name}:
     get:
       parameters:
       - description: The name of the service running as a process in the pipeline
@@ -85,7 +117,7 @@ paths:
         example: 100
         explode: true
         in: query
-        name: log_lines
+        name: lines
         required: false
         schema:
           default: 50
@@ -98,8 +130,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/_pipeline__name__get_200_response'
-          description: The status of the process
+                description: The latest <lines> log lines of the process
+                example:
+                - "INFO: Starting imaging service"
+                - "INFO: Imaging service completed"
+                items:
+                  type: string
+                type: array
+          description: The collection of logs
         "400":
           content:
             application/json:
@@ -111,7 +149,9 @@ paths:
         "401":
           description: Unauthorized access (you need to set the Authorization header
             with a valid username and password)
-      summary: Retrieve the status of a service running as a process in the pipeline
+      summary: "Retrieve logs for a pipeline service (this can be logs from multiple\
+        \ processes, if the service was restarted). These logs are still queryable\
+        \ if a process has been terminated or if the pipeline was stopped."
       tags:
       - Pipeline
   /services:
@@ -122,9 +162,11 @@ paths:
             application/json:
               schema:
                 items:
-                  $ref: '#/components/schemas/_services_get_200_response_inner'
+                  description: An author of a parsable service
+                  example: vu-ase
+                  type: string
                 type: array
-          description: An array of services
+          description: The list of authors
         "400":
           content:
             application/json:
@@ -134,7 +176,8 @@ paths:
         "401":
           description: Unauthorized access (you need to set the Authorization header
             with a valid username and password)
-      summary: Retrieve all parsable services and their status from disk.
+      summary: Retrieve the list of all authors that have parsable services. With
+        these authors you can query further for services
       tags:
       - Services
     post:
@@ -150,7 +193,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/_services_post_200_response'
-          description: The service action was performed successfully
+          description: The service was uploaded successfully
         "400":
           content:
             application/json:
@@ -164,14 +207,14 @@ paths:
         file
       tags:
       - Services
-  /services/{name}:
+  /services/{author}:
     get:
       parameters:
-      - description: The name of the service
-        example: imaging
+      - description: The author name
+        example: vu-ase
         explode: false
         in: path
-        name: name
+        name: author
         required: true
         schema:
           type: string
@@ -181,8 +224,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/_services__name__get_200_response'
-          description: The status of the service
+                example:
+                - imaging
+                - actuator
+                items:
+                  description: The name of the service
+                  type: string
+                type: array
+          description: The list of services for the author
         "400":
           content:
             application/json:
@@ -194,17 +243,75 @@ paths:
         "401":
           description: Unauthorized access (you need to set the Authorization header
             with a valid username and password)
-      summary: Retrieve the status and versions of a service
+      summary: Retrieve the list of parsable services for a specific author
       tags:
       - Services
-  /services/{name}/{version}:
-    delete:
+  /services/{author}/{service}:
+    get:
       parameters:
-      - description: The name of the service
+      - description: The author name
+        example: vu-ase
+        explode: false
+        in: path
+        name: author
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The service name
         example: imaging
         explode: false
         in: path
-        name: name
+        name: service
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                example:
+                - 1.0.0
+                - 1.0.1
+                items:
+                  description: The version of the service
+                  type: string
+                type: array
+          description: The list of versions for this author and service name
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+        "404":
+          description: Entity not found
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: Retrieve the list of parsable service versions for a specific author
+        and service
+      tags:
+      - Services
+  /services/{author}/{service}/{version}:
+    delete:
+      parameters:
+      - description: The author name
+        example: vu-ase
+        explode: false
+        in: path
+        name: author
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The service name
+        example: imaging
+        explode: false
+        in: path
+        name: service
         required: true
         schema:
           type: string
@@ -220,6 +327,10 @@ paths:
         style: simple
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_services__author___service___version__delete_200_response'
           description: The service version was deleted successfully
         "400":
           content:
@@ -237,11 +348,20 @@ paths:
       - Services
     get:
       parameters:
-      - description: The name of the service
+      - description: The author name
+        example: vu-ase
+        explode: false
+        in: path
+        name: author
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The service name
         example: imaging
         explode: false
         in: path
-        name: name
+        name: service
         required: true
         schema:
           type: string
@@ -260,8 +380,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/_services__name___version__get_200_response'
-          description: The status of the service
+                $ref: '#/components/schemas/_services__author___service___version__get_200_response'
+          description: The service configuration
         "400":
           content:
             application/json:
@@ -278,11 +398,20 @@ paths:
       - Services
     post:
       parameters:
-      - description: The name of the service
+      - description: The author name
+        example: vu-ase
+        explode: false
+        in: path
+        name: author
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The service name
         example: imaging
         explode: false
         in: path
-        name: name
+        name: service
         required: true
         schema:
           type: string
@@ -296,34 +425,21 @@ paths:
         schema:
           type: string
         style: simple
-      - description: The action to perform on the service version
-        example: enable
-        explode: true
-        in: query
-        name: action
-        required: true
-        schema:
-          enum:
-          - enable
-          - disable
-          - build
-          type: string
-        style: form
       responses:
         "200":
-          description: The service action was performed successfully
+          description: The service was built successfully
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericError'
-          description: An error occurred
+                $ref: '#/components/schemas/_services__author___service___version__post_400_response'
+          description: The build failed
         "404":
           description: Entity not found
         "401":
           description: Unauthorized access (you need to set the Authorization header
             with a valid username and password)
-      summary: "Enable, disable or build a specific version of a service in the pipeline"
+      summary: Build a fully qualified service version
       tags:
       - Services
   /sources:
@@ -392,7 +508,9 @@ paths:
         "401":
           description: Unauthorized access (you need to set the Authorization header
             with a valid username and password)
-      summary: "Downloads and installs a new source, adds it the 'downloaded' in rover.yaml"
+      summary: "Downloads and installs a new source, overwriting the prior version\
+        \ (if any) and adding it to the 'downloaded' section in rover.yaml (checks\
+        \ for duplicate source names)"
       tags:
       - Sources
   /status:
@@ -453,10 +571,9 @@ components:
     PipelineStatus:
       description: The status of the entire pipeline corresponding to a state machine
       enum:
+      - startable
       - started
       - restarting
-      - invalid
-      - valid
       type: string
     UnmetStreamError:
       description: UnmetStreamError
@@ -519,8 +636,172 @@ components:
           description: A code describing the error (this is not an HTTP status code)
           type: integer
       type: object
-    _pipeline_get_200_response_pipeline_validation_errors:
-      description: "If status is invalid, this array shows the validation errors"
+    _pipeline_get_200_response_enabled_inner_service:
+      description: The fully qualified service that is enabled
+      example:
+        author: author
+        name: name
+        version: version
+        faults: 1
+      properties:
+        name:
+          description: The name of the service
+          type: string
+        version:
+          description: The version of the service
+          type: string
+        author:
+          description: The author of the service
+          type: string
+        faults:
+          description: The number of faults that have occurred (causing the pipeline
+            to restart) since pipeline.last_start
+          example: 1
+          type: integer
+      required:
+      - author
+      - name
+      - version
+      type: object
+    _pipeline_get_200_response_enabled_inner_process:
+      description: The last process that was started for this service (instantiated
+        from the service). This can be undefined if the pipeline was not started before.
+      example:
+        memory: 1024
+        cpu: 20
+        pid: 7890
+        status: running
+        uptime: 121
+      properties:
+        pid:
+          description: "The process ID. Depending on the status, this PID might not\
+            \ exist anymore"
+          example: 7890
+          type: integer
+        status:
+          $ref: '#/components/schemas/ProcessStatus'
+        uptime:
+          description: The number of milliseconds the process has been running
+          example: 121
+          format: int64
+          type: integer
+        memory:
+          description: The amount of memory used by the process in megabytes
+          example: 1024
+          type: integer
+        cpu:
+          description: The percentage of CPU used by the process
+          example: 20
+          type: integer
+      required:
+      - cpu
+      - faults
+      - memory
+      - pid
+      - status
+      - uptime
+      type: object
+    _pipeline_get_200_response_enabled_inner:
+      example:
+        process:
+          memory: 1024
+          cpu: 20
+          pid: 7890
+          status: running
+          uptime: 121
+        service:
+          author: author
+          name: name
+          version: version
+          faults: 1
+      properties:
+        service:
+          $ref: '#/components/schemas/_pipeline_get_200_response_enabled_inner_service'
+        process:
+          $ref: '#/components/schemas/_pipeline_get_200_response_enabled_inner_process'
+      required:
+      - service
+      type: object
+    _pipeline_get_200_response:
+      example:
+        last_start: 1612345678211
+        last_restart: 1612345678901
+        last_stop: 1612345678910
+        enabled:
+        - process:
+            memory: 1024
+            cpu: 20
+            pid: 7890
+            status: running
+            uptime: 121
+          service:
+            author: author
+            name: name
+            version: version
+            faults: 1
+        - process:
+            memory: 1024
+            cpu: 20
+            pid: 7890
+            status: running
+            uptime: 121
+          service:
+            author: author
+            name: name
+            version: version
+            faults: 1
+        status: startable
+      properties:
+        status:
+          $ref: '#/components/schemas/PipelineStatus'
+        last_start:
+          description: Milliseconds since epoch when the pipeline was manually started
+          example: 1612345678211
+          format: int64
+          type: integer
+        last_stop:
+          description: Milliseconds since epoch when the pipeline was manually stopped
+          example: 1612345678910
+          format: int64
+          type: integer
+        last_restart:
+          description: Milliseconds since epoch when the pipeline was automatically
+            restarted (on process faults)
+          example: 1612345678901
+          format: int64
+          type: integer
+        enabled:
+          description: "The list of fully qualified services that are enabled in this\
+            \ pipeline. If the pipeline was started, this includes a process for each\
+            \ service"
+          items:
+            $ref: '#/components/schemas/_pipeline_get_200_response_enabled_inner'
+          type: array
+      required:
+      - enabled
+      - status
+      type: object
+    _pipeline_post_request_inner:
+      properties:
+        name:
+          description: The name of the service
+          example: imaging
+          type: string
+        version:
+          description: The version of the service
+          example: 1.0.0
+          type: string
+        author:
+          description: The author of the service
+          example: vu-ase
+          type: string
+      required:
+      - author
+      - name
+      - version
+      type: object
+    _pipeline_post_400_response_validation_errors:
+      description: The validation errors that prevent the pipeline from being set
       example:
         unmet_streams:
         - stream: stream
@@ -551,10 +832,8 @@ components:
             $ref: '#/components/schemas/DuplicateServiceError'
           type: array
       type: object
-    _pipeline_get_200_response_pipeline:
+    _pipeline_post_400_response:
       example:
-        last_start: 1612345678211
-        last_restart: 1612345678901
         validation_errors:
           unmet_streams:
           - stream: stream
@@ -571,218 +850,15 @@ components:
           duplicate_service:
           - null
           - null
-        last_stop: 1612345678910
-        status: started
+        message: message
       properties:
-        status:
-          $ref: '#/components/schemas/PipelineStatus'
-        last_start:
-          description: Milliseconds since epoch when the pipeline was manually started
-          example: 1612345678211
-          format: int64
-          type: integer
-        last_stop:
-          description: Milliseconds since epoch when the pipeline was manually stopped
-          example: 1612345678910
-          format: int64
-          type: integer
-        last_restart:
-          description: Milliseconds since epoch when the pipeline was automatically
-            restarted (on process faults)
-          example: 1612345678901
-          format: int64
-          type: integer
+        message:
+          description: Additional information
+          type: string
         validation_errors:
-          $ref: '#/components/schemas/_pipeline_get_200_response_pipeline_validation_errors'
+          $ref: '#/components/schemas/_pipeline_post_400_response_validation_errors'
       required:
-      - last_restart
-      - last_start
-      - last_stop
-      - status
-      type: object
-    _pipeline_get_200_response_processes_inner:
-      example:
-        memory: 1024
-        name: imaging
-        cpu: 20
-        pid: 7890
-        faults: 1
-        status: running
-        uptime: 121
-      properties:
-        name:
-          description: The name of the service running as a process
-          example: imaging
-          type: string
-        status:
-          $ref: '#/components/schemas/ProcessStatus'
-        pid:
-          description: The process ID
-          example: 7890
-          type: integer
-        uptime:
-          description: The number of milliseconds the process has been running
-          example: 121
-          format: int64
-          type: integer
-        memory:
-          description: The amount of memory used by the process in megabytes
-          example: 1024
-          type: integer
-        cpu:
-          description: The percentage of CPU used by the process
-          example: 20
-          type: integer
-        faults:
-          description: The number of faults that have occurred (causing the pipeline
-            to restart) since last_start
-          example: 1
-          type: integer
-      required:
-      - cpu
-      - faults
-      - memory
-      - name
-      - pid
-      - status
-      - uptime
-      type: object
-    _pipeline_get_200_response:
-      example:
-        pipeline:
-          last_start: 1612345678211
-          last_restart: 1612345678901
-          validation_errors:
-            unmet_streams:
-            - stream: stream
-              source: source
-              target: target
-            - stream: stream
-              source: source
-              target: target
-            unmet_services:
-            - source: source
-              target: target
-            - source: source
-              target: target
-            duplicate_service:
-            - null
-            - null
-          last_stop: 1612345678910
-          status: started
-        processes:
-        - memory: 1024
-          name: imaging
-          cpu: 20
-          pid: 7890
-          faults: 1
-          status: running
-          uptime: 121
-        - memory: 1024
-          name: imaging
-          cpu: 20
-          pid: 7890
-          faults: 1
-          status: running
-          uptime: 121
-      properties:
-        pipeline:
-          $ref: '#/components/schemas/_pipeline_get_200_response_pipeline'
-        processes:
-          items:
-            $ref: '#/components/schemas/_pipeline_get_200_response_processes_inner'
-          type: array
-      type: object
-    _pipeline__name__get_200_response:
-      example:
-        memory: 1024
-        service_name: imaging
-        name: imaging
-        cpu: 20
-        pid: 7890
-        service_version: 1.0.0
-        faults: 1
-        logs:
-        - "INFO: Starting imaging service"
-        - "INFO: Imaging service completed"
-        status: running
-        uptime: 121
-      properties:
-        name:
-          description: The name of the service running as a process
-          example: imaging
-          type: string
-        status:
-          $ref: '#/components/schemas/ProcessStatus'
-        pid:
-          description: The process ID
-          example: 7890
-          type: integer
-        uptime:
-          description: The number of milliseconds the process has been running
-          example: 121
-          format: int64
-          type: integer
-        memory:
-          description: The amount of memory used by the process in megabytes
-          example: 1024
-          type: integer
-        cpu:
-          description: The percentage of CPU used by the process
-          example: 20
-          type: integer
-        faults:
-          description: The number of faults that have occurred (causing the pipeline
-            to restart) since last_start
-          example: 1
-          type: integer
-        service_name:
-          description: The name of the service that this process is running
-          example: imaging
-          type: string
-        service_version:
-          description: The version of the service that this process is running
-          example: 1.0.0
-          type: string
-        logs:
-          description: The latest <log_lines> log lines of the process
-          example:
-          - "INFO: Starting imaging service"
-          - "INFO: Imaging service completed"
-          items:
-            type: string
-          type: array
-      required:
-      - cpu
-      - faults
-      - memory
-      - name
-      - pid
-      - service_name
-      - service_version
-      - status
-      - uptime
-      type: object
-    _services_get_200_response_inner:
-      example:
-        enabled_version: 1.0.0
-        name: imaging
-        status: enabled
-      properties:
-        name:
-          description: The name of the service
-          example: imaging
-          type: string
-        status:
-          $ref: '#/components/schemas/ServiceStatus'
-        enabled_version:
-          description: The version that is enabled for this service (if any)
-          example: 1.0.0
-          type: string
-      required:
-      - enabled_version
-      - name
-      - status
+      - validation_errors
       type: object
     _services_post_request:
       properties:
@@ -793,7 +869,9 @@ components:
       type: object
     _services_post_200_response:
       example:
+        author: vu-ase
         name: imaging
+        invalidated_pipeline: true
         version: 1.0.0
       properties:
         name:
@@ -804,43 +882,21 @@ components:
           description: The version of the service
           example: 1.0.0
           type: string
+        author:
+          description: The author of the service
+          example: vu-ase
+          type: string
+        invalidated_pipeline:
+          description: Whether the pipeline was invalidated by this service upload
+          example: true
+          type: boolean
       required:
+      - author
+      - invalidated_pipeline
       - name
       - version
       type: object
-    _services__name__get_200_response:
-      example:
-        enabled_version: 1.0.0
-        versions:
-        - 1.0.0
-        - 1.0.1
-        name: imaging
-        status: enabled
-      properties:
-        name:
-          description: The name of the service
-          example: imaging
-          type: string
-        status:
-          $ref: '#/components/schemas/ServiceStatus'
-        versions:
-          example:
-          - 1.0.0
-          - 1.0.1
-          items:
-            description: The versions of the service that are installed
-            type: string
-          type: array
-        enabled_version:
-          description: The version that is enabled for this service (if any)
-          example: 1.0.0
-          type: string
-      required:
-      - name
-      - status
-      - versions
-      type: object
-    _services__name___version__get_200_response_inputs_inner:
+    _services__author___service___version__get_200_response_inputs_inner:
       properties:
         service:
           description: The name of the service dependency
@@ -850,44 +906,27 @@ components:
           items:
             type: string
           type: array
+      required:
+      - service
+      - streams
       type: object
-    _services__name___version__get_200_response:
+    _services__author___service___version__get_200_response:
       example:
         outputs:
         - image
         built_at: 1612345678142
-        author: Elias
         inputs:
         - service: lux
           streams:
           - light_level
           - temperature
-        name: imaging
-        version: 1.0.0
-        errors:
-        - Missing input stream 'light_level'
-        status: enabled
       properties:
-        name:
-          description: The name of the service
-          example: imaging
-          type: string
-        version:
-          description: The version of the service
-          example: 1.0.0
-          type: string
-        status:
-          $ref: '#/components/schemas/ServiceStatus'
         built_at:
-          description: The time this version was last built as milliseconds since
-            epoch
+          description: "The time this version was last built as milliseconds since\
+            \ epoch, not set if the service was never built"
           example: 1612345678142
           format: int64
           type: integer
-        author:
-          description: The author of the service
-          example: Elias
-          type: string
         inputs:
           description: The dependencies/inputs of this service version
           example:
@@ -896,7 +935,7 @@ components:
             - light_level
             - temperature
           items:
-            $ref: '#/components/schemas/_services__name___version__get_200_response_inputs_inner'
+            $ref: '#/components/schemas/_services__author___service___version__get_200_response_inputs_inner'
           type: array
         outputs:
           description: The output streams of this service version
@@ -905,23 +944,38 @@ components:
           items:
             type: string
           type: array
-        errors:
-          description: The validation errors of this service version (one error per
-            line)
-          example:
-          - Missing input stream 'light_level'
+      required:
+      - inputs
+      - outputs
+      type: object
+    _services__author___service___version__post_400_response:
+      example:
+        build_log:
+        - build_log
+        - build_log
+        message: message
+      properties:
+        message:
+          description: The error message
+          type: string
+        build_log:
+          description: The build log (one log line per item)
           items:
             type: string
           type: array
       required:
-      - author
-      - built_at
-      - errors
-      - inputs
-      - name
-      - outputs
-      - status
-      - version
+      - message
+      type: object
+    _services__author___service___version__delete_200_response:
+      example:
+        invalidated_pipeline: true
+      properties:
+        invalidated_pipeline:
+          description: Whether the pipeline was invalidated by this service deletion
+          example: true
+          type: boolean
+      required:
+      - invalidated_pipeline
       type: object
     _sources_get_200_response_inner:
       example:
@@ -970,11 +1024,58 @@ components:
       - url
       - version
       type: object
+    _status_get_200_response_memory:
+      description: Memory usage information
+      example:
+        total: 0
+        used: 6
+      properties:
+        total:
+          description: The total amount of memory available on the rover in megabytes
+          type: integer
+        used:
+          description: The amount of memory used on the rover in megabytes
+          type: integer
+      required:
+      - total
+      - used
+      type: object
+    _status_get_200_response_cpu_inner:
+      description: CPU usage information about a specific core
+      example:
+        core: 1
+        total: 5
+        used: 5
+      properties:
+        core:
+          description: The core number
+          type: integer
+        total:
+          description: The total amount of CPU available on the core
+          type: integer
+        used:
+          description: The amount of CPU used on the core
+          type: integer
+      required:
+      - core
+      - total
+      - used
+      type: object
     _status_get_200_response:
       example:
         error_message: none
         rover_name: zenith
+        memory:
+          total: 0
+          used: 6
         os: linux 5.4.0-65-generic x86_64 ubuntu 20.04
+        cpu:
+        - core: 1
+          total: 5
+          used: 5
+        - core: 1
+          total: 5
+          used: 5
         systime: 1612345674703
         version: 1.0.0
         rover_id: 12
@@ -1014,7 +1115,16 @@ components:
           description: The unique name of the rover
           example: zenith
           type: string
+        memory:
+          $ref: '#/components/schemas/_status_get_200_response_memory'
+        cpu:
+          description: The CPU usage of the roverd process
+          items:
+            $ref: '#/components/schemas/_status_get_200_response_cpu_inner'
+          type: array
       required:
+      - cpu
+      - memory
       - os
       - status
       - systime
