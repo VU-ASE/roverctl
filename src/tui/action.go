@@ -75,6 +75,11 @@ func (a Action[T]) IsSuccess() bool {
 	return a.Started && a.Finished && a.Result
 }
 
+// Can be used for optimistic updates, where you want to use the previous data while the new data is loading
+func (a Action[T]) HasData() bool {
+	return a.Data != nil
+}
+
 func (a Action[T]) IsError() bool {
 	return a.Started && a.Finished && !a.Result
 }
@@ -88,7 +93,7 @@ func (a *Action[T]) Reset() {
 	a.Finished = false
 	a.Result = false
 	a.Error = nil
-	a.Data = nil
+	// a.Data = nil
 }
 
 func (a *Action[T]) Restart() {

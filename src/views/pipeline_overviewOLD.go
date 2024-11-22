@@ -26,154 +26,154 @@ package views
 // 	error                    error // Can be shown to the user
 // }
 
-// // // keyMap defines a set of keybindings. To work for help it must satisfy key.Map
-// // type keyMap struct {
-// // 	MarkActive key.Binding
-// // 	Save       key.Binding
-// // 	Reload     key.Binding
-// // }
+// // keyMap defines a set of keybindings. To work for help it must satisfy key.Map
+// type keyMap struct {
+// 	MarkActive key.Binding
+// 	Save       key.Binding
+// 	Reload     key.Binding
+// }
 
-// // // ShortHelp returns keybindings to be shown in the mini help view. It's part
-// // // of the key.Map interface.
-// // func (k keyMap) ShortHelp() []key.Binding {
-// // 	return []key.Binding{k.MarkActive, k.Save, k.Reload}
-// // }
+// // ShortHelp returns keybindings to be shown in the mini help view. It's part
+// // of the key.Map interface.
+// func (k keyMap) ShortHelp() []key.Binding {
+// 	return []key.Binding{k.MarkActive, k.Save, k.Reload}
+// }
 
-// // // FullHelp returns keybindings for the expanded help view. It's part of the
-// // // key.Map interface.
-// // func (k keyMap) FullHelp() [][]key.Binding {
-// // 	return [][]key.Binding{}
-// // }
+// // FullHelp returns keybindings for the expanded help view. It's part of the
+// // key.Map interface.
+// func (k keyMap) FullHelp() [][]key.Binding {
+// 	return [][]key.Binding{}
+// }
 
-// // var keys = keyMap{
-// // 	MarkActive: key.NewBinding(
-// // 		key.WithKeys(" "),
-// // 		key.WithHelp("space", "toggle service"),
-// // 	),
-// // 	Save: key.NewBinding(
-// // 		key.WithKeys("s"),
-// // 		key.WithHelp("s", "save to Rover"),
-// // 	),
-// // 	Reload: key.NewBinding(
-// // 		key.WithKeys("r"),
-// // 		key.WithHelp("r", "reload"),
-// // 	),
-// // }
+// var keys = keyMap{
+// 	MarkActive: key.NewBinding(
+// 		key.WithKeys(" "),
+// 		key.WithHelp("space", "toggle service"),
+// 	),
+// 	Save: key.NewBinding(
+// 		key.WithKeys("s"),
+// 		key.WithHelp("s", "save to Rover"),
+// 	),
+// 	Reload: key.NewBinding(
+// 		key.WithKeys("r"),
+// 		key.WithHelp("r", "reload"),
+// 	),
+// }
 
-// // // List item to render
-// // type item struct {
-// // 	service services.FoundService
-// // 	active  bool
-// // }
+// // List item to render
+// type item struct {
+// 	service services.FoundService
+// 	active  bool
+// }
 
-// // func (i item) FilterValue() string { return i.service.Service.Name }
+// func (i item) FilterValue() string { return i.service.Service.Name }
 
-// // type itemDelegate struct{}
+// type itemDelegate struct{}
 
-// // func (d itemDelegate) Height() int                             { return 1 }
-// // func (d itemDelegate) Spacing() int                            { return 0 }
-// // func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
-// // func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-// // 	i, ok := listItem.(item)
-// // 	if !ok {
-// // 		return
-// // 	}
+// func (d itemDelegate) Height() int                             { return 1 }
+// func (d itemDelegate) Spacing() int                            { return 0 }
+// func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
+// func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
+// 	i, ok := listItem.(item)
+// 	if !ok {
+// 		return
+// 	}
 
-// // 	shortPath := strings.Replace(i.service.Path, configuration.RemoteServiceDir+"/", "", 1)
+// 	shortPath := strings.Replace(i.service.Path, configuration.RemoteServiceDir+"/", "", 1)
 
-// // 	str := i.service.Service.Name + " " + lipgloss.NewStyle().Foreground(style.AsePrimary).Render(i.service.Service.Version) + " " + lipgloss.NewStyle().Foreground(style.GrayPrimary).Render("("+shortPath+")")
+// 	str := i.service.Service.Name + " " + lipgloss.NewStyle().Foreground(style.AsePrimary).Render(i.service.Service.Version) + " " + lipgloss.NewStyle().Foreground(style.GrayPrimary).Render("("+shortPath+")")
 
-// // 	fn := lipgloss.NewStyle().Render
-// // 	if index == m.Index() {
-// // 		fn = func(s ...string) string {
-// // 			if i.active {
-// // 				return lipgloss.NewStyle().Bold(true).Foreground(style.SuccessPrimary).Render("> " + strings.Join(s, " "))
-// // 			} else {
-// // 				return lipgloss.NewStyle().Bold(true).Render("> " + strings.Join(s, " "))
-// // 			}
-// // 		}
-// // 	} else if i.active {
-// // 		str = style.RenderColor("✓ ", style.SuccessPrimary) + str
-// // 	} else {
-// // 		str = "- " + str
-// // 	}
+// 	fn := lipgloss.NewStyle().Render
+// 	if index == m.Index() {
+// 		fn = func(s ...string) string {
+// 			if i.active {
+// 				return lipgloss.NewStyle().Bold(true).Foreground(style.SuccessPrimary).Render("> " + strings.Join(s, " "))
+// 			} else {
+// 				return lipgloss.NewStyle().Bold(true).Render("> " + strings.Join(s, " "))
+// 			}
+// 		}
+// 	} else if i.active {
+// 		str = style.RenderColor("✓ ", style.SuccessPrimary) + str
+// 	} else {
+// 		str = "- " + str
+// 	}
 
-// // 	fmt.Fprint(w, fn(str))
-// // }
+// 	fmt.Fprint(w, fn(str))
+// }
 
-// // type serviceDependency struct {
-// // 	service string
-// // 	stream  string
-// // }
+// type serviceDependency struct {
+// 	service string
+// 	stream  string
+// }
 
-// // func getUnmetDependencies(service services.FoundService, enabled []services.FoundService) []serviceDependency {
-// // 	dependencies := make([]serviceDependency, 0)
-// // 	for _, dependency := range service.Service.Inputs {
-// // 		for _, stream := range dependency.Streams {
-// // 			dependencies = append(dependencies, serviceDependency{
-// // 				service: dependency.Service,
-// // 				stream:  stream,
-// // 			})
-// // 		}
-// // 	}
+// func getUnmetDependencies(service services.FoundService, enabled []services.FoundService) []serviceDependency {
+// 	dependencies := make([]serviceDependency, 0)
+// 	for _, dependency := range service.Service.Inputs {
+// 		for _, stream := range dependency.Streams {
+// 			dependencies = append(dependencies, serviceDependency{
+// 				service: dependency.Service,
+// 				stream:  stream,
+// 			})
+// 		}
+// 	}
 
-// // 	for _, dependency := range service.Service.Inputs {
-// // 		// Go over all other service
-// // 		for _, other := range enabled {
-// // 			// Is this the service we are looking for?
-// // 			if dependency.Service == other.Service.Name {
-// // 				// Are all the streams available?
-// // 				for _, stream := range dependency.Streams {
-// // 					if slices.Contains(other.Service.Outputs, stream) {
-// // 						// Remove the dependency
-// // 						dependencies = slices.DeleteFunc(dependencies, func(d serviceDependency) bool {
-// // 							return d.service == dependency.Service && d.stream == stream
-// // 						})
-// // 					}
-// // 				}
-// // 			}
-// // 		}
-// // 	}
+// 	for _, dependency := range service.Service.Inputs {
+// 		// Go over all other service
+// 		for _, other := range enabled {
+// 			// Is this the service we are looking for?
+// 			if dependency.Service == other.Service.Name {
+// 				// Are all the streams available?
+// 				for _, stream := range dependency.Streams {
+// 					if slices.Contains(other.Service.Outputs, stream) {
+// 						// Remove the dependency
+// 						dependencies = slices.DeleteFunc(dependencies, func(d serviceDependency) bool {
+// 							return d.service == dependency.Service && d.stream == stream
+// 						})
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
 
-// // 	return dependencies
-// // }
+// 	return dependencies
+// }
 
-// // // Returns the errors in the configuration, if none are found, the configuration is valid
-// // func configurationValid(config *roveryaml.RoverConfig, allservices []services.FoundService) []error {
-// // 	enabledServices := make([]services.FoundService, 0)
-// // 	for _, service := range allservices {
-// // 		if config.HasEnabled(service.Path) {
-// // 			enabledServices = append(enabledServices, service)
-// // 		}
-// // 	}
+// // Returns the errors in the configuration, if none are found, the configuration is valid
+// func configurationValid(config *roveryaml.RoverConfig, allservices []services.FoundService) []error {
+// 	enabledServices := make([]services.FoundService, 0)
+// 	for _, service := range allservices {
+// 		if config.HasEnabled(service.Path) {
+// 			enabledServices = append(enabledServices, service)
+// 		}
+// 	}
 
-// // 	errors := make([]error, 0)
-// // 	for _, service := range enabledServices {
-// // 		unmet := getUnmetDependencies(service, enabledServices)
-// // 		for _, dep := range unmet {
-// // 			errors = append(errors, fmt.Errorf("Service '%s' depends on service '%s' for stream '%s' which is not enabled", service.Service.Name, dep.service, dep.stream))
-// // 		}
-// // 	}
+// 	errors := make([]error, 0)
+// 	for _, service := range enabledServices {
+// 		unmet := getUnmetDependencies(service, enabledServices)
+// 		for _, dep := range unmet {
+// 			errors = append(errors, fmt.Errorf("Service '%s' depends on service '%s' for stream '%s' which is not enabled", service.Service.Name, dep.service, dep.stream))
+// 		}
+// 	}
 
-// // 	return errors
-// // }
+// 	return errors
+// }
 
-// // func servicesToListItem(services []services.FoundService, config *roveryaml.RoverConfig) []list.Item {
-// // 	items := make([]list.Item, 0)
+// func servicesToListItem(services []services.FoundService, config *roveryaml.RoverConfig) []list.Item {
+// 	items := make([]list.Item, 0)
 
-// // 	if services == nil {
-// // 		return items
-// // 	}
+// 	if services == nil {
+// 		return items
+// 	}
 
-// // 	for _, service := range services {
-// // 		items = append(items, item{
-// // 			service: service,
-// // 			active:  config.HasEnabled(service.Path),
-// // 		})
-// // 	}
+// 	for _, service := range services {
+// 		items = append(items, item{
+// 			service: service,
+// 			active:  config.HasEnabled(service.Path),
+// 		})
+// 	}
 
-// // 	return items
-// // }
+// 	return items
+// }
 
 // func NewPipelineOverviewPage() PipelineOverviewPage {
 // 	l := list.New([]list.Item{}, itemDelegate{}, 0, 14)

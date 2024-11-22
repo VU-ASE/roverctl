@@ -13,6 +13,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/lempiy/dgraph"
@@ -46,7 +47,9 @@ type PipelineOverviewSummary struct {
 // Keys to navigate
 type PipelineOverviewKeyMap struct {
 	Retry   key.Binding
-	Confirm key.Binding
+	Toggle  key.Binding // start/stop pipeline
+	Logs    key.Binding
+	Details key.Binding
 	Quit    key.Binding
 }
 
@@ -54,7 +57,45 @@ type PipelineOverviewKeyMap struct {
 var pipelineOverviewKeysRegular = PipelineOverviewKeyMap{
 	Retry: key.NewBinding(
 		key.WithKeys("r"),
-		key.WithHelp("r", "retry"),
+		key.WithHelp("r", "refetch"),
+	),
+	Quit: key.NewBinding(
+		key.WithKeys("q"),
+		key.WithHelp("q", "quit"),
+	),
+}
+
+var pipelineOverviewKeysRunning = PipelineOverviewKeyMap{
+	Retry: key.NewBinding(
+		key.WithKeys("r"),
+		key.WithHelp("r", "refetch"),
+	),
+	Toggle: key.NewBinding(
+		key.WithKeys("s"),
+		key.WithHelp("s", "stop pipeline"),
+	),
+	Logs: key.NewBinding(
+		key.WithKeys("l"),
+		key.WithHelp("l", "logs"),
+	),
+	Details: key.NewBinding(
+		key.WithKeys("p"),
+		key.WithHelp("p", "details"),
+	),
+	Quit: key.NewBinding(
+		key.WithKeys("q"),
+		key.WithHelp("q", "quit"),
+	),
+}
+
+var pipelineOverviewKeysIdle = PipelineOverviewKeyMap{
+	Retry: key.NewBinding(
+		key.WithKeys("r"),
+		key.WithHelp("r", "refetch"),
+	),
+	Toggle: key.NewBinding(
+		key.WithKeys("s"),
+		key.WithHelp("s", "start pipeline"),
 	),
 	Quit: key.NewBinding(
 		key.WithKeys("q"),
@@ -63,12 +104,24 @@ var pipelineOverviewKeysRegular = PipelineOverviewKeyMap{
 }
 
 func (k PipelineOverviewKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Retry, k.Confirm, k.Quit}
+	return []key.Binding{k.Retry, k.Toggle, k.Logs, k.Details, k.Quit}
 }
 
 func (k PipelineOverviewKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{}
 }
+
+//
+// Possible tabs to select
+//
+
+type PipelineOverviewTab int
+
+const (
+	PipelineOverviewTabNone PipelineOverviewTab = iota
+	PipelineOverviewTabServiceDetails
+	PipelineOverviewTabLogs
+)
 
 //
 // The page model
@@ -80,6 +133,9 @@ type PipelineOverviewPage struct {
 	pipeline      tui.Action[PipelineOverviewSummary]
 	pipelineGraph string // preserved in the model to avoid re-rendering in .View()
 	progress      progress.Model
+	table         table.Model
+	openView      PipelineOverviewTab
+	toggle        tui.Action[bool]
 }
 
 func NewPipelineOverviewPage() PipelineOverviewPage {
@@ -91,6 +147,8 @@ func NewPipelineOverviewPage() PipelineOverviewPage {
 		pipeline:      tui.NewAction[PipelineOverviewSummary]("pipelineFetch"),
 		pipelineGraph: "",
 		progress:      progress.New(progress.WithScaledGradient(string(style.AsePrimary), "#FFF")),
+		table:         table.New(),
+		openView:      PipelineOverviewTabNone,
 	}
 }
 
@@ -104,6 +162,15 @@ func (m PipelineOverviewPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case spinner.TickMsg:
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
+	case tui.ActionInit[bool]:
+		m.toggle.ProcessInit(msg)
+		return m, nil
+	case tui.ActionResult[bool]:
+		m.toggle.ProcessResult(msg)
+		if m.toggle.IsSuccess() {
+			// we know data is stale now, need to refetch
+			return m, m.fetchPipeline()
+		}
 	case tui.ActionInit[PipelineOverviewSummary]:
 		m.pipeline.ProcessInit(msg)
 		return m, nil
@@ -136,8 +203,10 @@ func (m PipelineOverviewPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if err != nil {
 					m.pipelineGraph = "Failed to draw pipeline\n"
 				} else if len(nodes) > 0 {
-					m.pipelineGraph = m.postProcessGraph(fmt.Sprintf("%s\n", canvas))
+					m.pipelineGraph = fmt.Sprintf("%s\n", canvas)
 				}
+
+				m.table = m.createServiceTable(*m.pipeline.Data)
 			}
 		}
 
@@ -147,17 +216,50 @@ func (m PipelineOverviewPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, pipelineOverviewKeysRegular.Quit):
 			return m, tea.Quit
 		case key.Matches(msg, pipelineOverviewKeysRegular.Retry):
-			// todo:
+			if !m.pipeline.IsLoading() {
+				return m, m.fetchPipeline()
+			}
 			return m, nil
-		case key.Matches(msg, pipelineOverviewKeysRegular.Confirm):
-			// todo:
+		case key.Matches(msg, pipelineOverviewKeysRunning.Logs):
+			sel := m.table.SelectedRow()
+			if sel != nil {
+				service := sel[0]
+				version := sel[1]
+				author := sel[2]
+
+				return RootScreen(state.Get()).SwitchScreen(NewPipelineLogsPage(
+					service, author, version,
+				))
+			}
 			return m, nil
+		case key.Matches(msg, pipelineOverviewKeysRunning.Toggle):
+			if !m.pipeline.IsLoading() && !m.toggle.IsLoading() {
+				return m, m.toggleExecution()
+			}
+		case key.Matches(msg, pipelineOverviewKeysRunning.Details):
+			if !m.pipeline.IsLoading() {
+				var found *PipelineOverviewServiceInfo
+				sel := m.table.SelectedRow()
+				if sel != nil {
+					for _, s := range m.pipeline.Data.Services {
+						if s.Name == sel[0] {
+							found = &s
+							break
+						}
+					}
+
+					if found != nil {
+						return RootScreen(state.Get()).SwitchScreen(NewPipelineDetailsPage(*found))
+					}
+				}
+			}
 		}
 	case tea.WindowSizeMsg:
 		m.progress.Width = (msg.Width - 4 - 6 - 6) / 3 // padding
 	}
 
-	return m, nil
+	m.table, cmd = m.table.Update(msg)
+	return m, cmd
 }
 
 func (m PipelineOverviewPage) Init() tea.Cmd {
@@ -173,12 +275,21 @@ func (m PipelineOverviewPage) pipelineView() string {
 	status := style.Error.Bold(true).Render("Unknown")
 	if m.pipeline.Data.Pipeline.Status == openapi.STARTABLE {
 		status = style.Color(style.SuccessLight).Bold(true).Render("Startable")
+		if m.toggle.IsLoading() {
+			status = style.Warning.Bold(true).Render("Starting")
+		}
 	} else if m.pipeline.Data.Pipeline.Status == openapi.STARTED {
 		status = style.Success.Bold(true).Render("Running")
+		if m.toggle.IsLoading() {
+			status = style.Warning.Bold(true).Render("Stopping")
+		}
 	} else if m.pipeline.Data.Pipeline.Status == openapi.RESTARTING {
 		status = style.Warning.Bold(true).Render("Restarting")
+		if m.toggle.IsLoading() {
+			status = style.Warning.Bold(true).Render("Stopping")
+		}
 	}
-	s := m.pipelineGraph
+	s := m.postProcessGraph(m.pipelineGraph)
 	status = status + "\n"
 	if m.pipeline.Data.Pipeline.LastStart != nil {
 		status += style.Gray.Render("last started at: ") + time.Unix(*m.pipeline.Data.Pipeline.LastStart, 0).Format("2006-01-02 15:04:05") + "\n"
@@ -190,18 +301,20 @@ func (m PipelineOverviewPage) pipelineView() string {
 		status += style.Gray.Render("last restarted at: ") + time.Unix(*m.pipeline.Data.Pipeline.LastRestart, 0).Format("2006-01-02 15:04:05") + "\n"
 	}
 
-	cpu := ""
+	cpu := style.Gray.Render("Total CPU usage per core ") + "\n"
 	if len(m.pipeline.Data.Status.Cpu) > 0 {
-		cpu += style.Gray.Render("CPU") + "\n"
 		for _, c := range m.pipeline.Data.Status.Cpu {
 			cpu += m.progress.ViewAs(float64(c.Used)/float64(c.Total)) + "\n"
 		}
+	} else {
+		cpu += style.Gray.Render("No CPU usage data available") + "\n"
 	}
-	mem := "\n" + style.Gray.Render("Memory") + "\n" + m.progress.ViewAs(float64(m.pipeline.Data.Status.Memory.Used)/float64(m.pipeline.Data.Status.Memory.Total)) + "\n"
-
-	enabled := style.Gray.Render("Services") + "\n"
-	for _, service := range m.pipeline.Data.Services {
-		enabled += service.Author + "/" + style.Primary.Render(service.Name) + style.Gray.Render(""+service.Version) + "\n"
+	mem := style.Gray.Render("Total memory usage") + "\n" + m.progress.ViewAs(float64(m.pipeline.Data.Status.Memory.Used)/float64(m.pipeline.Data.Status.Memory.Total)) + "\n"
+	if m.pipeline.Data.Status.Memory.Total > 0 {
+		mem += style.Gray.Render("The Rover uses ") + fmt.Sprintf("%d/%d MB", m.pipeline.Data.Status.Memory.Used, m.pipeline.Data.Status.Memory.Total) + "\n"
+		mem += style.Gray.Render("Of which ") + fmt.Sprintf("%d MB", 10) + style.Gray.Render(" is used by this pipeline") + "\n"
+	} else {
+		mem += style.Gray.Render("No memory usage data available") + "\n"
 	}
 
 	// Calculate column width (subtract padding and borders)
@@ -209,27 +322,40 @@ func (m PipelineOverviewPage) pipelineView() string {
 
 	// Define styles for each column
 	columnStyle := lipgloss.NewStyle().
-		// BorderStyle(lipgloss.NormalBorder()).
-		// Padding(1, 1).
 		Width(columnWidth)
 
-	// Join columns horizontally
 	row := lipgloss.JoinHorizontal(lipgloss.Top,
 		columnStyle.Render(status),
-		columnStyle.Render(enabled),
-		columnStyle.Render(cpu+mem),
+		columnStyle.Render(mem),
+		columnStyle.Render(cpu),
 	)
 
-	return s + "\n\n" + row
+	proc_list := "\n" + m.table.View() + "\n\n"
+	view := s + "\n\n" + row + proc_list
+
+	view += m.table.HelpView() + style.Gray.Render(" • ")
+	if m.pipeline.Data.Pipeline.Status == openapi.STARTED {
+		view += m.help.View(pipelineOverviewKeysRunning)
+	} else {
+		view += m.help.View(pipelineOverviewKeysIdle)
+	}
+
+	return view
 }
 
 func (m PipelineOverviewPage) View() string {
-	s := style.Title.Render("Pipeline") + "\n\n"
-	if m.pipeline.IsLoading() {
+	s := style.Title.Render("Pipeline")
+	// We're doing optimistic updates, so we want to show an indicator without disrupting the view
+	if (m.pipeline.IsLoading() && m.pipeline.HasData()) || m.toggle.IsLoading() {
+		s += " " + m.spinner.View()
+	}
+	s += "\n\n"
+
+	if m.pipeline.IsLoading() && !m.pipeline.HasData() {
 		s += m.spinner.View() + " Loading pipeline..."
 	} else if m.pipeline.IsError() {
 		s += style.Error.Render("Error loading pipeline") + " (" + m.pipeline.Error.Error() + ")"
-	} else if m.pipeline.IsSuccess() {
+	} else if m.pipeline.HasData() {
 		s += m.pipelineView()
 	}
 	s += "\n"
@@ -249,9 +375,10 @@ func (m PipelineOverviewPage) fetchPipeline() tea.Cmd {
 		time.Sleep(100 * time.Millisecond)
 		// First roverd tells us what services are enabled, by reference (FQN)
 		pipeline := openapi.PipelineGet200Response{
-			Status:    openapi.STARTABLE,
+			Status:    openapi.STARTED,
 			LastStart: openapi.PtrInt64(123456),
 			LastStop:  openapi.PtrInt64(123456),
+			// LastRestart: openapi.PtrInt64(123456),
 			Enabled: []openapi.PipelineGet200ResponseEnabledInner{
 				{
 					Service: openapi.PipelineGet200ResponseEnabledInnerService{
@@ -260,7 +387,6 @@ func (m PipelineOverviewPage) fetchPipeline() tea.Cmd {
 						Author:  "vu-ase",
 					},
 				},
-
 				{
 					Service: openapi.PipelineGet200ResponseEnabledInnerService{
 						Name:    "controller",
@@ -327,7 +453,7 @@ func (m PipelineOverviewPage) fetchPipeline() tea.Cmd {
 								},
 							},
 							{
-								Service: "controllertje",
+								Service: "controller yo",
 								Streams: []string{
 									"track",
 								},
@@ -377,5 +503,110 @@ func (m PipelineOverviewPage) postProcessGraph(s string) string {
 	// Remove empty lines
 	n = regexp.MustCompile(`\n\s*\n`).ReplaceAllString(n, "\n")
 
+	// Highlight the currently selected service
+	sel := m.table.SelectedRow()
+	if sel != nil {
+		// The first item is always the service name
+		name := sel[0]
+
+		// Find the service in the graph
+		n = regexp.MustCompile(fmt.Sprintf(`\b%s\b`, name)).ReplaceAllString(n, style.Primary.Render(name))
+	}
+
 	return n
+}
+
+// Converts a percentage to a table column width in characters
+func pct(pct int) int {
+	total := state.Get().WindowWidth - 4 - 6 - 6 // padding
+	return int(float64(total) * float64(pct) / 100.0)
+}
+
+// Create a nicely formatted table based on input data
+func (m PipelineOverviewPage) createServiceTable(res PipelineOverviewSummary) table.Model {
+	// Depending on the state of the pipeline, we want to show different columns
+	columns := []table.Column{}
+	rows := []table.Row{}
+
+	// Pipeline is currently running
+	if res.Pipeline.Status == openapi.STARTED {
+		columns = []table.Column{
+			{Title: "Service", Width: pct(10)},
+			{Title: "Version", Width: pct(5)},
+			{Title: "Author", Width: pct(10)},
+			{Title: "Faults", Width: pct(5)},
+			{Title: "Uptime", Width: pct(10)},
+			{Title: "PID", Width: pct(10)},
+			{Title: "CPU", Width: pct(10)},
+			{Title: "Memory", Width: pct(40)},
+		}
+
+		rows = []table.Row{
+			{"imaging", "1.0.1", "vu-ase", "0", "1h 23m 45s", "1234", "5%", "50MB"},
+			{"controller", "1.1.1", "vu-ase", "0", "1h 23m 45s", "1234", "10%", "150MB"},
+			{"transceiver", "1.2.2", "vu-ase", "0", "1h 23m 45s", "1234", "15%", "250MB"},
+		}
+	} else if res.Pipeline.Status != openapi.STARTED && res.Pipeline.LastStart == nil {
+		// This pipeline is not running, and has not been started before
+		columns = []table.Column{
+			{Title: "Service", Width: pct(10)},
+			{Title: "Version", Width: pct(5)},
+			{Title: "Author", Width: pct(85)},
+		}
+
+		rows = []table.Row{
+			{"imaging", "1.0.1", "vu-ase"},
+			{"controller", "1.1.1", "vu-ase"},
+			{"transceiver", "1.2.2", "vu-ase"},
+		}
+	} else {
+		// This pipeline is not running, but has been started before
+		columns = []table.Column{
+			{Title: "Service", Width: pct(10)},
+			{Title: "Version", Width: pct(5)},
+			{Title: "Author", Width: pct(10)},
+			{Title: "Faults", Width: pct(5)},
+			{Title: "Uptime", Width: pct(70)},
+		}
+
+		rows = []table.Row{
+			{"imaging", "1.0.1", "vu-ase", "0", "1h 23m 45s"},
+			{"controller", "1.1.1", "vu-ase", "0", "1h 23m 45s"},
+		}
+	}
+
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithFocused(true),
+		table.WithHeight(5),
+	)
+	if len(rows) < 7 {
+		t.SetHeight(len(rows) + 1)
+	}
+
+	s := table.DefaultStyles()
+	s.Header = s.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(false)
+	s.Selected = s.Selected.
+		Foreground(lipgloss.Color("FFF")).
+		Background(style.AsePrimary).
+		Bold(false)
+	t.SetStyles(s)
+
+	return t
+}
+
+func (m PipelineOverviewPage) toggleExecution() tea.Cmd {
+	return tui.PerformAction(&m.toggle, func() (*bool, error) {
+		// Mock toggle
+		// ! remove
+
+		time.Sleep(500 * time.Millisecond)
+
+		return openapi.PtrBool(true), nil
+	})
 }
