@@ -46,11 +46,12 @@ type PipelineOverviewSummary struct {
 
 // Keys to navigate
 type PipelineOverviewKeyMap struct {
-	Retry   key.Binding
-	Toggle  key.Binding // start/stop pipeline
-	Logs    key.Binding
-	Details key.Binding
-	Quit    key.Binding
+	Retry     key.Binding
+	Toggle    key.Binding // start/stop pipeline
+	Logs      key.Binding
+	Details   key.Binding
+	Configure key.Binding
+	Quit      key.Binding
 }
 
 // Shown when the services are being updated
@@ -82,6 +83,10 @@ var pipelineOverviewKeysRunning = PipelineOverviewKeyMap{
 		key.WithKeys("p"),
 		key.WithHelp("p", "details"),
 	),
+	Configure: key.NewBinding(
+		key.WithKeys("c"),
+		key.WithHelp("c", "configure"),
+	),
 	Quit: key.NewBinding(
 		key.WithKeys("q"),
 		key.WithHelp("q", "quit"),
@@ -89,22 +94,17 @@ var pipelineOverviewKeysRunning = PipelineOverviewKeyMap{
 }
 
 var pipelineOverviewKeysIdle = PipelineOverviewKeyMap{
-	Retry: key.NewBinding(
-		key.WithKeys("r"),
-		key.WithHelp("r", "refetch"),
-	),
+	Retry: pipelineOverviewKeysRunning.Retry,
 	Toggle: key.NewBinding(
 		key.WithKeys("s"),
 		key.WithHelp("s", "start pipeline"),
 	),
-	Quit: key.NewBinding(
-		key.WithKeys("q"),
-		key.WithHelp("q", "quit"),
-	),
+	Configure: pipelineOverviewKeysRunning.Configure,
+	Quit:      pipelineOverviewKeysRunning.Quit,
 }
 
 func (k PipelineOverviewKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Retry, k.Toggle, k.Logs, k.Details, k.Quit}
+	return []key.Binding{k.Retry, k.Toggle, k.Logs, k.Details, k.Configure, k.Quit}
 }
 
 func (k PipelineOverviewKeyMap) FullHelp() [][]key.Binding {
@@ -253,6 +253,8 @@ func (m PipelineOverviewPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 			}
+		case key.Matches(msg, pipelineOverviewKeysRunning.Configure):
+			return RootScreen(state.Get()).SwitchScreen(NewPipelineConfiguratorPage())
 		}
 	case tea.WindowSizeMsg:
 		m.progress.Width = (msg.Width - 4 - 6 - 6) / 3 // padding
@@ -606,6 +608,8 @@ func (m PipelineOverviewPage) toggleExecution() tea.Cmd {
 		// ! remove
 
 		time.Sleep(500 * time.Millisecond)
+
+		// todo: also need to call API build endpoint
 
 		return openapi.PtrBool(true), nil
 	})
