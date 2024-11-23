@@ -138,8 +138,13 @@ func (m PipelineLogsPage) Init() tea.Cmd {
 }
 
 func (m PipelineLogsPage) View() string {
-	if m.logs.IsSuccess() {
-		return style.Title.Render("Logs for "+m.author+"/"+m.service+":"+m.version) + style.Gray.Render(fmt.Sprintf(" %3.f%%", 100.0*m.viewport.ScrollPercent())) + "\n\n" + m.viewport.View() + "\n\n" + m.help.View(PipelineLogsKeysRegular)
+	// We use hasData, so that we can do optimistic refetching, without blocking the entire view
+	if m.logs.IsSuccess() || m.logs.HasData() {
+		s := ""
+		if m.logs.IsLoading() && m.logs.HasData() { // if we are loading optimistically, show the spinner so that there is still an indication that something is happening
+			s = " " + m.spinner.View()
+		}
+		return style.Title.Render("Logs for "+m.author+"/"+m.service+":"+m.version) + style.Gray.Render(fmt.Sprintf(" %3.f%%", 100.0*m.viewport.ScrollPercent())) + s + "\n\n" + m.viewport.View() + "\n\n" + m.help.View(PipelineLogsKeysRegular)
 	} else if m.logs.IsError() {
 		return style.Error.Render("Failed to load logs for " + m.service + ".")
 	} else {

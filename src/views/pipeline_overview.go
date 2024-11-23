@@ -510,7 +510,7 @@ func (m PipelineOverviewPage) postProcessGraph(s string) string {
 		name := sel[0]
 
 		// Find the service in the graph
-		n = regexp.MustCompile(fmt.Sprintf(`\b%s\b`, name)).ReplaceAllString(n, style.Primary.Render(name))
+		n = regexp.MustCompile(fmt.Sprintf(`\b%s\b`, name)).ReplaceAllString(n, style.Primary.Bold(true).Render(name))
 	}
 
 	return n
@@ -538,7 +538,7 @@ func (m PipelineOverviewPage) createServiceTable(res PipelineOverviewSummary) ta
 			{Title: "Uptime", Width: pct(10)},
 			{Title: "PID", Width: pct(10)},
 			{Title: "CPU", Width: pct(10)},
-			{Title: "Memory", Width: pct(40)},
+			{Title: "Memory", Width: pct(39)},
 		}
 
 		rows = []table.Row{
