@@ -198,16 +198,16 @@ func (m PipelineOverviewPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return found
 					}(),
 				})
-
-				canvas, err := dgraph.DrawGraph(nodes)
-				if err != nil {
-					m.pipelineGraph = "Failed to draw pipeline\n"
-				} else if len(nodes) > 0 {
-					m.pipelineGraph = fmt.Sprintf("%s\n", canvas)
-				}
-
-				m.table = m.createServiceTable(*m.pipeline.Data)
 			}
+			canvas, err := dgraph.DrawGraph(nodes)
+			if len(nodes) <= 0 {
+				m.pipelineGraph = style.Gray.Render("This pipeline is empty")
+			} else if err != nil {
+				m.pipelineGraph = "Failed to draw pipeline\n"
+			} else {
+				m.pipelineGraph = fmt.Sprintf("%s\n", canvas)
+			}
+			m.table = m.createServiceTable(*m.pipeline.Data)
 		}
 
 		return m, nil

@@ -1,6 +1,8 @@
 package views
 
 import (
+	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/VU-ASE/rover/src/openapi"
@@ -13,6 +15,8 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/lempiy/dgraph"
+	"github.com/lempiy/dgraph/core"
 )
 
 //
@@ -24,6 +28,8 @@ type PipelineConfiguratorKeyMap struct {
 	Retry   key.Binding
 	Confirm key.Binding
 	Switch  key.Binding // switch table focus
+	Remove  key.Binding // remove service from pipeline
+	Back    key.Binding // go back one level
 	Quit    key.Binding
 }
 
@@ -32,6 +38,106 @@ var pipelineConfiguratorKeysRegular = PipelineConfiguratorKeyMap{
 	Retry: key.NewBinding(
 		key.WithKeys("r"),
 		key.WithHelp("r", "retry"),
+	),
+	Confirm: key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "confirm"),
+	),
+	Back: key.NewBinding(
+		key.WithKeys("backspace"),
+		key.WithHelp("backspace", "go back one level"),
+	),
+	Switch: key.NewBinding(
+		key.WithKeys("tab"),
+		key.WithHelp("tab", "switch table"),
+	),
+	Remove: key.NewBinding(
+		key.WithKeys("d"),
+		key.WithHelp("d", "remove"),
+	),
+	Quit: key.NewBinding(
+		key.WithKeys("q"),
+		key.WithHelp("q", "quit"),
+	),
+}
+
+// When the "active" table is focussed
+var pipelineConfiguratorKeysActiveTable = PipelineConfiguratorKeyMap{
+	Retry: key.NewBinding(
+		key.WithKeys("r"),
+		key.WithHelp("r", "retry"),
+	),
+	Switch: key.NewBinding(
+		key.WithKeys("tab"),
+		key.WithHelp("tab", "switch table"),
+	),
+	Remove: key.NewBinding(
+		key.WithKeys("d"),
+		key.WithHelp("d", "remove from pipeline"),
+	),
+	Quit: key.NewBinding(
+		key.WithKeys("q"),
+		key.WithHelp("q", "quit"),
+	),
+}
+
+// When the "remote" table is focussed on the "select an author" level
+var pipelineConfiguratorKeysRemoteTableAuthor = PipelineConfiguratorKeyMap{
+	Retry: key.NewBinding(
+		key.WithKeys("r"),
+		key.WithHelp("r", "retry"),
+	),
+	Confirm: key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "select"),
+	),
+	Switch: key.NewBinding(
+		key.WithKeys("tab"),
+		key.WithHelp("tab", "switch table"),
+	),
+	Quit: key.NewBinding(
+		key.WithKeys("q"),
+		key.WithHelp("q", "quit"),
+	),
+}
+
+// When the "remote" table is focussed on the "select a service" level
+var pipelineConfiguratorKeysRemoteTableService = PipelineConfiguratorKeyMap{
+	Retry: key.NewBinding(
+		key.WithKeys("r"),
+		key.WithHelp("r", "retry"),
+	),
+	Confirm: key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "select"),
+	),
+	Back: key.NewBinding(
+		key.WithKeys("backspace"),
+		key.WithHelp("backspace", "go one level back"),
+	),
+	Switch: key.NewBinding(
+		key.WithKeys("tab"),
+		key.WithHelp("tab", "switch table"),
+	),
+	Quit: key.NewBinding(
+		key.WithKeys("q"),
+		key.WithHelp("q", "quit"),
+	),
+}
+
+// When the "remote" table is focussed on the "select a version" level
+var pipelineConfiguratorKeysRemoteTableVersion = PipelineConfiguratorKeyMap{
+	Retry: key.NewBinding(
+		key.WithKeys("r"),
+		key.WithHelp("r", "retry"),
+	),
+	Confirm: key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "add to pipeline"),
+	),
+	Back: key.NewBinding(
+		key.WithKeys("backspace"),
+		key.WithHelp("backspace", "go one level back"),
 	),
 	Switch: key.NewBinding(
 		key.WithKeys("tab"),
@@ -44,7 +150,7 @@ var pipelineConfiguratorKeysRegular = PipelineConfiguratorKeyMap{
 }
 
 func (k PipelineConfiguratorKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Retry, k.Confirm, k.Quit}
+	return []key.Binding{k.Retry, k.Confirm, k.Remove, k.Back, k.Switch, k.Quit}
 }
 
 func (k PipelineConfiguratorKeyMap) FullHelp() [][]key.Binding {
@@ -62,27 +168,34 @@ type PipelineConfiguratorPage struct {
 	tableActive table.Model // the pipeline as it is configured now, with the enabled services
 	tableRemote table.Model // all remote services that still can be enabled
 	// actions to fetch data to populate the tables
-	pipeline tui.Action[PipelineOverviewSummary]
-	authors  tui.Action[[]string]                                           // first part of FQN
-	services tui.Action[[]string]                                           // second part of FQN
-	versions tui.Action[openapi.ServicesAuthorServiceVersionGet200Response] // third part of FQN, with all information
+	pipeline         tui.Action[PipelineOverviewSummary]
+	pipelineGraph    string               // preserved in the model to avoid re-rendering in .View()
+	dependencyErrors []error              // errors in the pipeline configuration
+	authors          tui.Action[[]string] // first part of FQN
+	services         tui.Action[[]string] // second part of FQN
+	versions         tui.Action[[]string] // third part of FQN
 	// Keep track of the focussed table (left/right)
 	focussed int // 0 = active, 1 = remote
+	// For querying remote services
+	remoteAuthor  string
+	remoteService string
 }
 
 func NewPipelineConfiguratorPage() PipelineConfiguratorPage {
 	// todo
 
 	return PipelineConfiguratorPage{
-		spinner:     spinner.New(),
-		help:        help.New(),
-		tableActive: table.New(),
-		tableRemote: table.New(),
-		pipeline:    tui.NewAction[PipelineOverviewSummary]("fetchActive"),
-		authors:     tui.NewAction[[]string]("fetchAuthors"),
-		services:    tui.NewAction[[]string]("fetchServices"),
-		versions:    tui.NewAction[openapi.ServicesAuthorServiceVersionGet200Response]("fetchVersions"),
-		focussed:    0,
+		spinner:       spinner.New(),
+		help:          help.New(),
+		tableActive:   table.New(),
+		tableRemote:   table.New(),
+		pipeline:      tui.NewAction[PipelineOverviewSummary]("fetchActive"),
+		authors:       tui.NewAction[[]string]("fetchAuthors"),
+		services:      tui.NewAction[[]string]("fetchServices"),
+		versions:      tui.NewAction[[]string]("fetchVersions"),
+		focussed:      0,
+		remoteAuthor:  "",
+		remoteService: "",
 	}
 }
 
@@ -102,23 +215,61 @@ func (m PipelineConfiguratorPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tui.ActionResult[PipelineOverviewSummary]:
 		m.pipeline.ProcessResult(msg)
 		if m.pipeline.IsSuccess() {
+			if len(m.pipeline.Data.Pipeline.Enabled) <= 0 {
+				m.focussed = 1 // nothing to navigate in the active table
+				m.tableRemote = m.createRemoteTable()
+			}
+
+			// Create the pipeline graph based on enabled services
+			nodes := make([]core.NodeInput, 0)
+			for _, service := range m.pipeline.Data.Pipeline.Enabled {
+				// Check if the service is selected, in this case unselect it
+				if m.remoteService == service.Service.Name {
+					m.remoteService = ""
+				}
+
+				nodes = append(nodes, core.NodeInput{
+					Id: service.Service.Name,
+					Next: func() []string {
+						// Find services that depend on an output of this service
+						found := make([]string, 0)
+						for _, s := range m.pipeline.Data.Services {
+							if s.Name != service.Service.Name {
+								for _, input := range s.Configuration.Inputs {
+									if input.Service == service.Service.Name {
+										found = append(found, s.Name)
+									}
+								}
+							}
+						}
+
+						return found
+					}(),
+				})
+			}
+			canvas, err := dgraph.DrawGraph(nodes)
+			if len(nodes) <= 0 {
+				m.pipelineGraph = style.Gray.Render("This pipeline is empty")
+			} else if err != nil {
+				m.pipelineGraph = "Failed to draw pipeline\n"
+			} else {
+				m.pipelineGraph = fmt.Sprintf("%s\n", canvas)
+			}
+			m.dependencyErrors = m.findDependencyErrors()
 			m.tableActive = m.createActiveTable(*m.pipeline.Data)
+			m.tableRemote = m.createRemoteTable()
 		}
 		return m, nil
 	case tui.ActionInit[[]string]:
 		m.authors.ProcessInit(msg)
 		m.services.ProcessInit(msg)
+		m.versions.ProcessInit(msg)
 		return m, nil
 	case tui.ActionResult[[]string]:
 		m.authors.ProcessResult(msg)
 		m.services.ProcessResult(msg)
-		m.tableRemote = m.createServicesTable()
-		return m, nil
-	case tui.ActionInit[openapi.ServicesAuthorServiceVersionGet200Response]:
-		m.versions.ProcessInit(msg)
-		return m, nil
-	case tui.ActionResult[openapi.ServicesAuthorServiceVersionGet200Response]:
 		m.versions.ProcessResult(msg)
+		m.tableRemote = m.createRemoteTable()
 		return m, nil
 	case tea.KeyMsg:
 		switch {
@@ -127,13 +278,31 @@ func (m PipelineConfiguratorPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, pipelineConfiguratorKeysRegular.Retry):
 			// todo:
 			return m, nil
+		case key.Matches(msg, pipelineConfiguratorKeysRegular.Remove):
+			if m.focussed == 0 {
+				return m.onActiveTableNavigation(msg)
+			}
+
+			// todo:
+			return m, nil
 		case key.Matches(msg, pipelineConfiguratorKeysRegular.Confirm):
+			if m.focussed == 1 {
+				return m.onRemoteTableNavigation(msg)
+			}
+
+			// todo:
+			return m, nil
+		case key.Matches(msg, pipelineConfiguratorKeysRegular.Back):
+			if m.focussed == 1 {
+				return m.onRemoteTableNavigation(msg)
+			}
+
 			// todo:
 			return m, nil
 		case key.Matches(msg, pipelineConfiguratorKeysRegular.Switch):
 			m.focussed = (m.focussed + 1) % 2
 			m.tableActive = m.createActiveTable(*m.pipeline.Data)
-			m.tableRemote = m.createServicesTable()
+			m.tableRemote = m.createRemoteTable()
 			return m, nil
 		}
 	}
@@ -151,6 +320,32 @@ func (m PipelineConfiguratorPage) Init() tea.Cmd {
 	return tea.Batch(m.spinner.Tick, m.fetchPipeline(), m.fetchAllAuthors())
 }
 
+func (m PipelineConfiguratorPage) remoteTableView() string {
+	if m.remoteAuthor == "" {
+		if m.authors.IsSuccess() {
+			return m.tableRemote.View()
+		} else if m.authors.IsError() {
+			return style.Error.Render("Error loading available authors") + style.Gray.Render(" "+m.authors.Error.Error())
+		} else {
+			return m.spinner.View() + style.Gray.Render(" Loading authors")
+		}
+	} else if m.remoteService == "" {
+		if m.services.IsSuccess() {
+			return m.tableRemote.View()
+		} else if m.services.IsError() {
+			return style.Error.Render("Error loading services for "+m.remoteAuthor) + style.Gray.Render(" "+m.services.Error.Error())
+		} else {
+			return m.spinner.View() + style.Gray.Render(" Loading services for "+m.remoteAuthor)
+		}
+	} else if m.versions.IsSuccess() {
+		return m.tableRemote.View()
+	} else if m.versions.IsError() {
+		return style.Error.Render("Error loading versions for "+m.remoteAuthor+"/"+m.remoteService) + style.Gray.Render(" "+m.versions.Error.Error())
+	} else {
+		return m.spinner.View() + style.Gray.Render(" Loading versions for "+m.remoteAuthor+"/"+m.remoteService)
+	}
+}
+
 func (m PipelineConfiguratorPage) View() string {
 	s := style.Title.Render("Configure your pipeline") + "\n\n"
 
@@ -162,7 +357,17 @@ func (m PipelineConfiguratorPage) View() string {
 
 	graph := ""
 	if m.pipeline.IsSuccess() {
-		graph = "Pipeline loaded"
+		graph = m.postProcessGraph(m.pipelineGraph)
+
+		if len(m.pipeline.Data.Services) > 0 && len(m.dependencyErrors) <= 0 {
+			graph += "\n" + style.Success.Render("✓ This pipeline is valid")
+
+		} else if len(m.pipeline.Data.Services) > 0 {
+			for _, err := range m.dependencyErrors {
+				graph += "\n" + style.Error.Render("✗ "+err.Error())
+			}
+		}
+
 	} else if m.pipeline.IsError() {
 		graph = style.Error.Render("Error loading pipeline") + style.Gray.Render(" "+m.pipeline.Error.Error())
 	} else {
@@ -171,8 +376,14 @@ func (m PipelineConfiguratorPage) View() string {
 	graph += "\n\n"
 
 	// Define the columns
-	columnActive := columnStyle.Render("Active services") + "\n\n" + m.tableActive.View()
-	columnRemote := columnStyle.Render("Remote services") + "\n\n" + m.tableRemote.View()
+	columnActive := m.spinner.View() + style.Gray.Render(" Loading active services...")
+	if m.pipeline.IsSuccess() {
+		columnActive = m.tableActive.View()
+	} else if m.pipeline.IsError() {
+		columnActive = style.Error.Render("Error loading active services") + style.Gray.Render(" "+m.pipeline.Error.Error())
+	}
+
+	columnRemote := m.remoteTableView()
 
 	row := lipgloss.JoinHorizontal(lipgloss.Top,
 		columnStyle.Render(columnActive),
@@ -180,7 +391,21 @@ func (m PipelineConfiguratorPage) View() string {
 		columnStyle.Render(columnRemote),
 	)
 
-	return s + graph + row
+	h := ""
+	if m.focussed == 0 {
+		h = m.tableActive.HelpView() + style.Gray.Render(" • ") + m.help.View(pipelineConfiguratorKeysActiveTable)
+	} else {
+		h = m.tableRemote.HelpView() + style.Gray.Render(" • ")
+		if m.remoteService != "" {
+			h += m.help.View(pipelineConfiguratorKeysRemoteTableVersion)
+		} else if m.remoteAuthor != "" {
+			h += m.help.View(pipelineConfiguratorKeysRemoteTableService)
+		} else {
+			h += m.help.View(pipelineConfiguratorKeysRemoteTableAuthor)
+		}
+	}
+
+	return s + graph + row + "\n\n" + h
 }
 
 //
@@ -192,7 +417,7 @@ func (m PipelineConfiguratorPage) getColWidth() int {
 }
 
 func (m PipelineConfiguratorPage) colPct(pct int) int {
-	total := m.getColWidth()
+	total := m.getColWidth() - 1
 	return (total*pct)/100 - 1
 }
 
@@ -329,20 +554,6 @@ func (m PipelineConfiguratorPage) fetchPipeline() tea.Cmd {
 	})
 }
 
-func (m PipelineConfiguratorPage) fetchAllAuthors() tea.Cmd {
-	return tui.PerformAction(&m.authors, func() (*[]string, error) {
-		// mock fetch
-		// ! remove
-		time.Sleep(5000 * time.Millisecond)
-
-		return &[]string{
-			"vu-ase",
-			"ielaajez",
-			"test",
-		}, nil
-	})
-}
-
 //
 // Tables
 //
@@ -414,25 +625,70 @@ func (m PipelineConfiguratorPage) createActiveTable(res PipelineOverviewSummary)
 	return t
 }
 
-func (m PipelineConfiguratorPage) createServicesTable() table.Model {
+func (m PipelineConfiguratorPage) createRemoteTable() table.Model {
 	// Retrieve the previously selected entry
-	prev := m.tableActive.SelectedRow()
+	prev := m.tableRemote.SelectedRow()
 
 	columns := []table.Column{
-		{Title: "Service", Width: m.colPct(30)},
-		{Title: "Version", Width: m.colPct(30)},
-		{Title: "Author", Width: m.colPct(39)},
+		{Title: "Author", Width: m.colPct(100)},
 	}
-
 	rows := make([]table.Row, 0)
+	// Go from most fine-grained to least fine-grained
+	if m.remoteService != "" {
+		columns = []table.Column{
+			{Title: fmt.Sprintf("Versions (%s/%s)", m.remoteAuthor, m.remoteService), Width: m.colPct(100)},
+		}
+		if m.versions.HasData() {
+			for _, version := range *m.versions.Data {
+				// Does this version already exist in the pipeline?
+				exists := false
+				if m.pipeline.HasData() {
+					for _, enabled := range m.pipeline.Data.Pipeline.Enabled {
+						if enabled.Service.Name == m.remoteService && enabled.Service.Version == version {
+							exists = true
+							break
+						}
+					}
+				}
 
-	if m.authors.HasData() {
-		for _, author := range *m.authors.Data {
-			rows = append(rows, table.Row{
-				author,
-				"n/a",
-				"n/a",
-			})
+				if !exists {
+					rows = append(rows, table.Row{
+						version,
+					})
+				}
+			}
+		}
+	} else if m.remoteAuthor != "" {
+		columns = []table.Column{
+			{Title: fmt.Sprintf("Services (%s)", m.remoteAuthor), Width: m.colPct(100)},
+		}
+		if m.services.HasData() {
+			for _, service := range *m.services.Data {
+				// Does this service already exist in the pipeline?
+				exists := false
+				if m.pipeline.HasData() {
+					for _, enabled := range m.pipeline.Data.Pipeline.Enabled {
+						if enabled.Service.Name == service {
+							exists = true
+							break
+						}
+					}
+				}
+
+				if !exists {
+					rows = append(rows, table.Row{
+						service,
+					})
+				}
+			}
+		}
+	} else {
+		if m.authors.HasData() {
+			for _, author := range *m.authors.Data {
+				rows = append(rows, table.Row{
+					author,
+				})
+			}
 		}
 	}
 
@@ -482,4 +738,256 @@ func (m PipelineConfiguratorPage) createServicesTable() table.Model {
 	t.SetStyles(s)
 
 	return t
+}
+
+//
+// Actions
+//
+
+func (m PipelineConfiguratorPage) fetchAllAuthors() tea.Cmd {
+	return tui.PerformAction(&m.authors, func() (*[]string, error) {
+		// mock fetch
+		// ! remove
+		time.Sleep(1000 * time.Millisecond)
+
+		return &[]string{
+			"vu-ase",
+			"ielaajezdev",
+			"maxgallup",
+		}, nil
+	})
+}
+
+func (m PipelineConfiguratorPage) fetchServicesForAuthor(author string) tea.Cmd {
+	return tui.PerformAction(&m.services, func() (*[]string, error) {
+		// mock fetch
+		// ! remove
+		time.Sleep(1000 * time.Millisecond)
+
+		res := []string{
+			"lux",
+			"controller",
+			"actuator",
+		}
+
+		return &res, nil
+	})
+}
+
+func (m PipelineConfiguratorPage) fetchVersionsForService(author string, service string) tea.Cmd {
+	return tui.PerformAction(&m.versions, func() (*[]string, error) {
+		// mock fetch
+		// ! remove
+		time.Sleep(1000 * time.Millisecond)
+
+		res := []string{
+			"1.0.0",
+			"1.0.1",
+			"1.0.2",
+		}
+
+		return &res, nil
+	})
+}
+
+func (m PipelineConfiguratorPage) onActiveTableNavigation(pressedKey tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.focussed != 0 {
+		return m, nil
+	}
+
+	if key.Matches(pressedKey, pipelineConfiguratorKeysRegular.Remove) {
+		// If there is no value, nothing we can do
+		sel := m.tableActive.SelectedRow()
+		if len(sel) <= 0 {
+			return m, nil
+		}
+
+		// Remove service from pipeline
+		return m, m.removeServiceFromPipeline(sel[2], sel[0], sel[1])
+	}
+
+	return m, nil
+}
+
+func (m PipelineConfiguratorPage) onRemoteTableNavigation(pressedKey tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.focussed != 1 {
+		return m, nil
+	}
+
+	// If there is no value, nothing we can do
+	sel := m.tableRemote.SelectedRow()
+	if len(sel) <= 0 {
+		return m, nil
+	}
+
+	// Hitting "enter" makes the lookup go one level deeper, unless we are at the deepest level (a specific version), which will then insert the service into the pipeline
+	if key.Matches(pressedKey, pipelineConfiguratorKeysRegular.Confirm) {
+		if m.remoteAuthor == "" {
+			m.remoteAuthor = sel[0]
+			return m, m.fetchServicesForAuthor(m.remoteAuthor)
+		} else if m.remoteService == "" {
+			m.remoteService = sel[0]
+			return m, m.fetchVersionsForService(m.remoteAuthor, m.remoteService)
+		} else {
+			// Insert service into pipeline
+			return m, m.addServiceToPipeline(m.remoteAuthor, m.remoteService, sel[0])
+		}
+	}
+
+	// Hitting "backspace" goes one level up
+	if key.Matches(pressedKey, pipelineConfiguratorKeysRegular.Back) {
+		if m.remoteService != "" {
+			m.remoteService = ""
+		} else if m.remoteAuthor != "" {
+			m.remoteAuthor = ""
+		}
+	}
+
+	m.tableRemote = m.createRemoteTable()
+	return m, nil
+}
+
+// This adds a service to a pipeline *locally*. It will only be checked by the server when the pipeline is saved.
+func (m PipelineConfiguratorPage) addServiceToPipeline(author string, service string, version string) tea.Cmd {
+	return tui.PerformAction(&m.pipeline, func() (*PipelineOverviewSummary, error) {
+		// There should already be a pipeline in the model
+		if !m.pipeline.IsSuccess() {
+			return nil, fmt.Errorf("Cannot add a service to a non-fetched pipeline")
+		}
+
+		// Fetch the specific service data
+		// mock fetch
+		// ! remove
+
+		res := openapi.ServicesAuthorServiceVersionGet200Response{
+			BuiltAt: openapi.PtrInt64(123456),
+			Inputs: []openapi.ServicesAuthorServiceVersionGet200ResponseInputsInner{
+				{
+					Service: "imaging",
+					Streams: []string{
+						"track",
+						"nonex",
+					},
+				},
+			},
+			Outputs: []string{
+				"lux",
+			},
+		}
+
+		// Add this service to the pipeline
+		pipeline := *m.pipeline.Data
+
+		// Check if the service is already in the pipeline
+		for _, enabled := range pipeline.Pipeline.Enabled {
+			if enabled.Service.Name == service {
+				return &pipeline, nil
+			}
+		}
+
+		pipeline.Services = append(pipeline.Services, PipelineOverviewServiceInfo{
+			Name:          service,
+			Author:        author,
+			Version:       version,
+			Configuration: res,
+		})
+		pipeline.Pipeline.Enabled = append(pipeline.Pipeline.Enabled, openapi.PipelineGet200ResponseEnabledInner{
+			Service: openapi.PipelineGet200ResponseEnabledInnerService{
+				Name:    service,
+				Version: version,
+				Author:  author,
+			},
+		})
+
+		return &pipeline, nil
+	})
+}
+
+// This removes a service from a pipeline *locally*. It will only be checked by the server when the pipeline is saved.
+func (m PipelineConfiguratorPage) removeServiceFromPipeline(author string, service string, version string) tea.Cmd {
+	return tui.PerformAction(&m.pipeline, func() (*PipelineOverviewSummary, error) {
+		// There should already be a pipeline in the model
+		if !m.pipeline.IsSuccess() {
+			return nil, fmt.Errorf("Cannot remove a service from a non-fetched pipeline")
+		}
+
+		// Remove this service from the pipeline
+		pipeline := *m.pipeline.Data
+		newServices := make([]PipelineOverviewServiceInfo, 0)
+		for _, s := range pipeline.Services {
+			if s.Name != service {
+				newServices = append(newServices, s)
+			}
+		}
+		pipeline.Services = newServices
+		newEnabled := make([]openapi.PipelineGet200ResponseEnabledInner, 0)
+		for _, enabled := range pipeline.Pipeline.Enabled {
+			if enabled.Service.Name != service {
+				newEnabled = append(newEnabled, enabled)
+			}
+		}
+		pipeline.Pipeline.Enabled = newEnabled
+		return &pipeline, nil
+	})
+}
+
+func (m PipelineConfiguratorPage) findDependencyErrors() []error {
+	errors := make([]error, 0)
+	if !m.pipeline.IsSuccess() {
+		return errors
+	}
+
+	// For each service, check if it has unmet dependencies with other services
+	for _, service := range m.pipeline.Data.Services {
+		for _, input := range service.Configuration.Inputs {
+			for _, stream := range input.Streams {
+				found := false
+				for _, other := range m.pipeline.Data.Services {
+					if other.Name == input.Service {
+						for _, output := range other.Configuration.Outputs {
+							if output == stream {
+								found = true
+								break
+							}
+						}
+					}
+				}
+
+				if !found {
+					errors = append(errors, fmt.Errorf("Service '%s' depends on unresolved stream '%s' from service '%s'", service.Name, stream, input.Service))
+				}
+
+			}
+		}
+	}
+
+	return errors
+}
+
+//
+// Aux methods for views
+//
+
+// Clean up the graph to make it a bit more readable and compressed
+func (m PipelineConfiguratorPage) postProcessGraph(s string) string {
+	n := s
+
+	// Remove empty lines
+	n = regexp.MustCompile(`\n\s*\n`).ReplaceAllString(n, "\n")
+
+	// Highlight the currently selected service
+	sel := m.tableActive.SelectedRow()
+	if sel != nil {
+		// The first item is always the service name
+		name := sel[0]
+
+		// Find the service in the graph
+		if m.focussed == 0 {
+			n = regexp.MustCompile(fmt.Sprintf(`\b%s\b`, name)).ReplaceAllString(n, style.Primary.Bold(true).Render(name))
+		} else {
+			n = regexp.MustCompile(fmt.Sprintf(`\b%s\b`, name)).ReplaceAllString(n, lipgloss.NewStyle().Bold(true).Render(name))
+		}
+	}
+
+	return n
 }
