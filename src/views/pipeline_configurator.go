@@ -296,8 +296,8 @@ func (m PipelineConfiguratorPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, pipelineConfiguratorKeysRegular.Quit):
-			return m, tea.Quit
+		// case key.Matches(msg, pipelineConfiguratorKeysRegular.Quit):
+		// return m, tea.Quit
 		case key.Matches(msg, pipelineConfiguratorKeysRegular.Remove):
 			if m.focussed == 0 {
 				return m.onActiveTableNavigation(msg)

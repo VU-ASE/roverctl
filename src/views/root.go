@@ -66,12 +66,38 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc", "q":
+			// Return to a route based on the current route
+			var returnTo tea.Model
+			switch m.current.(type) {
+			case ServiceInitPage:
+				returnTo = NewServicesOverviewPage()
+			case ServicesSyncPage:
+				returnTo = NewServicesOverviewPage()
+			case ServicesUpdatePage:
+				returnTo = NewServicesOverviewPage()
+			case ServicesListPage:
+				returnTo = NewServicesOverviewPage()
+			case InfoPage:
+				returnTo = NewUtilitiesPage()
+			case PipelineConfiguratorPage:
+				returnTo = NewPipelineOverviewPage()
+			case PipelineLogsPage:
+				returnTo = NewPipelineOverviewPage()
+			case PipelineDetailsPage:
+				returnTo = NewPipelineOverviewPage()
+			case StartPage:
+				returnTo = nil
+			default:
+				returnTo = NewStartPage()
+			}
 
-			// Return based on the current route
-			// todo ...
+			if returnTo == nil {
+				return m, tea.Quit
+			}
 
-			return m, tea.Quit
-
+			var cmd tea.Cmd
+			m.current, cmd = RootScreen(state.Get()).SwitchScreen(returnTo)
+			return m, cmd
 		case "ctrl+c":
 			return m, tea.Quit
 		}
@@ -101,5 +127,5 @@ func (m MainModel) SwitchScreen(model tea.Model) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	return m.current, tea.Batch(initCmd, sizeCmd())
+	return m.current, tea.Sequence(initCmd, sizeCmd())
 }
