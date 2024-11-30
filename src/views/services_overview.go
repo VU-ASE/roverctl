@@ -30,6 +30,7 @@ func NewServicesOverviewPage() ServicesOverviewPage {
 	}
 	listItems = append(listItems, []list.Item{
 		components.ActionItem{Name: "Update", Desc: "Update official services from source onto your Rover"},
+		components.ActionItem{Name: "List", Desc: "List all services available on the Rover"},
 	}...)
 
 	l := list.New(listItems, list.NewDefaultDelegate(), 0, 0)
@@ -71,6 +72,8 @@ func (m ServicesOverviewPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return RootScreen(state.Get()).SwitchScreen(NewServicesSyncPage())
 				case "Update":
 					return RootScreen(state.Get()).SwitchScreen(NewServicesUpdatePage())
+				case "List":
+					return RootScreen(state.Get()).SwitchScreen(NewServicesListPage())
 				}
 				// state.Get().Route.Push(value)
 				return m, tea.Quit
