@@ -258,6 +258,11 @@ func (m PipelineOverviewPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.WindowSizeMsg:
 		m.progress.Width = (msg.Width - 4 - 6 - 6) / 3 // padding
+		if m.pipeline.HasData() {
+			m.table = m.createServiceTable(*m.pipeline.Data)
+		} else {
+			m.table = table.New()
+		}
 	}
 
 	m.table, cmd = m.table.Update(msg)
@@ -521,26 +526,26 @@ func (m PipelineOverviewPage) postProcessGraph(s string) string {
 // Converts a percentage to a table column width in characters
 func pct(pct int) int {
 	total := state.Get().WindowWidth - 4 - 6 - 6 // padding
-	return int(float64(total) * float64(pct) / 100.0)
+	return int(float64(total)*float64(pct)/100.0) - 1
 }
 
 // Create a nicely formatted table based on input data
 func (m PipelineOverviewPage) createServiceTable(res PipelineOverviewSummary) table.Model {
 	// Depending on the state of the pipeline, we want to show different columns
-	columns := []table.Column{}
-	rows := []table.Row{}
+	var columns []table.Column
+	var rows []table.Row
 
 	// Pipeline is currently running
 	if res.Pipeline.Status == openapi.STARTED {
 		columns = []table.Column{
 			{Title: "Service", Width: pct(10)},
-			{Title: "Version", Width: pct(5)},
+			{Title: "Version", Width: pct(10)},
 			{Title: "Author", Width: pct(10)},
-			{Title: "Faults", Width: pct(5)},
+			{Title: "Faults", Width: pct(10)},
 			{Title: "Uptime", Width: pct(10)},
 			{Title: "PID", Width: pct(10)},
 			{Title: "CPU", Width: pct(10)},
-			{Title: "Memory", Width: pct(39)},
+			{Title: "Memory", Width: pct(30)},
 		}
 
 		rows = []table.Row{

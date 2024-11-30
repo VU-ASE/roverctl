@@ -473,7 +473,7 @@ func (m PipelineConfiguratorPage) getColWidth() int {
 }
 
 func (m PipelineConfiguratorPage) colPct(pct int) int {
-	total := m.getColWidth() - 1
+	total := m.getColWidth() - 2
 	return (total*pct)/100 - 1
 }
 
