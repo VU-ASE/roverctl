@@ -1,6 +1,7 @@
 package views
 
 import (
+	"context"
 	"fmt"
 	"runtime"
 	"time"
@@ -125,26 +126,8 @@ func (m InfoPage) fetchInfo() tea.Cmd {
 			return nil, nil
 		}
 
-		// mock data
-		// ! remove
-
-		// Wait 2 seconds
-		time.Sleep(2 * time.Second)
-
-		// return nil, fmt.Errorf("Failed to connect")
-		// a := remote.ToApiClient()
-		// res, _, err := a.HealthAPI.StatusGet(context.Background()).Execute()
-		// return res, err
-
-		res := openapi.StatusGet200Response{
-			Status:    openapi.AllowedDaemonStatusEnumValues[0],
-			Version:   "1.0.0",
-			Uptime:    60 * 60 * 1000,
-			Os:        "linux",
-			Systime:   time.Now().Unix() * 1000,
-			RoverId:   openapi.PtrInt32(12),
-			RoverName: openapi.PtrString("zenith"),
-		}
-		return &res, nil
+		a := remote.ToApiClient()
+		res, _, err := a.HealthAPI.StatusGet(context.Background()).Execute()
+		return res, err
 	})
 }

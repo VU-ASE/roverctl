@@ -21,5 +21,6 @@
     "securityOpt": [
         "seccomp=unconfined"
     ],
+    "runArgs": ["--network=host"],
     "forwardPorts": []
 }
