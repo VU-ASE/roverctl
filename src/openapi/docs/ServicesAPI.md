@@ -4,14 +4,79 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**FetchPost**](ServicesAPI.md#FetchPost) | **Post** /fetch | Fetches the zip file from the given URL and installs the service onto the filesystem
 [**ServicesAuthorGet**](ServicesAPI.md#ServicesAuthorGet) | **Get** /services/{author} | Retrieve the list of parsable services for a specific author
 [**ServicesAuthorServiceGet**](ServicesAPI.md#ServicesAuthorServiceGet) | **Get** /services/{author}/{service} | Retrieve the list of parsable service versions for a specific author and service
 [**ServicesAuthorServiceVersionDelete**](ServicesAPI.md#ServicesAuthorServiceVersionDelete) | **Delete** /services/{author}/{service}/{version} | Delete a specific version of a service
 [**ServicesAuthorServiceVersionGet**](ServicesAPI.md#ServicesAuthorServiceVersionGet) | **Get** /services/{author}/{service}/{version} | Retrieve the status of a specific version of a service
 [**ServicesAuthorServiceVersionPost**](ServicesAPI.md#ServicesAuthorServiceVersionPost) | **Post** /services/{author}/{service}/{version} | Build a fully qualified service version
 [**ServicesGet**](ServicesAPI.md#ServicesGet) | **Get** /services | Retrieve the list of all authors that have parsable services. With these authors you can query further for services
-[**ServicesPost**](ServicesAPI.md#ServicesPost) | **Post** /services | Upload a new service or new version to the rover by uploading a ZIP file
+[**UploadPost**](ServicesAPI.md#UploadPost) | **Post** /upload | Upload a new service or new version to the rover by uploading a ZIP file
 
+
+
+## FetchPost
+
+> FetchPost200Response FetchPost(ctx).FetchPostRequest(fetchPostRequest).Execute()
+
+Fetches the zip file from the given URL and installs the service onto the filesystem
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+)
+
+func main() {
+	fetchPostRequest := *openapiclient.NewFetchPostRequest("https://downloads.ase.vu.nl/api/imaging/v1.0.0") // FetchPostRequest | 
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.ServicesAPI.FetchPost(context.Background()).FetchPostRequest(fetchPostRequest).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `ServicesAPI.FetchPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `FetchPost`: FetchPost200Response
+	fmt.Fprintf(os.Stdout, "Response from `ServicesAPI.FetchPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiFetchPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **fetchPostRequest** | [**FetchPostRequest**](FetchPostRequest.md) |  | 
+
+### Return type
+
+[**FetchPost200Response**](FetchPost200Response.md)
+
+### Authorization
+
+[BasicAuth](../README.md#BasicAuth)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
 
 ## ServicesAuthorGet
@@ -29,7 +94,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/VU-ASE/roverctl"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
 )
 
 func main() {
@@ -97,7 +162,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/VU-ASE/roverctl"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
 )
 
 func main() {
@@ -168,7 +233,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/VU-ASE/roverctl"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
 )
 
 func main() {
@@ -242,7 +307,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/VU-ASE/roverctl"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
 )
 
 func main() {
@@ -316,7 +381,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/VU-ASE/roverctl"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
 )
 
 func main() {
@@ -388,7 +453,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/VU-ASE/roverctl"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
 )
 
 func main() {
@@ -432,9 +497,9 @@ Other parameters are passed through a pointer to a apiServicesGetRequest struct 
 [[Back to README]](../README.md)
 
 
-## ServicesPost
+## UploadPost
 
-> ServicesPost200Response ServicesPost(ctx).Content(content).Execute()
+> FetchPost200Response UploadPost(ctx).Content(content).Execute()
 
 Upload a new service or new version to the rover by uploading a ZIP file
 
@@ -447,7 +512,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/VU-ASE/roverctl"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
 )
 
 func main() {
@@ -455,13 +520,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.ServicesAPI.ServicesPost(context.Background()).Content(content).Execute()
+	resp, r, err := apiClient.ServicesAPI.UploadPost(context.Background()).Content(content).Execute()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `ServicesAPI.ServicesPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error when calling `ServicesAPI.UploadPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `ServicesPost`: ServicesPost200Response
-	fmt.Fprintf(os.Stdout, "Response from `ServicesAPI.ServicesPost`: %v\n", resp)
+	// response from `UploadPost`: FetchPost200Response
+	fmt.Fprintf(os.Stdout, "Response from `ServicesAPI.UploadPost`: %v\n", resp)
 }
 ```
 
@@ -471,7 +536,7 @@ func main() {
 
 ### Other Parameters
 
-Other parameters are passed through a pointer to a apiServicesPostRequest struct via the builder pattern
+Other parameters are passed through a pointer to a apiUploadPostRequest struct via the builder pattern
 
 
 Name | Type | Description  | Notes
@@ -480,7 +545,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**ServicesPost200Response**](ServicesPost200Response.md)
+[**FetchPost200Response**](FetchPost200Response.md)
 
 ### Authorization
 

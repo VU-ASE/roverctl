@@ -20,6 +20,7 @@ type PipelineStatus string
 
 // List of PipelineStatus
 const (
+	EMPTY PipelineStatus = "empty"
 	STARTABLE PipelineStatus = "startable"
 	STARTED PipelineStatus = "started"
 	RESTARTING PipelineStatus = "restarting"
@@ -27,6 +28,7 @@ const (
 
 // All allowed values of PipelineStatus enum
 var AllowedPipelineStatusEnumValues = []PipelineStatus{
+	"empty",
 	"startable",
 	"started",
 	"restarting",

@@ -5,13 +5,13 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Message** | **string** | The error message | 
-**BuildLog** | Pointer to **[]string** | The build log (one log line per item) | [optional] 
+**BuildLog** | **[]string** | The build log (one log line per item) | 
 
 ## Methods
 
 ### NewServicesAuthorServiceVersionPost400Response
 
-`func NewServicesAuthorServiceVersionPost400Response(message string, ) *ServicesAuthorServiceVersionPost400Response`
+`func NewServicesAuthorServiceVersionPost400Response(message string, buildLog []string, ) *ServicesAuthorServiceVersionPost400Response`
 
 NewServicesAuthorServiceVersionPost400Response instantiates a new ServicesAuthorServiceVersionPost400Response object
 This constructor will assign default values to properties that have it defined,
@@ -65,11 +65,6 @@ and a boolean to check if the value has been set.
 
 SetBuildLog sets BuildLog field to given value.
 
-### HasBuildLog
-
-`func (o *ServicesAuthorServiceVersionPost400Response) HasBuildLog() bool`
-
-HasBuildLog returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

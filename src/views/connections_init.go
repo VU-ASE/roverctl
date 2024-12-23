@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/VU-ASE/rover/src/configuration"
@@ -378,7 +379,14 @@ func (m ConnectionsInitPage) View() string {
 
 func (m ConnectionsInitPage) checkRoute() tea.Cmd {
 	return tui.PerformAction(&m.routeExists, func() (*bool, error) {
-		ping, _ := probing.NewPinger(m.host)
+		// Separate the host from the port
+		parts := strings.Split(m.host, ":")
+		if len(parts) <= 0 {
+			return nil, fmt.Errorf("Invalid host format")
+		}
+
+		host := parts[0]
+		ping, _ := probing.NewPinger(host)
 		ping.Count = 3
 		ping.Timeout = 10 * time.Second
 		err := ping.Run()

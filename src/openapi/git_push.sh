@@ -3,8 +3,8 @@
 #
 # Usage example: /bin/sh ./git_push.sh wing328 openapi-petstore-perl "minor update" "gitlab.com"
 
-VU-ASE=$1
-roverctl=$2
+git_user_id=$1
+git_repo_id=$2
 release_note=$3
 git_host=$4
 
@@ -13,14 +13,14 @@ if [ "$git_host" = "" ]; then
     echo "[INFO] No command line input provided. Set \$git_host to $git_host"
 fi
 
-if [ "$VU-ASE" = "" ]; then
-    VU-ASE="VU-ASE"
-    echo "[INFO] No command line input provided. Set \$VU-ASE to $VU-ASE"
+if [ "$git_user_id" = "" ]; then
+    git_user_id="GIT_USER_ID"
+    echo "[INFO] No command line input provided. Set \$git_user_id to $git_user_id"
 fi
 
-if [ "$roverctl" = "" ]; then
-    roverctl="roverctl"
-    echo "[INFO] No command line input provided. Set \$roverctl to $roverctl"
+if [ "$git_repo_id" = "" ]; then
+    git_repo_id="GIT_REPO_ID"
+    echo "[INFO] No command line input provided. Set \$git_repo_id to $git_repo_id"
 fi
 
 if [ "$release_note" = "" ]; then
@@ -43,9 +43,9 @@ if [ "$git_remote" = "" ]; then # git remote not defined
 
     if [ "$GIT_TOKEN" = "" ]; then
         echo "[INFO] \$GIT_TOKEN (environment variable) is not set. Using the git credential in your environment."
-        git remote add origin https://${git_host}/${VU-ASE}/${roverctl}.git
+        git remote add origin https://${git_host}/${git_user_id}/${git_repo_id}.git
     else
-        git remote add origin https://${VU-ASE}:"${GIT_TOKEN}"@${git_host}/${VU-ASE}/${roverctl}.git
+        git remote add origin https://${git_user_id}:"${GIT_TOKEN}"@${git_host}/${git_user_id}/${git_repo_id}.git
     fi
 
 fi
@@ -53,5 +53,5 @@ fi
 git pull origin master
 
 # Pushes (Forces) the changes in the local repository up to the remote repository
-echo "Git pushing to https://${git_host}/${VU-ASE}/${roverctl}.git"
+echo "Git pushing to https://${git_host}/${git_user_id}/${git_repo_id}.git"
 git push origin master 2>&1 | grep -v 'To https'

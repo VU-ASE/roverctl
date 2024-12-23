@@ -22,7 +22,7 @@ go get golang.org/x/net/context
 Put the package under your project folder and add the following in import:
 
 ```go
-import openapi "github.com/VU-ASE/roverctl"
+import openapi "github.com/GIT_USER_ID/GIT_REPO_ID"
 ```
 
 To use a proxy, set the environment variable `HTTP_PROXY`:
@@ -80,26 +80,26 @@ Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *HealthAPI* | [**StatusGet**](docs/HealthAPI.md#statusget) | **Get** /status | Retrieve the health and versioning information
 *HealthAPI* | [**UpdatePost**](docs/HealthAPI.md#updatepost) | **Post** /update | Self-update the roverd daemon process
-*PipelineAPI* | [**LogsNameGet**](docs/PipelineAPI.md#logsnameget) | **Get** /logs/{name} | Retrieve logs for a pipeline service (this can be logs from multiple processes, if the service was restarted). These logs are still queryable if a process has been terminated or if the pipeline was stopped.
+*PipelineAPI* | [**LogsAuthorNameVersionGet**](docs/PipelineAPI.md#logsauthornameversionget) | **Get** /logs/{author}/{name}/{version} | Retrieve logs for any service. Logs from running or previously run services can be viewed and will be kept until rover reboot.
 *PipelineAPI* | [**PipelineGet**](docs/PipelineAPI.md#pipelineget) | **Get** /pipeline | Retrieve pipeline status and process execution information
 *PipelineAPI* | [**PipelinePost**](docs/PipelineAPI.md#pipelinepost) | **Post** /pipeline | Set the services that are enabled in this pipeline, by specifying the fully qualified services
 *PipelineAPI* | [**PipelineStartPost**](docs/PipelineAPI.md#pipelinestartpost) | **Post** /pipeline/start | Start the pipeline
 *PipelineAPI* | [**PipelineStopPost**](docs/PipelineAPI.md#pipelinestoppost) | **Post** /pipeline/stop | Stop the pipeline
+*ServicesAPI* | [**FetchPost**](docs/ServicesAPI.md#fetchpost) | **Post** /fetch | Fetches the zip file from the given URL and installs the service onto the filesystem
 *ServicesAPI* | [**ServicesAuthorGet**](docs/ServicesAPI.md#servicesauthorget) | **Get** /services/{author} | Retrieve the list of parsable services for a specific author
 *ServicesAPI* | [**ServicesAuthorServiceGet**](docs/ServicesAPI.md#servicesauthorserviceget) | **Get** /services/{author}/{service} | Retrieve the list of parsable service versions for a specific author and service
 *ServicesAPI* | [**ServicesAuthorServiceVersionDelete**](docs/ServicesAPI.md#servicesauthorserviceversiondelete) | **Delete** /services/{author}/{service}/{version} | Delete a specific version of a service
 *ServicesAPI* | [**ServicesAuthorServiceVersionGet**](docs/ServicesAPI.md#servicesauthorserviceversionget) | **Get** /services/{author}/{service}/{version} | Retrieve the status of a specific version of a service
 *ServicesAPI* | [**ServicesAuthorServiceVersionPost**](docs/ServicesAPI.md#servicesauthorserviceversionpost) | **Post** /services/{author}/{service}/{version} | Build a fully qualified service version
 *ServicesAPI* | [**ServicesGet**](docs/ServicesAPI.md#servicesget) | **Get** /services | Retrieve the list of all authors that have parsable services. With these authors you can query further for services
-*ServicesAPI* | [**ServicesPost**](docs/ServicesAPI.md#servicespost) | **Post** /services | Upload a new service or new version to the rover by uploading a ZIP file
-*SourcesAPI* | [**SourcesDelete**](docs/SourcesAPI.md#sourcesdelete) | **Delete** /sources | Delete a source
-*SourcesAPI* | [**SourcesGet**](docs/SourcesAPI.md#sourcesget) | **Get** /sources | Retrieve all sources
-*SourcesAPI* | [**SourcesPost**](docs/SourcesAPI.md#sourcespost) | **Post** /sources | Downloads and installs a new source, overwriting the prior version (if any) and adding it to the &#39;downloaded&#39; section in rover.yaml (checks for duplicate source names)
+*ServicesAPI* | [**UploadPost**](docs/ServicesAPI.md#uploadpost) | **Post** /upload | Upload a new service or new version to the rover by uploading a ZIP file
 
 
 ## Documentation For Models
 
  - [DaemonStatus](docs/DaemonStatus.md)
+ - [FetchPost200Response](docs/FetchPost200Response.md)
+ - [FetchPostRequest](docs/FetchPostRequest.md)
  - [GenericError](docs/GenericError.md)
  - [PipelineGet200Response](docs/PipelineGet200Response.md)
  - [PipelineGet200ResponseEnabledInner](docs/PipelineGet200ResponseEnabledInner.md)
@@ -110,14 +110,12 @@ Class | Method | HTTP request | Description
  - [PipelinePostRequestInner](docs/PipelinePostRequestInner.md)
  - [PipelineStatus](docs/PipelineStatus.md)
  - [ProcessStatus](docs/ProcessStatus.md)
+ - [ReferencedService](docs/ReferencedService.md)
  - [ServiceStatus](docs/ServiceStatus.md)
  - [ServicesAuthorServiceVersionDelete200Response](docs/ServicesAuthorServiceVersionDelete200Response.md)
  - [ServicesAuthorServiceVersionGet200Response](docs/ServicesAuthorServiceVersionGet200Response.md)
  - [ServicesAuthorServiceVersionGet200ResponseInputsInner](docs/ServicesAuthorServiceVersionGet200ResponseInputsInner.md)
  - [ServicesAuthorServiceVersionPost400Response](docs/ServicesAuthorServiceVersionPost400Response.md)
- - [ServicesPost200Response](docs/ServicesPost200Response.md)
- - [SourcesGet200ResponseInner](docs/SourcesGet200ResponseInner.md)
- - [SourcesPostRequest](docs/SourcesPostRequest.md)
  - [StatusGet200Response](docs/StatusGet200Response.md)
  - [StatusGet200ResponseCpuInner](docs/StatusGet200ResponseCpuInner.md)
  - [StatusGet200ResponseMemory](docs/StatusGet200ResponseMemory.md)

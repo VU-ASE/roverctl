@@ -3,6 +3,8 @@
 ## Enum
 
 
+* `EMPTY` (value: `"empty"`)
+
 * `STARTABLE` (value: `"startable"`)
 
 * `STARTED` (value: `"started"`)

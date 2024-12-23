@@ -54,8 +54,6 @@ type APIClient struct {
 	PipelineAPI *PipelineAPIService
 
 	ServicesAPI *ServicesAPIService
-
-	SourcesAPI *SourcesAPIService
 }
 
 type service struct {
@@ -77,7 +75,6 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.HealthAPI = (*HealthAPIService)(&c.common)
 	c.PipelineAPI = (*PipelineAPIService)(&c.common)
 	c.ServicesAPI = (*ServicesAPIService)(&c.common)
-	c.SourcesAPI = (*SourcesAPIService)(&c.common)
 
 	return c
 }

@@ -4,7 +4,7 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**LogsNameGet**](PipelineAPI.md#LogsNameGet) | **Get** /logs/{name} | Retrieve logs for a pipeline service (this can be logs from multiple processes, if the service was restarted). These logs are still queryable if a process has been terminated or if the pipeline was stopped.
+[**LogsAuthorNameVersionGet**](PipelineAPI.md#LogsAuthorNameVersionGet) | **Get** /logs/{author}/{name}/{version} | Retrieve logs for any service. Logs from running or previously run services can be viewed and will be kept until rover reboot.
 [**PipelineGet**](PipelineAPI.md#PipelineGet) | **Get** /pipeline | Retrieve pipeline status and process execution information
 [**PipelinePost**](PipelineAPI.md#PipelinePost) | **Post** /pipeline | Set the services that are enabled in this pipeline, by specifying the fully qualified services
 [**PipelineStartPost**](PipelineAPI.md#PipelineStartPost) | **Post** /pipeline/start | Start the pipeline
@@ -12,11 +12,11 @@ Method | HTTP request | Description
 
 
 
-## LogsNameGet
+## LogsAuthorNameVersionGet
 
-> []string LogsNameGet(ctx, name).Lines(lines).Execute()
+> []string LogsAuthorNameVersionGet(ctx, author, name, version).Lines(lines).Execute()
 
-Retrieve logs for a pipeline service (this can be logs from multiple processes, if the service was restarted). These logs are still queryable if a process has been terminated or if the pipeline was stopped.
+Retrieve logs for any service. Logs from running or previously run services can be viewed and will be kept until rover reboot.
 
 ### Example
 
@@ -27,22 +27,24 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/VU-ASE/roverctl"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
 )
 
 func main() {
-	name := "imaging" // string | The name of the service running as a process in the pipeline
+	author := "vu-ase" // string | The author of the service.
+	name := "imaging" // string | The name of the service.
+	version := "1.0.0" // string | The version of the service.
 	lines := int32(100) // int32 | The number of log lines to retrieve (optional) (default to 50)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.PipelineAPI.LogsNameGet(context.Background(), name).Lines(lines).Execute()
+	resp, r, err := apiClient.PipelineAPI.LogsAuthorNameVersionGet(context.Background(), author, name, version).Lines(lines).Execute()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `PipelineAPI.LogsNameGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error when calling `PipelineAPI.LogsAuthorNameVersionGet``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `LogsNameGet`: []string
-	fmt.Fprintf(os.Stdout, "Response from `PipelineAPI.LogsNameGet`: %v\n", resp)
+	// response from `LogsAuthorNameVersionGet`: []string
+	fmt.Fprintf(os.Stdout, "Response from `PipelineAPI.LogsAuthorNameVersionGet`: %v\n", resp)
 }
 ```
 
@@ -52,15 +54,19 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**name** | **string** | The name of the service running as a process in the pipeline | 
+**author** | **string** | The author of the service. | 
+**name** | **string** | The name of the service. | 
+**version** | **string** | The version of the service. | 
 
 ### Other Parameters
 
-Other parameters are passed through a pointer to a apiLogsNameGetRequest struct via the builder pattern
+Other parameters are passed through a pointer to a apiLogsAuthorNameVersionGetRequest struct via the builder pattern
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
+
+
 
  **lines** | **int32** | The number of log lines to retrieve | [default to 50]
 
@@ -97,7 +103,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/VU-ASE/roverctl"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
 )
 
 func main() {
@@ -156,7 +162,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/VU-ASE/roverctl"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
 )
 
 func main() {
@@ -218,7 +224,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/VU-ASE/roverctl"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
 )
 
 func main() {
@@ -275,7 +281,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/VU-ASE/roverctl"
+	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
 )
 
 func main() {

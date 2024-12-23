@@ -24,7 +24,7 @@ type ServicesAuthorServiceVersionPost400Response struct {
 	// The error message
 	Message string `json:"message"`
 	// The build log (one log line per item)
-	BuildLog []string `json:"build_log,omitempty"`
+	BuildLog []string `json:"build_log"`
 }
 
 type _ServicesAuthorServiceVersionPost400Response ServicesAuthorServiceVersionPost400Response
@@ -33,9 +33,10 @@ type _ServicesAuthorServiceVersionPost400Response ServicesAuthorServiceVersionPo
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewServicesAuthorServiceVersionPost400Response(message string) *ServicesAuthorServiceVersionPost400Response {
+func NewServicesAuthorServiceVersionPost400Response(message string, buildLog []string) *ServicesAuthorServiceVersionPost400Response {
 	this := ServicesAuthorServiceVersionPost400Response{}
 	this.Message = message
+	this.BuildLog = buildLog
 	return &this
 }
 
@@ -71,34 +72,26 @@ func (o *ServicesAuthorServiceVersionPost400Response) SetMessage(v string) {
 	o.Message = v
 }
 
-// GetBuildLog returns the BuildLog field value if set, zero value otherwise.
+// GetBuildLog returns the BuildLog field value
 func (o *ServicesAuthorServiceVersionPost400Response) GetBuildLog() []string {
-	if o == nil || IsNil(o.BuildLog) {
+	if o == nil {
 		var ret []string
 		return ret
 	}
+
 	return o.BuildLog
 }
 
-// GetBuildLogOk returns a tuple with the BuildLog field value if set, nil otherwise
+// GetBuildLogOk returns a tuple with the BuildLog field value
 // and a boolean to check if the value has been set.
 func (o *ServicesAuthorServiceVersionPost400Response) GetBuildLogOk() ([]string, bool) {
-	if o == nil || IsNil(o.BuildLog) {
+	if o == nil {
 		return nil, false
 	}
 	return o.BuildLog, true
 }
 
-// HasBuildLog returns a boolean if a field has been set.
-func (o *ServicesAuthorServiceVersionPost400Response) HasBuildLog() bool {
-	if o != nil && !IsNil(o.BuildLog) {
-		return true
-	}
-
-	return false
-}
-
-// SetBuildLog gets a reference to the given []string and assigns it to the BuildLog field.
+// SetBuildLog sets field value
 func (o *ServicesAuthorServiceVersionPost400Response) SetBuildLog(v []string) {
 	o.BuildLog = v
 }
@@ -114,9 +107,7 @@ func (o ServicesAuthorServiceVersionPost400Response) MarshalJSON() ([]byte, erro
 func (o ServicesAuthorServiceVersionPost400Response) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["message"] = o.Message
-	if !IsNil(o.BuildLog) {
-		toSerialize["build_log"] = o.BuildLog
-	}
+	toSerialize["build_log"] = o.BuildLog
 	return toSerialize, nil
 }
 
@@ -126,6 +117,7 @@ func (o *ServicesAuthorServiceVersionPost400Response) UnmarshalJSON(data []byte)
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"message",
+		"build_log",
 	}
 
 	allProperties := make(map[string]interface{})

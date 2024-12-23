@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"slices"
+	"time"
 
 	"github.com/VU-ASE/rover/src/openapi"
 	"github.com/melbahja/goph"
@@ -176,6 +177,7 @@ func basicAuthClient(username, password string) *http.Client {
 			Password: password,
 			Base:     http.DefaultTransport, // Use the default RoundTripper
 		},
+		Timeout: 2 * time.Second,
 	}
 }
 

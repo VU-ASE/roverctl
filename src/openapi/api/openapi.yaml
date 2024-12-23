@@ -14,8 +14,6 @@ tags:
   name: Pipeline
 - description: Managing services that compose a pipeline
   name: Services
-- description: Managing sources that services can be downloaded from
-  name: Sources
 - description: Health and versioning information
   name: Health
 paths:
@@ -101,14 +99,32 @@ paths:
       summary: Stop the pipeline
       tags:
       - Pipeline
-  /logs/{name}:
+  /logs/{author}/{name}/{version}:
     get:
       parameters:
-      - description: The name of the service running as a process in the pipeline
+      - description: The author of the service.
+        example: vu-ase
+        explode: false
+        in: path
+        name: author
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The name of the service.
         example: imaging
         explode: false
         in: path
         name: name
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The version of the service.
+        example: 1.0.0
+        explode: false
+        in: path
+        name: version
         required: true
         schema:
           type: string
@@ -149,11 +165,66 @@ paths:
         "401":
           description: Unauthorized access (you need to set the Authorization header
             with a valid username and password)
-      summary: "Retrieve logs for a pipeline service (this can be logs from multiple\
-        \ processes, if the service was restarted). These logs are still queryable\
-        \ if a process has been terminated or if the pipeline was stopped."
+      summary: Retrieve logs for any service. Logs from running or previously run
+        services can be viewed and will be kept until rover reboot.
       tags:
       - Pipeline
+  /fetch:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/_fetch_post_request'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_fetch_post_200_response'
+          description: The service was uploaded successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: Fetches the zip file from the given URL and installs the service onto
+        the filesystem
+      tags:
+      - Services
+  /upload:
+    post:
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/_upload_post_request'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_fetch_post_200_response'
+          description: The service was uploaded successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericError'
+          description: An error occurred
+        "401":
+          description: Unauthorized access (you need to set the Authorization header
+            with a valid username and password)
+      summary: Upload a new service or new version to the rover by uploading a ZIP
+        file
+      tags:
+      - Services
   /services:
     get:
       responses:
@@ -178,33 +249,6 @@ paths:
             with a valid username and password)
       summary: Retrieve the list of all authors that have parsable services. With
         these authors you can query further for services
-      tags:
-      - Services
-    post:
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/_services_post_request'
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/_services_post_200_response'
-          description: The service was uploaded successfully
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericError'
-          description: An error occurred
-        "401":
-          description: Unauthorized access (you need to set the Authorization header
-            with a valid username and password)
-      summary: Upload a new service or new version to the rover by uploading a ZIP
-        file
       tags:
       - Services
   /services/{author}:
@@ -442,77 +486,6 @@ paths:
       summary: Build a fully qualified service version
       tags:
       - Services
-  /sources:
-    delete:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/_sources_post_request'
-        required: true
-      responses:
-        "200":
-          description: The source was deleted successfully
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericError'
-          description: An error occurred
-        "404":
-          description: Entity not found
-        "401":
-          description: Unauthorized access (you need to set the Authorization header
-            with a valid username and password)
-      summary: Delete a source
-      tags:
-      - Sources
-    get:
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/_sources_get_200_response_inner'
-                type: array
-          description: An array of sources
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericError'
-          description: An error occurred
-        "401":
-          description: Unauthorized access (you need to set the Authorization header
-            with a valid username and password)
-      summary: Retrieve all sources
-      tags:
-      - Sources
-    post:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/_sources_post_request'
-        required: true
-      responses:
-        "200":
-          description: The source was added successfully
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericError'
-          description: An error occurred
-        "401":
-          description: Unauthorized access (you need to set the Authorization header
-            with a valid username and password)
-      summary: "Downloads and installs a new source, overwriting the prior version\
-        \ (if any) and adding it to the 'downloaded' section in rover.yaml (checks\
-        \ for duplicate source names)"
-      tags:
-      - Sources
   /status:
     get:
       responses:
@@ -571,6 +544,7 @@ components:
     PipelineStatus:
       description: The status of the entire pipeline corresponding to a state machine
       enum:
+      - empty
       - startable
       - started
       - restarting
@@ -624,6 +598,13 @@ components:
       - recoverable
       - unrecoverable
       type: string
+    ReferencedService:
+      properties:
+        url:
+          description: Fully qualified download url.
+          example: https://downloads.ase.vu.nl/api/imaging/v1.0.0
+          type: string
+      type: object
     GenericError:
       example:
         code: 0
@@ -750,7 +731,7 @@ components:
             name: name
             version: version
             faults: 1
-        status: startable
+        status: empty
       properties:
         status:
           $ref: '#/components/schemas/PipelineStatus'
@@ -860,14 +841,17 @@ components:
       required:
       - validation_errors
       type: object
-    _services_post_request:
+    _fetch_post_request:
       properties:
-        content:
-          description: The content of the ZIP file to upload
-          format: binary
+        url:
+          description: "Download URL of the service to be downloaded, must include\
+            \ scheme"
+          example: https://downloads.ase.vu.nl/api/imaging/v1.0.0
           type: string
+      required:
+      - url
       type: object
-    _services_post_200_response:
+    _fetch_post_200_response:
       example:
         author: vu-ase
         name: imaging
@@ -895,6 +879,13 @@ components:
       - invalidated_pipeline
       - name
       - version
+      type: object
+    _upload_post_request:
+      properties:
+        content:
+          description: The content of the ZIP file to upload
+          format: binary
+          type: string
       type: object
     _services__author___service___version__get_200_response_inputs_inner:
       properties:
@@ -964,6 +955,7 @@ components:
             type: string
           type: array
       required:
+      - build_log
       - message
       type: object
     _services__author___service___version__delete_200_response:
@@ -976,53 +968,6 @@ components:
           type: boolean
       required:
       - invalidated_pipeline
-      type: object
-    _sources_get_200_response_inner:
-      example:
-        name: imaging
-        version: 1.0.0
-        sha: 68c4008de241ee6f8c17de9162f80c38533b94fc0ee6de2a83740cdc2e0edf64
-        url: github.com/VU-ASE/imaging
-      properties:
-        name:
-          description: The name of the source
-          example: imaging
-          type: string
-        url:
-          description: The URL of the source (without scheme)
-          example: github.com/VU-ASE/imaging
-          type: string
-        version:
-          example: 1.0.0
-          type: string
-        sha:
-          description: "The SHA256 hash of the source download, computed over the\
-            \ ZIP file downloaded"
-          example: 68c4008de241ee6f8c17de9162f80c38533b94fc0ee6de2a83740cdc2e0edf64
-          type: string
-      required:
-      - name
-      - url
-      - version
-      type: object
-    _sources_post_request:
-      properties:
-        name:
-          description: The name of the source
-          example: imaging
-          type: string
-        url:
-          description: The URL of the source (without scheme)
-          example: github.com/VU-ASE/imaging
-          type: string
-        version:
-          description: The version of the source
-          example: 1.0.0
-          type: string
-      required:
-      - name
-      - url
-      - version
       type: object
     _status_get_200_response_memory:
       description: Memory usage information

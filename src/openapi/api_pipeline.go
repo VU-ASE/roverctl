@@ -23,41 +23,47 @@ import (
 // PipelineAPIService PipelineAPI service
 type PipelineAPIService service
 
-type ApiLogsNameGetRequest struct {
+type ApiLogsAuthorNameVersionGetRequest struct {
 	ctx context.Context
 	ApiService *PipelineAPIService
+	author string
 	name string
+	version string
 	lines *int32
 }
 
 // The number of log lines to retrieve
-func (r ApiLogsNameGetRequest) Lines(lines int32) ApiLogsNameGetRequest {
+func (r ApiLogsAuthorNameVersionGetRequest) Lines(lines int32) ApiLogsAuthorNameVersionGetRequest {
 	r.lines = &lines
 	return r
 }
 
-func (r ApiLogsNameGetRequest) Execute() ([]string, *http.Response, error) {
-	return r.ApiService.LogsNameGetExecute(r)
+func (r ApiLogsAuthorNameVersionGetRequest) Execute() ([]string, *http.Response, error) {
+	return r.ApiService.LogsAuthorNameVersionGetExecute(r)
 }
 
 /*
-LogsNameGet Retrieve logs for a pipeline service (this can be logs from multiple processes, if the service was restarted). These logs are still queryable if a process has been terminated or if the pipeline was stopped.
+LogsAuthorNameVersionGet Retrieve logs for any service. Logs from running or previously run services can be viewed and will be kept until rover reboot.
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param name The name of the service running as a process in the pipeline
- @return ApiLogsNameGetRequest
+ @param author The author of the service.
+ @param name The name of the service.
+ @param version The version of the service.
+ @return ApiLogsAuthorNameVersionGetRequest
 */
-func (a *PipelineAPIService) LogsNameGet(ctx context.Context, name string) ApiLogsNameGetRequest {
-	return ApiLogsNameGetRequest{
+func (a *PipelineAPIService) LogsAuthorNameVersionGet(ctx context.Context, author string, name string, version string) ApiLogsAuthorNameVersionGetRequest {
+	return ApiLogsAuthorNameVersionGetRequest{
 		ApiService: a,
 		ctx: ctx,
+		author: author,
 		name: name,
+		version: version,
 	}
 }
 
 // Execute executes the request
 //  @return []string
-func (a *PipelineAPIService) LogsNameGetExecute(r ApiLogsNameGetRequest) ([]string, *http.Response, error) {
+func (a *PipelineAPIService) LogsAuthorNameVersionGetExecute(r ApiLogsAuthorNameVersionGetRequest) ([]string, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
@@ -65,13 +71,15 @@ func (a *PipelineAPIService) LogsNameGetExecute(r ApiLogsNameGetRequest) ([]stri
 		localVarReturnValue  []string
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "PipelineAPIService.LogsNameGet")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "PipelineAPIService.LogsAuthorNameVersionGet")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/logs/{name}"
+	localVarPath := localBasePath + "/logs/{author}/{name}/{version}"
+	localVarPath = strings.Replace(localVarPath, "{"+"author"+"}", url.PathEscape(parameterValueToString(r.author, "author")), -1)
 	localVarPath = strings.Replace(localVarPath, "{"+"name"+"}", url.PathEscape(parameterValueToString(r.name, "name")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"version"+"}", url.PathEscape(parameterValueToString(r.version, "version")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}

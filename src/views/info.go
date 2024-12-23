@@ -1,6 +1,7 @@
 package views
 
 import (
+	"context"
 	"fmt"
 	"runtime"
 	"time"
@@ -122,29 +123,14 @@ func (m InfoPage) fetchInfo() tea.Cmd {
 	return tui.PerformAction(&m.remoteInfo, func() (*openapi.StatusGet200Response, error) {
 		remote := state.Get().RoverConnections.GetActive()
 		if remote == nil {
-			return nil, nil
+			return nil, fmt.Errorf("No active rover connection")
 		}
 
-		// mock data
-		// ! remove
+		api := remote.ToApiClient()
+		res, _, err := api.HealthAPI.StatusGet(
+			context.Background(),
+		).Execute()
 
-		// Wait 2 seconds
-		time.Sleep(2 * time.Second)
-
-		// return nil, fmt.Errorf("Failed to connect")
-		// a := remote.ToApiClient()
-		// res, _, err := a.HealthAPI.StatusGet(context.Background()).Execute()
-		// return res, err
-
-		res := openapi.StatusGet200Response{
-			Status:    openapi.AllowedDaemonStatusEnumValues[0],
-			Version:   "1.0.0",
-			Uptime:    60 * 60 * 1000,
-			Os:        "linux",
-			Systime:   time.Now().Unix() * 1000,
-			RoverId:   openapi.PtrInt32(12),
-			RoverName: openapi.PtrString("zenith"),
-		}
-		return &res, nil
+		return res, err
 	})
 }
