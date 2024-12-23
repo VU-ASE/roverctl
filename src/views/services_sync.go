@@ -2,21 +2,19 @@ package views
 
 import (
 	"archive/zip"
-	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/VU-ASE/rover/src/openapi"
 	"github.com/VU-ASE/rover/src/state"
 	"github.com/VU-ASE/rover/src/style"
 	"github.com/VU-ASE/rover/src/tui"
+	"github.com/VU-ASE/rover/src/utils"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -333,43 +331,11 @@ func (m ServicesSyncPage) uploadChanges() tea.Cmd {
 		res, htt, err := req.Execute()
 
 		if err != nil && htt != nil {
-			// Read http response body
-			httres := make([]byte, htt.ContentLength)
-			htt.Body.Read(httres)
-			return nil, fmt.Errorf("Failed to upload temp zip file '%s' which was set as multipart formdata in %s: \n%s", zipFile.Name(), err, httres)
+			return nil, utils.ParseHTTPError(err, htt)
 		}
 
 		return res, err
 	})
-}
-
-func inspectRequest(req *http.Request) string {
-	var s strings.Builder
-
-	// Append method and URL
-	s.WriteString(fmt.Sprintf("Method: %s\n", req.Method))
-	s.WriteString(fmt.Sprintf("URL: %s\n", req.URL.String()))
-	s.WriteString("Headers:\n")
-
-	// Append headers
-	for key, values := range req.Header {
-		for _, value := range values {
-			s.WriteString(fmt.Sprintf("  %s: %s\n", key, value))
-		}
-	}
-
-	// Append body if available
-	if req.Body != nil {
-		// Save the original body
-		var buf bytes.Buffer
-		tee := io.TeeReader(req.Body, &buf)
-		bodyBytes, _ := io.ReadAll(tee)
-		req.Body = io.NopCloser(&buf) // Restore the original body
-
-		s.WriteString(fmt.Sprintf("Body: %s\n", string(bodyBytes)))
-	}
-
-	return s.String()
 }
 
 // Enum for possible file change actions, using iota

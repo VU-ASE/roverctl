@@ -9,6 +9,7 @@ import (
 	"github.com/VU-ASE/rover/src/state"
 	"github.com/VU-ASE/rover/src/style"
 	"github.com/VU-ASE/rover/src/tui"
+	"github.com/VU-ASE/rover/src/utils"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -60,10 +61,6 @@ var servicesListKeysAuthor = ServicesListKeyMap{
 		key.WithKeys("enter"),
 		key.WithHelp("enter", "view services"),
 	),
-	Delete: key.NewBinding(
-		key.WithKeys("d"),
-		key.WithHelp("d", "delete author"),
-	),
 	Quit: key.NewBinding(
 		key.WithKeys("q"),
 		key.WithHelp("q", "quit"),
@@ -84,10 +81,6 @@ var servicesListKeysService = ServicesListKeyMap{
 		key.WithKeys("backspace"),
 		key.WithHelp("backspace", "view authors"),
 	),
-	Delete: key.NewBinding(
-		key.WithKeys("d"),
-		key.WithHelp("d", "delete service"),
-	),
 	Quit: key.NewBinding(
 		key.WithKeys("q"),
 		key.WithHelp("q", "quit"),
@@ -107,10 +100,6 @@ var servicesListKeysVersion = ServicesListKeyMap{
 	Back: key.NewBinding(
 		key.WithKeys("backspace"),
 		key.WithHelp("backspace", "view services"),
-	),
-	Delete: key.NewBinding(
-		key.WithKeys("d"),
-		key.WithHelp("d", "delete version"),
 	),
 	Quit: key.NewBinding(
 		key.WithKeys("q"),
@@ -172,8 +161,6 @@ type ServicesListPage struct {
 }
 
 func NewServicesListPage() ServicesListPage {
-	// todo
-
 	return ServicesListPage{
 		spinner: spinner.New(),
 		help:    help.New(),
@@ -336,7 +323,11 @@ func (m ServicesListPage) View() string {
 	h := m.table.HelpView()
 	if m.selectedService != "" && m.selectedAuthor != "" {
 		if m.versions.IsSuccess() {
-			s += m.table.View()
+			if len(*m.versions.Data) <= 0 {
+				s += style.Gray.Render("No installed versions found for service ") + m.selectedAuthor + "/" + m.selectedService
+			} else {
+				s += m.table.View()
+			}
 		} else if m.versions.IsError() {
 			s += "Could not fetch versions (" + m.versions.Error.Error() + ")"
 		} else {
@@ -345,7 +336,11 @@ func (m ServicesListPage) View() string {
 		h += style.Gray.Render(" • ") + m.help.View(servicesListKeysVersion)
 	} else if m.selectedAuthor != "" {
 		if m.services.IsSuccess() {
-			s += m.table.View()
+			if len(*m.services.Data) <= 0 {
+				s += style.Gray.Render("No services found for author ") + m.selectedAuthor
+			} else {
+				s += m.table.View()
+			}
 		} else if m.services.IsError() {
 			s += "Could not fetch services (" + m.services.Error.Error() + ")"
 		} else {
@@ -354,7 +349,11 @@ func (m ServicesListPage) View() string {
 		h += style.Gray.Render(" • ") + m.help.View(servicesListKeysService)
 	} else {
 		if m.authors.IsSuccess() {
-			s += m.table.View()
+			if len(*m.authors.Data) <= 0 {
+				s += style.Gray.Render("No authors found. Go ahead and create a service!")
+			} else {
+				s += m.table.View()
+			}
 		} else if m.authors.IsError() {
 			s += "Could not fetch authors (" + m.authors.Error.Error() + ")"
 		} else {
@@ -386,12 +385,8 @@ func (m ServicesListPage) fetchAuthors() tea.Cmd {
 			context.Background(),
 		).Execute()
 
-		if err != nil {
-			// Read http response body
-			httres := make([]byte, htt.ContentLength)
-			htt.Body.Read(httres)
-			return nil, fmt.Errorf("Failed to fetch authors: %s", httres)
-
+		if err != nil && htt != nil {
+			return nil, utils.ParseHTTPError(err, htt)
 		}
 
 		return &res, err
@@ -400,88 +395,90 @@ func (m ServicesListPage) fetchAuthors() tea.Cmd {
 
 func (m ServicesListPage) fetchServices() tea.Cmd {
 	return tui.PerformAction(&m.services, func() (*[]string, error) {
-
-		// mock fetch
-		// ! remove
-
-		time.Sleep(200 * time.Millisecond)
-
-		services := []string{
-			"service1",
-			"service2",
-			"service3",
-			"service4",
-			"service5",
-			"service6",
-			"service7",
-			"service8",
-			"service9",
+		remote := state.Get().RoverConnections.GetActive()
+		if remote == nil {
+			return nil, fmt.Errorf("No active rover connection")
 		}
 
-		return &services, nil
+		api := remote.ToApiClient()
+		res, htt, err := api.ServicesAPI.ServicesAuthorGet(
+			context.Background(),
+			m.selectedAuthor,
+		).Execute()
+
+		if err != nil && htt != nil {
+			return nil, utils.ParseHTTPError(err, htt)
+		}
+
+		return &res, err
 	})
 }
 
 func (m ServicesListPage) fetchVersions() tea.Cmd {
 	return tui.PerformAction(&m.versions, func() (*[]string, error) {
-
-		// mock fetch
-		// ! remove
-
-		time.Sleep(200 * time.Millisecond)
-
-		versions := []string{
-			"1.0.0",
-			"1.0.1",
-			"1.0.2",
-			"1.0.3",
-			"2.0.0",
-			"2.0.1",
-			"2.0.2",
+		remote := state.Get().RoverConnections.GetActive()
+		if remote == nil {
+			return nil, fmt.Errorf("No active rover connection")
 		}
 
-		return &versions, nil
+		api := remote.ToApiClient()
+		res, htt, err := api.ServicesAPI.ServicesAuthorServiceGet(
+			context.Background(),
+			m.selectedAuthor,
+			m.selectedService,
+		).Execute()
+
+		if err != nil && htt != nil {
+			return nil, utils.ParseHTTPError(err, htt)
+		}
+
+		return &res, err
 	})
 }
 
 func (m ServicesListPage) fetchVersionDetails() tea.Cmd {
 	return tui.PerformAction(&m.versionDetails, func() (*openapi.ServicesAuthorServiceVersionGet200Response, error) {
-
-		// mock fetch
-		// ! remove
-
-		time.Sleep(200 * time.Millisecond)
-
-		res := openapi.ServicesAuthorServiceVersionGet200Response{
-			BuiltAt: openapi.PtrInt64(time.Now().UnixMilli()),
-			Inputs: []openapi.ServicesAuthorServiceVersionGet200ResponseInputsInner{
-				{
-					Service: "service1",
-					Streams: []string{"stream1", "stream2"},
-				},
-				{
-					Service: "service2",
-					Streams: []string{"stream3", "stream4"},
-				},
-			},
-			Outputs: []string{"output1", "output2"},
+		remote := state.Get().RoverConnections.GetActive()
+		if remote == nil {
+			return nil, fmt.Errorf("No active rover connection")
 		}
 
-		return &res, nil
+		api := remote.ToApiClient()
+		res, htt, err := api.ServicesAPI.ServicesAuthorServiceVersionGet(
+			context.Background(),
+			m.selectedAuthor,
+			m.selectedService,
+			m.selectedVersion,
+		).Execute()
+
+		if err != nil && htt != nil {
+			return nil, utils.ParseHTTPError(err, htt)
+		}
+
+		return res, err
 	})
 }
 
 func (m ServicesListPage) deleteVersion() tea.Cmd {
 	return tui.PerformAction(&m.delete, func() (*openapi.ServicesAuthorServiceVersionDelete200Response, error) {
+		remote := state.Get().RoverConnections.GetActive()
+		if remote == nil {
+			return nil, fmt.Errorf("No active rover connection")
+		}
 
-		// mock fetch
-		// ! remove
+		api := remote.ToApiClient()
+		res, htt, err := api.ServicesAPI.ServicesAuthorServiceVersionDelete(
+			context.Background(),
+			m.selectedAuthor,
+			m.selectedService,
+			m.selectedVersion,
+		).Execute()
 
-		time.Sleep(200 * time.Millisecond)
+		if err != nil && htt != nil {
+			return nil, utils.ParseHTTPError(err, htt)
+		}
 
-		res := openapi.ServicesAuthorServiceVersionDelete200Response{}
-
-		return &res, nil
+		return res, err
 	})
 }
 
@@ -555,7 +552,7 @@ func (m ServicesListPage) createTable() table.Model {
 		Bold(false)
 
 	s.Selected = s.Selected.
-		Foreground(lipgloss.Color("FFF")).
+		Foreground(lipgloss.Color("FFFFFF")).
 		Background(style.AsePrimary).
 		Bold(false)
 
