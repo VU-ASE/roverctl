@@ -886,6 +886,8 @@ components:
           description: The content of the ZIP file to upload
           format: binary
           type: string
+      required:
+      - content
       type: object
     _services__author___service___version__get_200_response_inputs_inner:
       properties:

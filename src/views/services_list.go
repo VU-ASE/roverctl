@@ -1,6 +1,8 @@
 package views
 
 import (
+	"context"
+	"fmt"
 	"time"
 
 	"github.com/VU-ASE/rover/src/openapi"
@@ -336,7 +338,7 @@ func (m ServicesListPage) View() string {
 		if m.versions.IsSuccess() {
 			s += m.table.View()
 		} else if m.versions.IsError() {
-			s += m.versions.Error.Error()
+			s += "Could not fetch versions (" + m.versions.Error.Error() + ")"
 		} else {
 			s += m.spinner.View() + " Fetching versions for " + m.selectedAuthor + "/" + m.selectedService
 		}
@@ -345,7 +347,7 @@ func (m ServicesListPage) View() string {
 		if m.services.IsSuccess() {
 			s += m.table.View()
 		} else if m.services.IsError() {
-			s += m.services.Error.Error()
+			s += "Could not fetch services (" + m.services.Error.Error() + ")"
 		} else {
 			s += m.spinner.View() + " Fetching services for " + m.selectedAuthor
 		}
@@ -354,7 +356,7 @@ func (m ServicesListPage) View() string {
 		if m.authors.IsSuccess() {
 			s += m.table.View()
 		} else if m.authors.IsError() {
-			s += m.authors.Error.Error()
+			s += "Could not fetch authors (" + m.authors.Error.Error() + ")"
 		} else {
 			s += m.spinner.View() + " Fetching authors"
 		}
@@ -374,24 +376,25 @@ func (m ServicesListPage) View() string {
 
 func (m ServicesListPage) fetchAuthors() tea.Cmd {
 	return tui.PerformAction(&m.authors, func() (*[]string, error) {
-
-		// mock fetch
-		// ! remove
-
-		time.Sleep(200 * time.Millisecond)
-		authors := []string{
-			"author1",
-			"author2",
-			"author3",
-			"author4",
-			"author5",
-			"author6",
-			"author7",
-			"author8",
-			"author9",
+		remote := state.Get().RoverConnections.GetActive()
+		if remote == nil {
+			return nil, fmt.Errorf("No active rover connection")
 		}
 
-		return &authors, nil
+		api := remote.ToApiClient()
+		res, htt, err := api.ServicesAPI.ServicesGet(
+			context.Background(),
+		).Execute()
+
+		if err != nil {
+			// Read http response body
+			httres := make([]byte, htt.ContentLength)
+			htt.Body.Read(httres)
+			return nil, fmt.Errorf("Failed to fetch authors: %s", httres)
+
+		}
+
+		return &res, err
 	})
 }
 

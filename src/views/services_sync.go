@@ -2,14 +2,19 @@ package views
 
 import (
 	"archive/zip"
+	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/VU-ASE/rover/src/openapi"
+	"github.com/VU-ASE/rover/src/state"
 	"github.com/VU-ASE/rover/src/style"
 	"github.com/VU-ASE/rover/src/tui"
 	"github.com/charmbracelet/bubbles/help"
@@ -26,7 +31,7 @@ type ServicesSyncPage struct {
 	// Is the cwd a service directory?
 	isServiceDir  bool
 	changes       tui.Action[[]fileChangeMsg]
-	uploading     tui.Action[openapi.ServicesPost200Response]
+	uploading     tui.Action[openapi.FetchPost200Response]
 	channel       chan fileChangeMsg
 	watchDebounce time.Duration // debounce time for collecting changes
 	spinner       spinner.Model
@@ -71,7 +76,7 @@ func NewServicesSyncPage() ServicesSyncPage {
 
 	// Actions
 	changes := tui.NewAction[[]fileChangeMsg]("fileChanges")
-	uploading := tui.NewAction[openapi.ServicesPost200Response]("uploading")
+	uploading := tui.NewAction[openapi.FetchPost200Response]("uploading")
 	sp := spinner.New()
 
 	model := ServicesSyncPage{
@@ -98,10 +103,10 @@ func (m ServicesSyncPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case tui.ActionInit[openapi.ServicesPost200Response]:
+	case tui.ActionInit[openapi.FetchPost200Response]:
 		m.uploading.ProcessInit(msg)
 		return m, nil
-	case tui.ActionResult[openapi.ServicesPost200Response]:
+	case tui.ActionResult[openapi.FetchPost200Response]:
 		m.uploading.ProcessResult(msg)
 		if m.uploading.IsSuccess() {
 			return m, m.collectChanges(nil)
@@ -180,7 +185,6 @@ func (m ServicesSyncPage) collectChanges(initial *[]fileChangeMsg) tea.Cmd {
 		changed := false // We only want to return if there are new changes, not if the initial list is the same
 		if initial != nil {
 			all = append(all, *initial...)
-
 		}
 
 		for {
@@ -219,88 +223,153 @@ func (m ServicesSyncPage) collectChanges(initial *[]fileChangeMsg) tea.Cmd {
 	})
 }
 
+func createZipFromDirectory(zipPath, sourceDir string) error {
+	// Create the zip file
+	tmpZip, err := os.Create(zipPath)
+	if err != nil {
+		return fmt.Errorf("failed to create temp zip file: %v", err)
+	}
+	defer tmpZip.Close()
+
+	// Create a zip writer
+	zipWriter := zip.NewWriter(tmpZip)
+	defer func() {
+		if closeErr := zipWriter.Close(); closeErr != nil {
+			fmt.Printf("Error closing zip writer: %v\n", closeErr)
+		}
+	}()
+
+	// Walk through the source directory
+	err = filepath.Walk(sourceDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return fmt.Errorf("error walking the path %q: %v", path, err)
+		}
+
+		// Get the relative path to store in the zip archive
+		relPath, err := filepath.Rel(sourceDir, path)
+		if err != nil {
+			return fmt.Errorf("failed to get relative path: %v", err)
+		}
+
+		// Skip the root directory itself
+		if relPath == "." {
+			return nil
+		}
+
+		// Skip the "roverctl" binary
+		if relPath == "roverctl" {
+			return nil
+		}
+
+		if info.IsDir() {
+			// Add a directory entry to the zip file
+			_, err := zipWriter.Create(relPath + "/")
+			if err != nil {
+				return fmt.Errorf("failed to create directory entry: %v", err)
+			}
+			return nil
+		}
+
+		// Add a file entry to the zip file
+		fileWriter, err := zipWriter.Create(relPath)
+		if err != nil {
+			return fmt.Errorf("failed to create file entry: %v", err)
+		}
+
+		// Open the file
+		file, err := os.Open(path)
+		if err != nil {
+			return fmt.Errorf("failed to open file: %v", err)
+		}
+		defer file.Close()
+
+		// Copy the file content to the zip file
+		_, err = io.Copy(fileWriter, file)
+		if err != nil {
+			return fmt.Errorf("failed to write file content: %v", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Upload all collected changes to the Rover
 func (m ServicesSyncPage) uploadChanges() tea.Cmd {
-	return tui.PerformAction(&m.uploading, func() (*openapi.ServicesPost200Response, error) {
-		// Create tmp zip file
-		tmpZip := os.TempDir() + "/" + time.Now().Format("20060102150405") + ".zip"
+	return tui.PerformAction(&m.uploading, func() (*openapi.FetchPost200Response, error) {
+		remote := state.Get().RoverConnections.GetActive()
+		if remote == nil {
+			return nil, fmt.Errorf("No active rover connection")
+		}
+
+		// Create a temp zip file
+		zipPath := os.TempDir() + "/rover-sync-" + time.Now().Format("20060102150405") + ".zip"
 		sourceDir := "."
 
-		// Create the zip file
-		zipFileWriter, err := os.Create(tmpZip)
+		err := createZipFromDirectory(zipPath, sourceDir)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create zip file: %v", err)
+			return nil, fmt.Errorf("Error creating zip: %v\n", err)
 		}
-		defer zipFileWriter.Close()
 
-		// Create a zip writer
-		zipWriter := zip.NewWriter(zipFileWriter)
-		defer zipWriter.Close()
-
-		// Walk through the directory
-		err = filepath.Walk(sourceDir, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return fmt.Errorf("error walking the path %q: %v", path, err)
-			}
-
-			// Get the relative path to store in the zip archive
-			relPath, err := filepath.Rel(sourceDir, path)
-			if err != nil {
-				return err
-			}
-
-			// Skip the root directory itself
-			if relPath == "." {
-				return nil
-			}
-
-			if info.IsDir() {
-				// Add a directory entry to the zip file
-				_, err := zipWriter.Create(relPath + "/")
-				if err != nil {
-					return fmt.Errorf("failed to create directory entry: %v", err)
-				}
-				return nil
-			}
-
-			// Add a file entry to the zip file
-			fileWriter, err := zipWriter.Create(relPath)
-			if err != nil {
-				return fmt.Errorf("failed to create file entry: %v", err)
-			}
-
-			// Open the file
-			file, err := os.Open(path)
-			if err != nil {
-				return fmt.Errorf("failed to open file: %v", err)
-			}
-			defer file.Close()
-
-			// Copy the file content to the zip file
-			_, err = io.Copy(fileWriter, file)
-			if err != nil {
-				return fmt.Errorf("failed to write file content: %v", err)
-			}
-
-			return nil
-		})
+		// Open the zip file
+		zipFile, err := os.Open(zipPath)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Failed to open temp zip file: %v", err)
+		}
+		defer zipFile.Close()
+
+		// Upload the zip file
+		api := remote.ToApiClient()
+		req := api.ServicesAPI.UploadPost(
+			context.Background(),
+		)
+		req = req.Content(zipFile)
+
+		// req.Content(zipFile)
+		res, htt, err := req.Execute()
+
+		if err != nil && htt != nil {
+			// Read http response body
+			httres := make([]byte, htt.ContentLength)
+			htt.Body.Read(httres)
+			return nil, fmt.Errorf("Failed to upload temp zip file '%s' which was set as multipart formdata in %s: \n%s", zipFile.Name(), err, httres)
 		}
 
-		// mock remove
-		time.Sleep(2 * time.Second)
-
-		if m.uploading.Attempt > 2 && m.uploading.Attempt < 5 {
-			return nil, fmt.Errorf("mocking an error here")
-		}
-
-		res := openapi.ServicesPost200Response{
-			Name:    "service",
-			Version: "1.0.0",
-		}
-		return &res, nil
+		return res, err
 	})
+}
+
+func inspectRequest(req *http.Request) string {
+	var s strings.Builder
+
+	// Append method and URL
+	s.WriteString(fmt.Sprintf("Method: %s\n", req.Method))
+	s.WriteString(fmt.Sprintf("URL: %s\n", req.URL.String()))
+	s.WriteString("Headers:\n")
+
+	// Append headers
+	for key, values := range req.Header {
+		for _, value := range values {
+			s.WriteString(fmt.Sprintf("  %s: %s\n", key, value))
+		}
+	}
+
+	// Append body if available
+	if req.Body != nil {
+		// Save the original body
+		var buf bytes.Buffer
+		tee := io.TeeReader(req.Body, &buf)
+		bodyBytes, _ := io.ReadAll(tee)
+		req.Body = io.NopCloser(&buf) // Restore the original body
+
+		s.WriteString(fmt.Sprintf("Body: %s\n", string(bodyBytes)))
+	}
+
+	return s.String()
 }
 
 // Enum for possible file change actions, using iota
