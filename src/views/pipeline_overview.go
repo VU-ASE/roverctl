@@ -1,6 +1,7 @@
 package views
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/VU-ASE/rover/src/state"
 	"github.com/VU-ASE/rover/src/style"
 	"github.com/VU-ASE/rover/src/tui"
+	"github.com/VU-ASE/rover/src/utils"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/progress"
@@ -376,127 +378,58 @@ func (m PipelineOverviewPage) View() string {
 
 func (m PipelineOverviewPage) fetchPipeline() tea.Cmd {
 	return tui.PerformAction(&m.pipeline, func() (*PipelineOverviewSummary, error) {
-		// mock fetch
-		// ! remove
+		remote := state.Get().RoverConnections.GetActive()
+		if remote == nil {
+			return nil, fmt.Errorf("No active rover connection")
+		}
 
-		time.Sleep(100 * time.Millisecond)
-		// First roverd tells us what services are enabled, by reference (FQN)
-		pipeline := openapi.PipelineGet200Response{
-			Status:    openapi.STARTED,
-			LastStart: openapi.PtrInt64(123456),
-			LastStop:  openapi.PtrInt64(123456),
-			// LastRestart: openapi.PtrInt64(123456),
-			Enabled: []openapi.PipelineGet200ResponseEnabledInner{
-				{
-					Service: openapi.PipelineGet200ResponseEnabledInnerService{
-						Name:    "imaging",
-						Version: "1.0.0",
-						Author:  "vu-ase",
-					},
-				},
-				{
-					Service: openapi.PipelineGet200ResponseEnabledInnerService{
-						Name:    "controller",
-						Version: "1.0.0",
-						Author:  "vu-ase",
-					},
-				},
-				{
-					Service: openapi.PipelineGet200ResponseEnabledInnerService{
-						Name:    "transceiver",
-						Version: "1.0.0",
-						Author:  "vu-ase",
-					},
-				},
-			},
+		api := remote.ToApiClient()
+
+		// First, fetch all services and the status of the current pipeline
+		pipeline, htt, err := api.PipelineAPI.PipelineGet(
+			context.Background(),
+		).Execute()
+
+		if err != nil && htt != nil {
+			return nil, utils.ParseHTTPError(err, htt)
 		}
 
 		// Then, for each service, we need to query the service for its actual configuration (inputs, outputs)
 		services := make([]PipelineOverviewServiceInfo, 0)
 		for _, enabled := range pipeline.Enabled {
-			// mock fetch
-			// ! remove
+			configuration, htt, err := api.ServicesAPI.ServicesAuthorServiceVersionGet(
+				context.Background(),
+				enabled.Service.Author,
+				enabled.Service.Name,
+				enabled.Service.Version,
+			).Execute()
 
-			if enabled.Service.Name == "imaging" {
-				services = append(services, PipelineOverviewServiceInfo{
-					Name:    enabled.Service.Name,
-					Version: enabled.Service.Version,
-					Author:  enabled.Service.Author,
-					Configuration: openapi.ServicesAuthorServiceVersionGet200Response{
-						Inputs: []openapi.ServicesAuthorServiceVersionGet200ResponseInputsInner{}, // no inputs
-						Outputs: []string{
-							"track",
-						},
-					},
-				})
-			} else if enabled.Service.Name == "controller" {
-				services = append(services, PipelineOverviewServiceInfo{
-					Name:    enabled.Service.Name,
-					Version: enabled.Service.Version,
-					Author:  enabled.Service.Author,
-					Configuration: openapi.ServicesAuthorServiceVersionGet200Response{
-						Inputs: []openapi.ServicesAuthorServiceVersionGet200ResponseInputsInner{
-							{
-								Service: "imaging",
-								Streams: []string{
-									"track",
-								},
-							},
-						},
-						Outputs: []string{}, // no outputs, last service
-					},
-				})
-			} else if enabled.Service.Name == "transceiver" {
-				services = append(services, PipelineOverviewServiceInfo{
-					Name:    enabled.Service.Name,
-					Version: enabled.Service.Version,
-					Author:  enabled.Service.Author,
-					Configuration: openapi.ServicesAuthorServiceVersionGet200Response{
-						Inputs: []openapi.ServicesAuthorServiceVersionGet200ResponseInputsInner{
-							{
-								Service: "imaging",
-								Streams: []string{
-									"track",
-								},
-							},
-							{
-								Service: "controller yo",
-								Streams: []string{
-									"track",
-								},
-							},
-						},
-						Outputs: []string{}, // no outputs, last service
-					},
-				})
+			if err != nil && htt != nil {
+				return nil, utils.ParseHTTPError(err, htt)
 			}
+
+			services = append(services, PipelineOverviewServiceInfo{
+				Name:          enabled.Service.Name,
+				Version:       enabled.Service.Version,
+				Author:        enabled.Service.Author,
+				Configuration: *configuration,
+			})
 		}
 
-		// Then the status (mock data)
-		status := openapi.StatusGet200Response{
-			Cpu: []openapi.StatusGet200ResponseCpuInner{
-				{
-					Core:  0,
-					Used:  5,
-					Total: 10,
-				},
-				{
-					Core:  1,
-					Used:  2,
-					Total: 10,
-				},
-			},
-			Memory: openapi.StatusGet200ResponseMemory{
-				Total: 100,
-				Used:  50,
-			},
+		// Then the Rover status
+		status, htt, err := api.HealthAPI.StatusGet(
+			context.Background(),
+		).Execute()
+
+		if err != nil && htt != nil {
+			return nil, utils.ParseHTTPError(err, htt)
 		}
 
 		// Combined response
 		res := PipelineOverviewSummary{
-			Pipeline: pipeline,
+			Pipeline: *pipeline,
 			Services: services,
-			Status:   status,
+			Status:   *status,
 		}
 
 		return &res, nil
@@ -549,9 +482,29 @@ func (m PipelineOverviewPage) createServiceTable(res PipelineOverviewSummary) ta
 		}
 
 		rows = []table.Row{
-			{"imaging", "1.0.1", "vu-ase", "0", "1h 23m 45s", "1234", "5%", "50MB"},
-			{"controller", "1.1.1", "vu-ase", "0", "1h 23m 45s", "1234", "10%", "150MB"},
-			{"transceiver", "1.2.2", "vu-ase", "0", "1h 23m 45s", "1234", "15%", "250MB"},
+			// {"imaging", "1.0.1", "vu-ase", "0", "1h 23m 45s", "1234", "5%", "50MB"},
+			// {"controller", "1.1.1", "vu-ase", "0", "1h 23m 45s", "1234", "10%", "150MB"},
+			// {"transceiver", "1.2.2", "vu-ase", "0", "1h 23m 45s", "1234", "15%", "250MB"},
+		}
+
+		for _, e := range res.Pipeline.Enabled {
+			row := []string{
+				e.Service.Name,
+				e.Service.Version,
+				e.Service.Author,
+				fmt.Sprintf("%d", *e.Service.Faults),
+			}
+
+			if e.Process != nil {
+				row = append(row,
+					utils.FormatDuration(e.Process.Uptime),
+				)
+				row = append(row, fmt.Sprintf("%d", e.Process.Pid))
+				row = append(row, fmt.Sprintf("%d%%", e.Process.Cpu))
+				row = append(row, fmt.Sprintf("%dMB", e.Process.Memory))
+			}
+
+			rows = append(rows, row)
 		}
 	} else if res.Pipeline.Status != openapi.STARTED && res.Pipeline.LastStart == nil {
 		// This pipeline is not running, and has not been started before
@@ -562,9 +515,19 @@ func (m PipelineOverviewPage) createServiceTable(res PipelineOverviewSummary) ta
 		}
 
 		rows = []table.Row{
-			{"imaging", "1.0.1", "vu-ase"},
-			{"controller", "1.1.1", "vu-ase"},
-			{"transceiver", "1.2.2", "vu-ase"},
+			// {"imaging", "1.0.1", "vu-ase"},
+			// {"controller", "1.1.1", "vu-ase"},
+			// {"transceiver", "1.2.2", "vu-ase"},
+		}
+
+		for _, e := range res.Pipeline.Enabled {
+			row := []string{
+				e.Service.Name,
+				e.Service.Version,
+				e.Service.Author,
+			}
+
+			rows = append(rows, row)
 		}
 	} else {
 		// This pipeline is not running, but has been started before
@@ -577,8 +540,25 @@ func (m PipelineOverviewPage) createServiceTable(res PipelineOverviewSummary) ta
 		}
 
 		rows = []table.Row{
-			{"imaging", "1.0.1", "vu-ase", "0", "1h 23m 45s"},
-			{"controller", "1.1.1", "vu-ase", "0", "1h 23m 45s"},
+			// {"imaging", "1.0.1", "vu-ase", "0", "1h 23m 45s"},
+			// {"controller", "1.1.1", "vu-ase", "0", "1h 23m 45s"},
+		}
+
+		for _, e := range res.Pipeline.Enabled {
+			row := []string{
+				e.Service.Name,
+				e.Service.Version,
+				e.Service.Author,
+				fmt.Sprintf("%d", *e.Service.Faults),
+			}
+
+			if e.Process != nil {
+				row = append(row,
+					utils.FormatDuration(e.Process.Uptime),
+				)
+			}
+
+			rows = append(rows, row)
 		}
 	}
 
@@ -609,13 +589,32 @@ func (m PipelineOverviewPage) createServiceTable(res PipelineOverviewSummary) ta
 
 func (m PipelineOverviewPage) toggleExecution() tea.Cmd {
 	return tui.PerformAction(&m.toggle, func() (*bool, error) {
-		// Mock toggle
-		// ! remove
+		remote := state.Get().RoverConnections.GetActive()
+		if remote == nil {
+			return nil, fmt.Errorf("No active rover connection")
+		}
 
-		time.Sleep(500 * time.Millisecond)
+		api := remote.ToApiClient()
+		var err error
+		if m.pipeline.Data.Pipeline.Status == openapi.STARTED {
+			htt, err := api.PipelineAPI.PipelineStopPost(
+				context.Background(),
+			).Execute()
+
+			if err != nil && htt != nil {
+				return nil, utils.ParseHTTPError(err, htt)
+			}
+		} else {
+			htt, err := api.PipelineAPI.PipelineStartPost(
+				context.Background(),
+			).Execute()
+
+			if err != nil && htt != nil {
+				return nil, utils.ParseHTTPError(err, htt)
+			}
+		}
 
 		// todo: also need to call API build endpoint
-
-		return openapi.PtrBool(true), nil
+		return openapi.PtrBool(true), err
 	})
 }
