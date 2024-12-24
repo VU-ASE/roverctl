@@ -355,7 +355,7 @@ func (m ServicesListPage) View() string {
 				s += m.table.View()
 			}
 		} else if m.authors.IsError() {
-			s += "Could not fetch authors (" + m.authors.Error.Error() + ")"
+			s += style.Error.Render("Could not fetch authors") + style.Gray.Render(" ("+m.authors.Error.Error()+")")
 		} else {
 			s += m.spinner.View() + " Fetching authors"
 		}

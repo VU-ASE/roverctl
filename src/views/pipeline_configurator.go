@@ -448,7 +448,7 @@ func (m PipelineConfiguratorPage) View() string {
 			graph = "\n\n" + m.postProcessGraph(m.pipelineGraph)
 		}
 	} else if m.pipeline.IsError() {
-		graph = "\n\n" + style.Error.Render("Error loading pipeline") + style.Gray.Render(" "+m.pipeline.Error.Error())
+		graph = "\n\n" + style.Error.Render("Could not fetch pipeline: ") + style.Gray.Render(m.pipeline.Error.Error())
 	} else {
 		graph = "\n\n" + m.spinner.View() + " Loading pipeline"
 	}

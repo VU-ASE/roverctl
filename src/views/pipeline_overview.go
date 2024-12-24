@@ -412,7 +412,7 @@ func (m PipelineOverviewPage) View() string {
 	if m.pipeline.IsLoading() && !m.pipeline.HasData() {
 		s += m.spinner.View() + " Loading pipeline..."
 	} else if m.pipeline.IsError() {
-		s += style.Error.Render("Error loading pipeline") + " (" + m.pipeline.Error.Error() + ")"
+		s += style.Error.Render("Could not fetch pipeline: ") + style.Gray.Render("("+m.pipeline.Error.Error()+")")
 	} else if m.pipeline.HasData() {
 		s += m.pipelineView()
 	}
