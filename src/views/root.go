@@ -2,6 +2,8 @@ package views
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/VU-ASE/rover/src/state"
 	"github.com/VU-ASE/rover/src/style"
@@ -15,10 +17,28 @@ type MainModel struct {
 }
 
 func RootScreen(s *state.AppState) MainModel {
-	start := NewStartPage()
+	var start tea.Model
+	start = NewStartPage()
+
+	// Try to open a given screen based on arguments (if any)
+	argv := os.Args[1:]
+	if len(argv) > 0 {
+		switch strings.ToLower(strings.Join(argv, " ")) {
+		case "service sync":
+			start = NewServicesSyncPage()
+		case "service init":
+			start = NewServiceInitPage()
+		case "connect":
+			start = NewConnectionsInitPage(nil)
+		case "pipeline":
+			start = NewPipelineOverviewPage()
+		case "info":
+			start = NewInfoPage()
+		}
+	}
 
 	return MainModel{
-		current: &start, // needs to be a pointer so that the model state can be modified (see https://shi.foo/weblog/multi-view-interfaces-in-bubble-tea)
+		current: start, // needs to be a pointer so that the model state can be modified (see https://shi.foo/weblog/multi-view-interfaces-in-bubble-tea)
 	}
 }
 
@@ -66,6 +86,12 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc", "q":
+			// Roverctl was not "opened" from another screen
+			argv := os.Args[1:]
+			if len(argv) > 0 {
+				return m, tea.Quit
+			}
+
 			// Return to a route based on the current route
 			var returnTo tea.Model
 			switch m.current.(type) {
