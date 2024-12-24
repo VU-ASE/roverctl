@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"time"
 
 	"github.com/VU-ASE/rover/src/openapi"
 	"github.com/VU-ASE/rover/src/state"
@@ -98,7 +97,7 @@ var pipelineOverviewKeysRunning = PipelineOverviewKeyMap{
 	),
 	Logs: key.NewBinding(
 		key.WithKeys("l"),
-		key.WithHelp("l", "logs"),
+		key.WithHelp("l", "service logs"),
 	),
 	Details: key.NewBinding(
 		key.WithKeys("p"),
@@ -315,70 +314,70 @@ func (m PipelineOverviewPage) pipelineView() string {
 		return fullScreenBox
 	}
 
-	status := style.Error.Bold(true).Render("Unknown")
+	// status := style.Error.Bold(true).Render("Unknown")
 
-	if m.pipeline.Data.Pipeline.Status == openapi.STARTABLE {
-		status = style.Color(style.SuccessLight).Bold(true).Render("Startable")
-		if m.toggle.IsLoading() {
-			status = style.Warning.Bold(true).Render("Starting")
-		}
-	} else if m.pipeline.Data.Pipeline.Status == openapi.STARTED {
-		status = style.Success.Bold(true).Render("Running")
-		if m.toggle.IsLoading() {
-			status = style.Warning.Bold(true).Render("Stopping")
-		}
-	} else if m.pipeline.Data.Pipeline.Status == openapi.RESTARTING {
-		status = style.Warning.Bold(true).Render("Restarting")
-		if m.toggle.IsLoading() {
-			status = style.Warning.Bold(true).Render("Stopping")
-		}
-	}
+	// if m.pipeline.Data.Pipeline.Status == openapi.STARTABLE {
+	// 	status = style.Color(style.SuccessLight).Bold(true).Render("Startable")
+	// 	if m.toggle.IsLoading() {
+	// 		status = style.Warning.Bold(true).Render("Starting")
+	// 	}
+	// } else if m.pipeline.Data.Pipeline.Status == openapi.STARTED {
+	// 	status = style.Success.Bold(true).Render("Running")
+	// 	if m.toggle.IsLoading() {
+	// 		status = style.Warning.Bold(true).Render("Stopping")
+	// 	}
+	// } else if m.pipeline.Data.Pipeline.Status == openapi.RESTARTING {
+	// 	status = style.Warning.Bold(true).Render("Restarting")
+	// 	if m.toggle.IsLoading() {
+	// 		status = style.Warning.Bold(true).Render("Stopping")
+	// 	}
+	// }
+	// status = status + "\n"
+	// if m.pipeline.Data.Pipeline.LastStart != nil {
+	// 	status += style.Gray.Render("last started at: ") + time.Unix(*m.pipeline.Data.Pipeline.LastStart, 0).Format("2006-01-02 15:04:05") + "\n"
+	// }
+	// if m.pipeline.Data.Pipeline.LastStop != nil {
+	// 	status += style.Gray.Render("last stopped at: ") + time.Unix(*m.pipeline.Data.Pipeline.LastStop, 0).Format("2006-01-02 15:04:05") + "\n"
+	// }
+	// if m.pipeline.Data.Pipeline.LastRestart != nil {
+	// 	status += style.Gray.Render("last restarted at: ") + time.Unix(*m.pipeline.Data.Pipeline.LastRestart, 0).Format("2006-01-02 15:04:05") + "\n"
+	// }
+
+	// cpu := style.Gray.Render("Total CPU usage per core ") + "\n"
+	// if len(m.pipeline.Data.Status.Cpu) > 0 {
+	// 	for _, c := range m.pipeline.Data.Status.Cpu {
+	// 		cpu += m.progress.ViewAs(float64(c.Used)/float64(c.Total)) + "\n"
+	// 	}
+	// } else {
+	// 	cpu += style.Gray.Render("No CPU usage data available") + "\n"
+	// }
+	// mem := style.Gray.Render("Total memory usage") + "\n" + m.progress.ViewAs(float64(m.pipeline.Data.Status.Memory.Used)/float64(m.pipeline.Data.Status.Memory.Total)) + "\n"
+	// if m.pipeline.Data.Status.Memory.Total > 0 {
+	// 	mem += style.Gray.Render("The Rover uses ") + fmt.Sprintf("%d/%d MB", m.pipeline.Data.Status.Memory.Used, m.pipeline.Data.Status.Memory.Total) + "\n"
+	// 	mem += style.Gray.Render("Of which ") + fmt.Sprintf("%d MB", 10) + style.Gray.Render(" is used by this pipeline") + "\n"
+	// } else {
+	// 	mem += style.Gray.Render("No memory usage data available") + "\n"
+	// }
+
+	// // Calculate column width (subtract padding and borders)
+	// columnWidth := (state.Get().WindowWidth - 4 - 6) / 3 // Adjust for padding and borders
+
+	// // Define styles for each column
+	// columnStyle := lipgloss.NewStyle().
+	// 	Width(columnWidth)
+
+	// row := lipgloss.JoinHorizontal(lipgloss.Top,
+	// 	columnStyle.Render(status),
+	// 	columnStyle.Render(mem),
+	// 	columnStyle.Render(cpu),
+	// )
+
 	s := m.postProcessGraph(m.pipelineGraph)
-	status = status + "\n"
-	if m.pipeline.Data.Pipeline.LastStart != nil {
-		status += style.Gray.Render("last started at: ") + time.Unix(*m.pipeline.Data.Pipeline.LastStart, 0).Format("2006-01-02 15:04:05") + "\n"
-	}
-	if m.pipeline.Data.Pipeline.LastStop != nil {
-		status += style.Gray.Render("last stopped at: ") + time.Unix(*m.pipeline.Data.Pipeline.LastStop, 0).Format("2006-01-02 15:04:05") + "\n"
-	}
-	if m.pipeline.Data.Pipeline.LastRestart != nil {
-		status += style.Gray.Render("last restarted at: ") + time.Unix(*m.pipeline.Data.Pipeline.LastRestart, 0).Format("2006-01-02 15:04:05") + "\n"
-	}
-
-	cpu := style.Gray.Render("Total CPU usage per core ") + "\n"
-	if len(m.pipeline.Data.Status.Cpu) > 0 {
-		for _, c := range m.pipeline.Data.Status.Cpu {
-			cpu += m.progress.ViewAs(float64(c.Used)/float64(c.Total)) + "\n"
-		}
-	} else {
-		cpu += style.Gray.Render("No CPU usage data available") + "\n"
-	}
-	mem := style.Gray.Render("Total memory usage") + "\n" + m.progress.ViewAs(float64(m.pipeline.Data.Status.Memory.Used)/float64(m.pipeline.Data.Status.Memory.Total)) + "\n"
-	if m.pipeline.Data.Status.Memory.Total > 0 {
-		mem += style.Gray.Render("The Rover uses ") + fmt.Sprintf("%d/%d MB", m.pipeline.Data.Status.Memory.Used, m.pipeline.Data.Status.Memory.Total) + "\n"
-		mem += style.Gray.Render("Of which ") + fmt.Sprintf("%d MB", 10) + style.Gray.Render(" is used by this pipeline") + "\n"
-	} else {
-		mem += style.Gray.Render("No memory usage data available") + "\n"
-	}
-
-	// Calculate column width (subtract padding and borders)
-	columnWidth := (state.Get().WindowWidth - 4 - 6) / 3 // Adjust for padding and borders
-
-	// Define styles for each column
-	columnStyle := lipgloss.NewStyle().
-		Width(columnWidth)
-
-	row := lipgloss.JoinHorizontal(lipgloss.Top,
-		columnStyle.Render(status),
-		columnStyle.Render(mem),
-		columnStyle.Render(cpu),
-	)
-
-	proc_list := "\n" + m.table.View() + "\n\n"
-	view := s + "\n\n" + row + proc_list
+	proc_list := m.table.View() + "\n\n"
+	view := s + "\n" + proc_list
 
 	if m.toggle.IsError() {
-		view += style.Gray.Render("Could not toggle pipeline execution") + " (" + m.toggle.Error.Error() + ")" + "\n\n"
+		view += style.Error.Render("Could not toggle pipeline execution") + " (" + m.toggle.Error.Error() + ")" + "\n\n"
 	}
 
 	view += m.table.HelpView() + style.Gray.Render(" • ")
@@ -396,6 +395,17 @@ func (m PipelineOverviewPage) View() string {
 	// We're doing optimistic updates, so we want to show an indicator without disrupting the view
 	if (m.pipeline.IsLoading() && m.pipeline.HasData()) || m.toggle.IsLoading() {
 		s += " " + m.spinner.View()
+	} else if m.pipeline.HasData() {
+		status := m.pipeline.Data.Pipeline.Status
+		if status == openapi.STARTED {
+			s += style.Success.Render(" running")
+		} else if status == openapi.STARTABLE {
+			s += lipgloss.NewStyle().Foreground(style.SuccessLight).Render(" startable")
+		} else if status == openapi.RESTARTING {
+			s += style.Warning.Render(" restarting")
+		} else {
+			s += style.Error.Render(" status unknown")
+		}
 	}
 	s += "\n\n"
 
@@ -429,7 +439,7 @@ func (m PipelineOverviewPage) fetchPipeline() tea.Cmd {
 			context.Background(),
 		).Execute()
 
-		if err != nil && htt != nil {
+		if err != nil {
 			return nil, utils.ParseHTTPError(err, htt)
 		}
 
@@ -443,7 +453,7 @@ func (m PipelineOverviewPage) fetchPipeline() tea.Cmd {
 				enabled.Service.Version,
 			).Execute()
 
-			if err != nil && htt != nil {
+			if err != nil {
 				return nil, utils.ParseHTTPError(err, htt)
 			}
 
@@ -460,7 +470,7 @@ func (m PipelineOverviewPage) fetchPipeline() tea.Cmd {
 			context.Background(),
 		).Execute()
 
-		if err != nil && htt != nil {
+		if err != nil {
 			return nil, utils.ParseHTTPError(err, htt)
 		}
 
@@ -489,7 +499,7 @@ func (m PipelineOverviewPage) postProcessGraph(s string) string {
 		name := sel[0]
 
 		// Find the service in the graph
-		n = regexp.MustCompile(fmt.Sprintf(`\b%s\b`, name)).ReplaceAllString(n, style.Primary.Bold(true).Render(name))
+		n = regexp.MustCompile(fmt.Sprintf(`\b%s\b`, name)).ReplaceAllString(n, lipgloss.NewStyle().Underline(true).Render(name))
 	}
 
 	return n
@@ -531,16 +541,23 @@ func (m PipelineOverviewPage) createServiceTable(res PipelineOverviewSummary) ta
 				e.Service.Name,
 				e.Service.Version,
 				e.Service.Author,
-				fmt.Sprintf("%d", *e.Service.Faults),
+				"-", // fmt.Sprintf("%d", *e.Service.Faults),
 			}
 
 			if e.Process != nil {
-				row = append(row,
-					utils.FormatDuration(e.Process.Uptime),
-				)
+				// todo: enable "real" values once the API is updated
+				row = append(row, "-")
+				// row = append(row,
+				// 	utils.FormatDuration(e.Process.Uptime),
+				// )
+
 				row = append(row, fmt.Sprintf("%d", e.Process.Pid))
-				row = append(row, fmt.Sprintf("%d%%", e.Process.Cpu))
-				row = append(row, fmt.Sprintf("%dMB", e.Process.Memory))
+
+				// todo: enable "real" values once the API is updated
+				row = append(row, "-")
+				// row = append(row, fmt.Sprintf("%d%%", e.Process.Cpu))
+				row = append(row, "-")
+				// row = append(row, fmt.Sprintf("%dMB", e.Process.Memory))
 			}
 
 			rows = append(rows, row)
@@ -640,7 +657,7 @@ func (m PipelineOverviewPage) toggleExecution() tea.Cmd {
 				context.Background(),
 			).Execute()
 
-			if err != nil && htt != nil {
+			if err != nil {
 				return nil, utils.ParseHTTPError(err, htt)
 			}
 		} else {
@@ -654,10 +671,8 @@ func (m PipelineOverviewPage) toggleExecution() tea.Cmd {
 					service.Name,
 					service.Version,
 				).Execute()
-				if err != nil && htt != nil {
+				if err != nil {
 					return nil, fmt.Errorf("Failed to build service %s: %s", service.Name, utils.ParseHTTPError(err, htt))
-				} else if err != nil {
-					return nil, fmt.Errorf("Failed to build service %s: %s", service.Name, err)
 				}
 			}
 
@@ -665,10 +680,8 @@ func (m PipelineOverviewPage) toggleExecution() tea.Cmd {
 				context.Background(),
 			).Execute()
 
-			if err != nil && htt != nil {
+			if err != nil {
 				return nil, utils.ParseHTTPError(err, htt)
-			} else if err != nil {
-				return nil, err
 			}
 		}
 

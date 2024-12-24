@@ -314,7 +314,7 @@ func (m ServicesListPage) versionDetailsView() string {
 }
 
 func (m ServicesListPage) View() string {
-	s := style.Title.Render("Remote services") + "\n\n"
+	s := style.Title.Render("Installed services") + "\n\n"
 
 	if m.selectedVersion != "" {
 		return s + m.versionDetailsView()
@@ -432,7 +432,9 @@ func (m ServicesListPage) fetchVersions() tea.Cmd {
 			return nil, utils.ParseHTTPError(err, htt)
 		}
 
-		return &res, err
+		sorted := utils.SortByVersion(res)
+
+		return &sorted, err
 	})
 }
 

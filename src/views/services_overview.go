@@ -29,11 +29,12 @@ func NewServicesOverviewPage() ServicesOverviewPage {
 		listItems = append(listItems, components.ActionItem{Name: "Sync", Desc: "Synchronize your local service with the Rover by watching for changes"})
 	}
 	listItems = append(listItems, []list.Item{
-		components.ActionItem{Name: "Update", Desc: "Update official services from source onto your Rover"},
+		// components.ActionItem{Name: "Update", Desc: "Update official services from source onto your Rover"},
 		components.ActionItem{Name: "List", Desc: "List all services available on the Rover"},
 	}...)
 
-	l := list.New(listItems, list.NewDefaultDelegate(), 0, 0)
+	d := style.DefaultListDelegate()
+	l := list.New(listItems, d, 0, 0)
 	// If there are connections available, add the connected actions
 	l.Title = lipgloss.NewStyle().Foreground(style.AsePrimary).Padding(0, 0).Render("Manage your services")
 	l.SetShowStatusBar(false)
@@ -70,8 +71,8 @@ func (m ServicesOverviewPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return RootScreen(state.Get()).SwitchScreen(NewServiceInitPage())
 				case "Sync":
 					return RootScreen(state.Get()).SwitchScreen(NewServicesSyncPage())
-				case "Update":
-					return RootScreen(state.Get()).SwitchScreen(NewServicesUpdatePage())
+				// case "Update":
+				// 	return RootScreen(state.Get()).SwitchScreen(NewServicesUpdatePage())
 				case "List":
 					return RootScreen(state.Get()).SwitchScreen(NewServicesListPage())
 				}

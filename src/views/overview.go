@@ -16,11 +16,11 @@ type StartPage struct {
 }
 
 func NewStartPage() StartPage {
+	d := style.DefaultListDelegate()
 	l := list.New([]list.Item{
 		components.ActionItem{Name: "Services", Desc: "Create services"},
 		components.ActionItem{Name: "Connect", Desc: "Initialize a connection to a Rover"}, // Should be "stop" when a pipeline is running
-	}, list.NewDefaultDelegate(), 0, 0)
-
+	}, d, 0, 0)
 	if len(state.Get().RoverConnections.Available) > 0 {
 		l = list.New([]list.Item{
 			components.ActionItem{Name: "Pipeline", Desc: "Manage your pipeline"},
@@ -30,7 +30,7 @@ func NewStartPage() StartPage {
 			// components.ActionItem{Name: "Debug", Desc: "Enable remote debugging for your pipeline"}, // Should not be available when no pipeline is running or disable when enabled
 			// components.ActionItem{Name: "Status", Desc: "Watcdh module outputs and status logs"},    // Should not be available when no pipeline is running
 			// components.ActionItem{Name: "Update", Desc: "Fetch the latest versions of all modules and install them"},
-		}, list.NewDefaultDelegate(), 0, 0)
+		}, d, 0, 0)
 	}
 
 	// If there are connections available, add the connected actions
