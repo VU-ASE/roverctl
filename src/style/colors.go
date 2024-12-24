@@ -14,7 +14,7 @@ var GrayPrimary = lipgloss.Color("#808080")
 var SuccessLight = lipgloss.Color("#7bc990")
 
 // Lipgloss classes that can be easily reused
-var Title = lipgloss.NewStyle().Foreground(AsePrimary)
+var Title = lipgloss.NewStyle().Foreground(AsePrimary).Bold(true)
 var Subtitle = lipgloss.NewStyle().Foreground(GrayPrimary)
 var Primary = lipgloss.NewStyle().Foreground(AsePrimary)
 var Error = lipgloss.NewStyle().Foreground(ErrorPrimary)

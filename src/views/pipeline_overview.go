@@ -23,6 +23,25 @@ import (
 )
 
 //
+// Style definitions
+//
+
+var (
+	// Define styles
+	boxStyle = lipgloss.NewStyle().
+			Padding(2, 4).
+			Align(lipgloss.Center)
+		// Width(50).
+		// Height(10)
+
+	ctaStyle = lipgloss.NewStyle().
+			Background(style.AsePrimary).
+			Foreground(lipgloss.Color("#FFF")).
+			Bold(true).
+			Padding(0, 1)
+)
+
+//
 // Action responses
 //
 
@@ -278,7 +297,22 @@ func (m PipelineOverviewPage) Init() tea.Cmd {
 // Rendered when the pipeline is successfully fetched
 func (m PipelineOverviewPage) pipelineView() string {
 	if len(m.pipeline.Data.Services) <= 0 {
-		return style.Gray.Render("Your pipeline is empty. Start by adding services to it.")
+		s := state.Get()
+
+		// Full-screen box layout
+		fullScreenBox := lipgloss.Place(
+			s.WindowWidth,
+			s.WindowHeight,
+			lipgloss.Center,
+			lipgloss.Center,
+			boxStyle.Render(
+				style.Title.Bold(true).Render("Your pipeline is empty!")+
+					"\n\nA pipeline must be composed of one or more service(s) before you can interact with it.\n"+
+					"When you configure a valid pipeline, its status will be shown here.\n\n"+
+					style.Gray.Render("Press ")+("c")+style.Gray.Render(" to configure a pipeline or ")+("q")+style.Gray.Render(" to quit."),
+			),
+		)
+		return fullScreenBox
 	}
 
 	status := style.Error.Bold(true).Render("Unknown")

@@ -202,7 +202,7 @@ func NewPipelineConfiguratorPage() PipelineConfiguratorPage {
 		services:      tui.NewAction[[]string]("fetchServices"),
 		versions:      tui.NewAction[[]string]("fetchVersions"),
 		savePipeline:  tui.NewAction[bool]("savePipeline"),
-		focussed:      0,
+		focussed:      1,
 		remoteAuthor:  "",
 		remoteService: "",
 	}
@@ -272,7 +272,7 @@ func (m PipelineConfiguratorPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			canvas, err := dgraph.DrawGraph(nodes)
 			if len(nodes) <= 0 {
-				m.pipelineGraph = style.Gray.Render("No pipeline to show! Go ahead and add some services.")
+				m.pipelineGraph = style.Gray.Render("")
 			} else if err != nil {
 				m.pipelineGraph = "Failed to draw pipeline\n"
 			} else {
@@ -332,6 +332,10 @@ func (m PipelineConfiguratorPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, m.savePipelineRemote()
 			}
 		case key.Matches(msg, pipelineConfiguratorKeysRegular.Switch):
+			if m.focussed == 1 && len(m.tableActive.Rows()) <= 0 {
+				return m, nil
+			}
+
 			m.focussed = (m.focussed + 1) % 2
 			m.tableActive = m.createActiveTable(*m.pipeline.Data)
 			m.tableRemote = m.createRemoteTable()
@@ -392,7 +396,9 @@ func (m PipelineConfiguratorPage) remoteTableView() string {
 }
 
 func (m PipelineConfiguratorPage) View() string {
-	s := style.Title.Render("Configure your pipeline") + "\n\n"
+	s := style.Title.Render("Pipeline configurator") + "\n\n"
+
+	s += style.Primary.Render("A pipeline is composed of ") + "services" + style.Primary.Render(" which can be enabled to run when the pipeline is started.") + "\n" + style.Primary.Render("By moving services between ") + "available" + style.Primary.Render(" and ") + "enabled" + style.Primary.Render(", you can modify the pipeline.") + "\n\n"
 
 	// Calculate column width (subtract padding and borders)
 	columnWidth := m.getColWidth()
@@ -400,39 +406,12 @@ func (m PipelineConfiguratorPage) View() string {
 	// Define styles for each column
 	columnStyle := lipgloss.NewStyle().Width(columnWidth)
 
-	graph := ""
-	if m.pipeline.IsSuccess() {
-		graph = m.postProcessGraph(m.pipelineGraph)
-
-		if len(m.pipeline.Data.Services) > 0 && len(m.dependencyErrors) <= 0 {
-			graph += "\n" + style.Success.Render("✓ This pipeline is valid") + " " + style.Gray.Render("- save it to your Rover with 's'")
-		} else if len(m.pipeline.Data.Services) > 0 {
-			for _, err := range m.dependencyErrors {
-				graph += "\n" + style.Error.Render("✗ "+err.Error())
-			}
-		}
-
-	} else if m.pipeline.IsError() {
-		graph = style.Error.Render("Error loading pipeline") + style.Gray.Render(" "+m.pipeline.Error.Error())
-	} else {
-		graph = m.spinner.View() + " Loading pipeline"
-	}
-
-	if m.savePipeline.IsLoading() {
-		graph += "\n" + m.spinner.View() + " Saving pipeline"
-	} else if m.savePipeline.IsSuccess() {
-		graph += "\n" + style.Success.Render("✓ Pipeline saved to Rover successfully")
-	} else if m.savePipeline.IsError() {
-		graph += "\n" + style.Error.Render("✗ Error saving pipeline") + style.Gray.Render(" "+m.savePipeline.Error.Error())
-	}
-	graph += "\n\n"
-
 	// Define the columns
 	columnActive := m.spinner.View() + style.Gray.Render(" Loading active services...")
 	if m.pipeline.IsSuccess() {
 		note := ""
 		if len(m.tableActive.Rows()) <= 0 {
-			note = style.Gray.Render(" There are no enabled services in this pipeline, yet.")
+			note = style.Gray.Render("This pipeline is empty. Start by enabling a service.")
 		}
 
 		columnActive = m.tableActive.View() + note
@@ -443,9 +422,9 @@ func (m PipelineConfiguratorPage) View() string {
 	columnRemote := m.remoteTableView()
 
 	row := lipgloss.JoinHorizontal(lipgloss.Top,
-		columnStyle.Render(columnActive),
-		" ",
 		columnStyle.Render(columnRemote),
+		" ",
+		columnStyle.Render(columnActive),
 	)
 
 	h := ""
@@ -462,7 +441,39 @@ func (m PipelineConfiguratorPage) View() string {
 		}
 	}
 
-	return s + graph + row + "\n\n" + h
+	// You might be tempted to extract the "\n\n" but we don't want to render an empty space if there is no graph
+	graph := ""
+	if m.pipeline.IsSuccess() {
+		if m.pipelineGraph != "" {
+			graph = "\n\n" + m.postProcessGraph(m.pipelineGraph)
+		}
+	} else if m.pipeline.IsError() {
+		graph = "\n\n" + style.Error.Render("Error loading pipeline") + style.Gray.Render(" "+m.pipeline.Error.Error())
+	} else {
+		graph = "\n\n" + m.spinner.View() + " Loading pipeline"
+	}
+
+	status := ""
+	if m.pipeline.HasData() {
+		if len(m.pipeline.Data.Services) > 0 && len(m.dependencyErrors) <= 0 {
+			status += "\n" + style.Success.Render("✓ This pipeline is valid") + " " + style.Gray.Render("- save it to your Rover with ") + "s"
+		} else if len(m.pipeline.Data.Services) > 0 {
+			for _, err := range m.dependencyErrors {
+				status += "\n" + style.Error.Render("✗ "+err.Error())
+			}
+		}
+	}
+	if m.savePipeline.IsLoading() {
+		status += "\n" + m.spinner.View() + " Saving pipeline\n\n"
+	} else if m.savePipeline.IsSuccess() {
+		status += "\n" + style.Success.Render("✓ Pipeline saved to Rover successfully") + "\n\n"
+	} else if m.savePipeline.IsError() {
+		status += "\n" + style.Error.Render("✗ Error saving pipeline") + style.Gray.Render(" "+m.savePipeline.Error.Error()) + "\n\n"
+	} else {
+		status += "\n\n"
+	}
+
+	return s + row + graph + status + h
 }
 
 //
@@ -551,17 +562,13 @@ func (m PipelineConfiguratorPage) createActiveTable(res PipelineOverviewSummary)
 	prev := m.tableActive.SelectedRow()
 
 	columns := []table.Column{
-		{Title: "Service", Width: m.colPct(30)},
-		{Title: "Version", Width: m.colPct(30)},
-		{Title: "Author", Width: m.colPct(39)},
+		{Title: "Enabled services in this pipeline", Width: m.colPct(99)},
 	}
 
 	rows := make([]table.Row, 0)
 	for _, service := range res.Services {
 		rows = append(rows, table.Row{
-			service.Name,
-			service.Version,
-			service.Author,
+			utils.ServiceFqn(service.Author, service.Name, service.Version),
 		})
 	}
 
@@ -618,13 +625,13 @@ func (m PipelineConfiguratorPage) createRemoteTable() table.Model {
 	prev := m.tableRemote.SelectedRow()
 
 	columns := []table.Column{
-		{Title: "Author", Width: m.colPct(100)},
+		{Title: "Available authors", Width: m.colPct(100)},
 	}
 	rows := make([]table.Row, 0)
 	// Go from most fine-grained to least fine-grained
 	if m.remoteService != "" {
 		columns = []table.Column{
-			{Title: fmt.Sprintf("Versions (%s/%s)", m.remoteAuthor, m.remoteService), Width: m.colPct(100)},
+			{Title: fmt.Sprintf("Available versions for %s/%s", m.remoteAuthor, m.remoteService), Width: m.colPct(100)},
 		}
 		if m.versions.HasData() {
 			for _, version := range *m.versions.Data {
@@ -648,7 +655,7 @@ func (m PipelineConfiguratorPage) createRemoteTable() table.Model {
 		}
 	} else if m.remoteAuthor != "" {
 		columns = []table.Column{
-			{Title: fmt.Sprintf("Services (%s)", m.remoteAuthor), Width: m.colPct(100)},
+			{Title: fmt.Sprintf("Available services from author %s", m.remoteAuthor), Width: m.colPct(100)},
 		}
 		if m.services.HasData() {
 			for _, service := range *m.services.Data {
@@ -792,7 +799,9 @@ func (m PipelineConfiguratorPage) fetchVersionsForService(author string, service
 			return nil, utils.ParseHTTPError(err, htt)
 		}
 
-		return &res, err
+		sorted := utils.SortByVersion(res)
+
+		return &sorted, err
 	})
 }
 
@@ -809,7 +818,7 @@ func (m PipelineConfiguratorPage) onActiveTableNavigation(pressedKey tea.KeyMsg)
 		}
 
 		// Remove service from pipeline
-		return m, m.removeServiceFromPipeline(sel[2], sel[0], sel[1])
+		return m, m.removeServiceFromPipeline(sel[0])
 	}
 
 	return m, nil
@@ -907,7 +916,7 @@ func (m PipelineConfiguratorPage) addServiceToPipeline(author string, service st
 }
 
 // This removes a service from a pipeline *locally*. It will only be checked by the server when the pipeline is saved.
-func (m PipelineConfiguratorPage) removeServiceFromPipeline(author string, service string, version string) tea.Cmd {
+func (m PipelineConfiguratorPage) removeServiceFromPipeline(fqn string) tea.Cmd {
 	return tui.PerformAction(&m.pipeline, func() (*PipelineOverviewSummary, error) {
 		// There should already be a pipeline in the model
 		if !m.pipeline.IsSuccess() {
@@ -918,14 +927,14 @@ func (m PipelineConfiguratorPage) removeServiceFromPipeline(author string, servi
 		pipeline := *m.pipeline.Data
 		newServices := make([]PipelineOverviewServiceInfo, 0)
 		for _, s := range pipeline.Services {
-			if s.Name != service {
+			if utils.ServiceFqn(s.Author, s.Name, s.Version) != fqn {
 				newServices = append(newServices, s)
 			}
 		}
 		pipeline.Services = newServices
 		newEnabled := make([]openapi.PipelineGet200ResponseEnabledInner, 0)
 		for _, enabled := range pipeline.Pipeline.Enabled {
-			if enabled.Service.Name != service {
+			if utils.ServiceFqn(enabled.Service.Author, enabled.Service.Name, enabled.Service.Version) != fqn {
 				newEnabled = append(newEnabled, enabled)
 			}
 		}
