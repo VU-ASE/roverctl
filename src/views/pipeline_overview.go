@@ -282,6 +282,7 @@ func (m PipelineOverviewPage) pipelineView() string {
 	}
 
 	status := style.Error.Bold(true).Render("Unknown")
+
 	if m.pipeline.Data.Pipeline.Status == openapi.STARTABLE {
 		status = style.Color(style.SuccessLight).Bold(true).Render("Startable")
 		if m.toggle.IsLoading() {
@@ -341,6 +342,10 @@ func (m PipelineOverviewPage) pipelineView() string {
 
 	proc_list := "\n" + m.table.View() + "\n\n"
 	view := s + "\n\n" + row + proc_list
+
+	if m.toggle.IsError() {
+		view += style.Gray.Render("Could not toggle pipeline execution") + " (" + m.toggle.Error.Error() + ")" + "\n\n"
+	}
 
 	view += m.table.HelpView() + style.Gray.Render(" • ")
 	if m.pipeline.Data.Pipeline.Status == openapi.STARTED {
