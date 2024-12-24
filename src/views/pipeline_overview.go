@@ -610,16 +610,34 @@ func (m PipelineOverviewPage) toggleExecution() tea.Cmd {
 				return nil, utils.ParseHTTPError(err, htt)
 			}
 		} else {
+			// First, build all services
+			// this is currently done very simple: it is not checked when the last build time was or if the services changed
+			// in theory, if the services did not change, we should not need to build them again
+			for _, service := range m.pipeline.Data.Services {
+				htt, err := api.ServicesAPI.ServicesAuthorServiceVersionPost(
+					context.Background(),
+					service.Author,
+					service.Name,
+					service.Version,
+				).Execute()
+				if err != nil && htt != nil {
+					return nil, fmt.Errorf("Failed to build service %s: %s", service.Name, utils.ParseHTTPError(err, htt))
+				} else if err != nil {
+					return nil, fmt.Errorf("Failed to build service %s: %s", service.Name, err)
+				}
+			}
+
 			htt, err := api.PipelineAPI.PipelineStartPost(
 				context.Background(),
 			).Execute()
 
 			if err != nil && htt != nil {
 				return nil, utils.ParseHTTPError(err, htt)
+			} else if err != nil {
+				return nil, err
 			}
 		}
 
-		// todo: also need to call API build endpoint
 		return openapi.PtrBool(true), err
 	})
 }
