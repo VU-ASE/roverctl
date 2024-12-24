@@ -55,7 +55,7 @@ func (m MainModel) View() string {
 
 	// Define the URL and the text
 	url := "https://ase.vu.nl"
-	text := "read the docs"
+	text := "read the docs at ase.vu.nl"
 
 	// Hyperlink escape sequence
 	link := fmt.Sprintf("\x1b]8;;%s\x1b\\%s\x1b]8;;\x1b\\", url, text)
