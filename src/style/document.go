@@ -16,11 +16,17 @@ var (
 	QuitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
 
+var (
+	listDelegateColor = lipgloss.AdaptiveColor{
+		Light: "#141414",
+		Dark:  "#f2f2f2",
+	}
+)
+
+// Delegates (i.e. list items)
 func DefaultListDelegate() list.DefaultDelegate {
-	// Styling the delegates
 	d := list.NewDefaultDelegate()
-	d.Styles.SelectedTitle = d.Styles.SelectedTitle.Foreground(SuccessPrimary).Bold(true).
-		BorderForeground(SuccessLight)
-	d.Styles.SelectedDesc = d.Styles.SelectedDesc.Foreground(SuccessPrimary).BorderForeground(SuccessLight)
+	d.Styles.SelectedTitle = d.Styles.SelectedTitle.Foreground(listDelegateColor).Bold(true).BorderForeground(listDelegateColor)
+	d.Styles.SelectedDesc = d.Styles.SelectedDesc.Foreground(listDelegateColor).BorderForeground(listDelegateColor)
 	return d
 }

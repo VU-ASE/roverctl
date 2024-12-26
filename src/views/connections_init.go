@@ -21,10 +21,11 @@ import (
 )
 
 type ConnectionInitFormValues struct {
-	name     string
-	index    string
-	username string
-	password string
+	name       string
+	index      string
+	username   string
+	password   string
+	customHost string
 }
 
 // keyMap defines a set of keybindings. To work for help it must satisfy key.Map
@@ -129,10 +130,11 @@ func NewConnectionsInitPage(val *ConnectionInitFormValues) ConnectionsInitPage {
 	s.Spinner = spinner.Line
 
 	formValues := &ConnectionInitFormValues{
-		name:     "",
-		index:    "",
-		username: "debix",
-		password: "debix",
+		name:       "",
+		index:      "",
+		username:   "debix",
+		password:   "debix",
+		customHost: "",
 	}
 	if val != nil {
 		formValues = val
@@ -157,7 +159,17 @@ func NewConnectionsInitPage(val *ConnectionInitFormValues) ConnectionsInitPage {
 		form: huh.NewForm(
 			huh.NewGroup(
 				huh.NewInput().
-					Title("Enter your Rover index (1-20, inclusive)").
+					Title("Enter a name for this connection").
+					CharLimit(255).
+					Prompt("> ").
+					Value(&formValues.name).Validate(func(s string) error {
+					if len(s) <= 0 {
+						return fmt.Errorf("You cannot leave this field empty")
+					}
+					return nil
+				}),
+				huh.NewInput().
+					Title("Enter the Rover index (1-20, inclusive)").
 					CharLimit(3).
 					Prompt("> ").
 					Value(&formValues.index).
@@ -169,26 +181,21 @@ func NewConnectionsInitPage(val *ConnectionInitFormValues) ConnectionsInitPage {
 						return nil
 					}),
 				huh.NewInput().
-					Title("Enter the authentication username").
+					Title("Enter the Roverd username").
 					CharLimit(255).
 					Prompt("> ").
 					Value((&formValues.username)),
 				huh.NewInput().
-					Title("Enter the authentication password").
+					Title("Enter the Roverd password").
 					CharLimit(255).
 					Prompt("> ").
 					EchoMode(huh.EchoModePassword).
 					Value((&formValues.password)),
 				huh.NewInput().
-					Title("Enter a name for this connection to find it back later").
+					Title("(optional) Enter a custom hostname or IP address to connect to").
 					CharLimit(255).
 					Prompt("> ").
-					Value(&formValues.name).Validate(func(s string) error {
-					if len(s) <= 0 {
-						return fmt.Errorf("You cannot leave this field empty")
-					}
-					return nil
-				}),
+					Value(&formValues.customHost),
 			),
 		).WithTheme(style.FormTheme),
 	}
@@ -274,10 +281,10 @@ func (m ConnectionsInitPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.routeExists = tui.NewAction[bool]("routeExists")
 					return m, cmd
 				}
-				// todo: change to 192.168.1 instead of 192.168.0
-				// m.host = fmt.Sprintf("192.168.0.%d", index+100)
-				m.host = "google.com"
-				m.host = "localhost:8070"
+				m.host = fmt.Sprintf("192.168.0.%d", index+100)
+				if len(m.formValues.customHost) > 0 {
+					m.host = m.formValues.customHost
+				}
 
 				// We are optimistic, start all checks in parallel
 				cmds = append(cmds, m.checkRoute(), m.checkAuth(), m.checkRoverdVersion(), m.checkRoverNumber())
