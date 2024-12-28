@@ -43,8 +43,8 @@ RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/i
 # Set up Go environment variables
 ENV PATH="/usr/local/go/bin:/usr/local/bin:${PATH}"
 
-# Ensure CGO is enabled for the zmq4 package
-ENV CGO_ENABLED=1
+# CGO is not necessary
+ENV CGO_ENABLED=0
 
 # Install Node.js and NPM based on the system architecture
 RUN ARCH=$(dpkg --print-architecture) && \
