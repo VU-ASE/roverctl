@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/VU-ASE/rover/src/configuration"
-	"github.com/VU-ASE/rover/src/state"
-	"github.com/VU-ASE/rover/src/views"
+	"github.com/VU-ASE/roverctl/src/configuration"
+	"github.com/VU-ASE/roverctl/src/state"
+	"github.com/VU-ASE/roverctl/src/views"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"

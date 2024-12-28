@@ -27,6 +27,8 @@ type ServicesAuthorServiceVersionGet200Response struct {
 	Inputs []ServicesAuthorServiceVersionGet200ResponseInputsInner `json:"inputs"`
 	// The output streams of this service version
 	Outputs []string `json:"outputs"`
+	// All configuration values of this service version and their tunability
+	Configuration []ServicesAuthorServiceVersionGet200ResponseConfigurationInner `json:"configuration"`
 }
 
 type _ServicesAuthorServiceVersionGet200Response ServicesAuthorServiceVersionGet200Response
@@ -35,10 +37,11 @@ type _ServicesAuthorServiceVersionGet200Response ServicesAuthorServiceVersionGet
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewServicesAuthorServiceVersionGet200Response(inputs []ServicesAuthorServiceVersionGet200ResponseInputsInner, outputs []string) *ServicesAuthorServiceVersionGet200Response {
+func NewServicesAuthorServiceVersionGet200Response(inputs []ServicesAuthorServiceVersionGet200ResponseInputsInner, outputs []string, configuration []ServicesAuthorServiceVersionGet200ResponseConfigurationInner) *ServicesAuthorServiceVersionGet200Response {
 	this := ServicesAuthorServiceVersionGet200Response{}
 	this.Inputs = inputs
 	this.Outputs = outputs
+	this.Configuration = configuration
 	return &this
 }
 
@@ -130,6 +133,30 @@ func (o *ServicesAuthorServiceVersionGet200Response) SetOutputs(v []string) {
 	o.Outputs = v
 }
 
+// GetConfiguration returns the Configuration field value
+func (o *ServicesAuthorServiceVersionGet200Response) GetConfiguration() []ServicesAuthorServiceVersionGet200ResponseConfigurationInner {
+	if o == nil {
+		var ret []ServicesAuthorServiceVersionGet200ResponseConfigurationInner
+		return ret
+	}
+
+	return o.Configuration
+}
+
+// GetConfigurationOk returns a tuple with the Configuration field value
+// and a boolean to check if the value has been set.
+func (o *ServicesAuthorServiceVersionGet200Response) GetConfigurationOk() ([]ServicesAuthorServiceVersionGet200ResponseConfigurationInner, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Configuration, true
+}
+
+// SetConfiguration sets field value
+func (o *ServicesAuthorServiceVersionGet200Response) SetConfiguration(v []ServicesAuthorServiceVersionGet200ResponseConfigurationInner) {
+	o.Configuration = v
+}
+
 func (o ServicesAuthorServiceVersionGet200Response) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -145,6 +172,7 @@ func (o ServicesAuthorServiceVersionGet200Response) ToMap() (map[string]interfac
 	}
 	toSerialize["inputs"] = o.Inputs
 	toSerialize["outputs"] = o.Outputs
+	toSerialize["configuration"] = o.Configuration
 	return toSerialize, nil
 }
 
@@ -155,6 +183,7 @@ func (o *ServicesAuthorServiceVersionGet200Response) UnmarshalJSON(data []byte) 
 	requiredProperties := []string{
 		"inputs",
 		"outputs",
+		"configuration",
 	}
 
 	allProperties := make(map[string]interface{})

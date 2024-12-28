@@ -3,7 +3,7 @@ package state
 import (
 	"math/rand"
 
-	"github.com/VU-ASE/rover/src/configuration"
+	"github.com/VU-ASE/roverctl/src/configuration"
 )
 
 // This is the struct that implements the Bubbletea model interface. It contains all the app state.

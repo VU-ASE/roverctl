@@ -1,7 +1,7 @@
 package views
 
 import (
-	"github.com/VU-ASE/rover/src/style"
+	"github.com/VU-ASE/roverctl/src/style"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"

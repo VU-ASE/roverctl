@@ -3,7 +3,7 @@
 
 BUILD_DIR=bin/
 BINARY_NAME=roverctl
-LDFLAGS := -X 'github.com/VU-ASE/rover/src/views.version=$(VERSION)'
+LDFLAGS := -X 'github.com/VU-ASE/roverctl/src/views.version=$(VERSION)'
 
 build-open-api:
 	# Check if the spec/apispec.yaml file exists

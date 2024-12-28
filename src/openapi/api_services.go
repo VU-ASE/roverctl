@@ -877,9 +877,6 @@ func (a *ServicesAPIService) UploadPostExecute(r ApiUploadPostRequest) (*FetchPo
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.content == nil {
-		return localVarReturnValue, nil, reportError("content is required and must be specified")
-	}
 
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{"multipart/form-data"}

@@ -425,7 +425,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/_services__author___service___version__get_200_response'
-          description: The service configuration
+          description: "A full description of the service at this version, with inputs,\
+            \ outputs and configuration"
         "400":
           content:
             application/json:
@@ -620,6 +621,7 @@ components:
     _pipeline_get_200_response_enabled_inner_service:
       description: The fully qualified service that is enabled
       example:
+        exit: 1
         author: author
         name: name
         version: version
@@ -639,8 +641,14 @@ components:
             to restart) since pipeline.last_start
           example: 1
           type: integer
+        exit:
+          description: The most recent exit code returned by the process.
+          example: 1
+          type: integer
       required:
       - author
+      - exit
+      - faults
       - name
       - version
       type: object
@@ -676,7 +684,6 @@ components:
           type: integer
       required:
       - cpu
-      - faults
       - memory
       - pid
       - status
@@ -691,6 +698,7 @@ components:
           status: running
           uptime: 121
         service:
+          exit: 1
           author: author
           name: name
           version: version
@@ -716,6 +724,7 @@ components:
             status: running
             uptime: 121
           service:
+            exit: 1
             author: author
             name: name
             version: version
@@ -727,6 +736,7 @@ components:
             status: running
             uptime: 121
           service:
+            exit: 1
             author: author
             name: name
             version: version
@@ -886,8 +896,6 @@ components:
           description: The content of the ZIP file to upload
           format: binary
           type: string
-      required:
-      - content
       type: object
     _services__author___service___version__get_200_response_inputs_inner:
       properties:
@@ -903,11 +911,43 @@ components:
       - service
       - streams
       type: object
+    _services__author___service___version__get_200_response_configuration_inner_value:
+      description: The value of the configuration
+      oneOf:
+      - type: string
+      - type: number
+    _services__author___service___version__get_200_response_configuration_inner:
+      properties:
+        name:
+          description: The name of the configuration value
+          type: string
+        type:
+          description: The type of the configuration value
+          enum:
+          - string
+          - number
+          type: string
+        value:
+          $ref: '#/components/schemas/_services__author___service___version__get_200_response_configuration_inner_value'
+        tunable:
+          description: Whether this configuration value is tunable
+          type: boolean
+      required:
+      - name
+      - tunable
+      - type
+      - value
+      type: object
     _services__author___service___version__get_200_response:
       example:
         outputs:
         - image
         built_at: 1612345678142
+        configuration:
+        - name: threshold
+          type: number
+          value: 0.5
+          tunable: true
         inputs:
         - service: lux
           streams:
@@ -937,7 +977,19 @@ components:
           items:
             type: string
           type: array
+        configuration:
+          description: All configuration values of this service version and their
+            tunability
+          example:
+          - name: threshold
+            type: number
+            value: 0.5
+            tunable: true
+          items:
+            $ref: '#/components/schemas/_services__author___service___version__get_200_response_configuration_inner'
+          type: array
       required:
+      - configuration
       - inputs
       - outputs
       type: object

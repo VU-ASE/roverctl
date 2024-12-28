@@ -1,9 +1,9 @@
 package views
 
 import (
-	"github.com/VU-ASE/rover/src/components"
-	"github.com/VU-ASE/rover/src/state"
-	"github.com/VU-ASE/rover/src/style"
+	"github.com/VU-ASE/roverctl/src/components"
+	"github.com/VU-ASE/roverctl/src/state"
+	"github.com/VU-ASE/roverctl/src/style"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"

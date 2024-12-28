@@ -28,7 +28,9 @@ type PipelineGet200ResponseEnabledInnerService struct {
 	// The author of the service
 	Author string `json:"author"`
 	// The number of faults that have occurred (causing the pipeline to restart) since pipeline.last_start
-	Faults *int32 `json:"faults,omitempty"`
+	Faults int32 `json:"faults"`
+	// The most recent exit code returned by the process.
+	Exit int32 `json:"exit"`
 }
 
 type _PipelineGet200ResponseEnabledInnerService PipelineGet200ResponseEnabledInnerService
@@ -37,11 +39,13 @@ type _PipelineGet200ResponseEnabledInnerService PipelineGet200ResponseEnabledInn
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewPipelineGet200ResponseEnabledInnerService(name string, version string, author string) *PipelineGet200ResponseEnabledInnerService {
+func NewPipelineGet200ResponseEnabledInnerService(name string, version string, author string, faults int32, exit int32) *PipelineGet200ResponseEnabledInnerService {
 	this := PipelineGet200ResponseEnabledInnerService{}
 	this.Name = name
 	this.Version = version
 	this.Author = author
+	this.Faults = faults
+	this.Exit = exit
 	return &this
 }
 
@@ -125,36 +129,52 @@ func (o *PipelineGet200ResponseEnabledInnerService) SetAuthor(v string) {
 	o.Author = v
 }
 
-// GetFaults returns the Faults field value if set, zero value otherwise.
+// GetFaults returns the Faults field value
 func (o *PipelineGet200ResponseEnabledInnerService) GetFaults() int32 {
-	if o == nil || IsNil(o.Faults) {
+	if o == nil {
 		var ret int32
 		return ret
 	}
-	return *o.Faults
+
+	return o.Faults
 }
 
-// GetFaultsOk returns a tuple with the Faults field value if set, nil otherwise
+// GetFaultsOk returns a tuple with the Faults field value
 // and a boolean to check if the value has been set.
 func (o *PipelineGet200ResponseEnabledInnerService) GetFaultsOk() (*int32, bool) {
-	if o == nil || IsNil(o.Faults) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Faults, true
+	return &o.Faults, true
 }
 
-// HasFaults returns a boolean if a field has been set.
-func (o *PipelineGet200ResponseEnabledInnerService) HasFaults() bool {
-	if o != nil && !IsNil(o.Faults) {
-		return true
+// SetFaults sets field value
+func (o *PipelineGet200ResponseEnabledInnerService) SetFaults(v int32) {
+	o.Faults = v
+}
+
+// GetExit returns the Exit field value
+func (o *PipelineGet200ResponseEnabledInnerService) GetExit() int32 {
+	if o == nil {
+		var ret int32
+		return ret
 	}
 
-	return false
+	return o.Exit
 }
 
-// SetFaults gets a reference to the given int32 and assigns it to the Faults field.
-func (o *PipelineGet200ResponseEnabledInnerService) SetFaults(v int32) {
-	o.Faults = &v
+// GetExitOk returns a tuple with the Exit field value
+// and a boolean to check if the value has been set.
+func (o *PipelineGet200ResponseEnabledInnerService) GetExitOk() (*int32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Exit, true
+}
+
+// SetExit sets field value
+func (o *PipelineGet200ResponseEnabledInnerService) SetExit(v int32) {
+	o.Exit = v
 }
 
 func (o PipelineGet200ResponseEnabledInnerService) MarshalJSON() ([]byte, error) {
@@ -170,9 +190,8 @@ func (o PipelineGet200ResponseEnabledInnerService) ToMap() (map[string]interface
 	toSerialize["name"] = o.Name
 	toSerialize["version"] = o.Version
 	toSerialize["author"] = o.Author
-	if !IsNil(o.Faults) {
-		toSerialize["faults"] = o.Faults
-	}
+	toSerialize["faults"] = o.Faults
+	toSerialize["exit"] = o.Exit
 	return toSerialize, nil
 }
 
@@ -184,6 +203,8 @@ func (o *PipelineGet200ResponseEnabledInnerService) UnmarshalJSON(data []byte) (
 		"name",
 		"version",
 		"author",
+		"faults",
+		"exit",
 	}
 
 	allProperties := make(map[string]interface{})

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/VU-ASE/rover/src/openapi"
-	"github.com/VU-ASE/rover/src/state"
-	"github.com/VU-ASE/rover/src/style"
-	"github.com/VU-ASE/rover/src/tui"
-	"github.com/VU-ASE/rover/src/utils"
+	"github.com/VU-ASE/roverctl/src/openapi"
+	"github.com/VU-ASE/roverctl/src/state"
+	"github.com/VU-ASE/roverctl/src/style"
+	"github.com/VU-ASE/roverctl/src/tui"
+	"github.com/VU-ASE/roverctl/src/utils"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/progress"
@@ -605,7 +605,7 @@ func (m PipelineOverviewPage) createServiceTable(res PipelineOverviewSummary) ta
 				e.Service.Name,
 				e.Service.Version,
 				e.Service.Author,
-				fmt.Sprintf("%d", *e.Service.Faults),
+				fmt.Sprintf("%d", e.Service.Faults),
 			}
 
 			if e.Process != nil {

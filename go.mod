@@ -1,4 +1,4 @@
-module github.com/VU-ASE/rover
+module github.com/VU-ASE/roverctl
 
 go 1.21.6
 
@@ -77,5 +77,6 @@ require (
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/src-d/go-billy.v4 v4.3.2 // indirect
 	gopkg.in/src-d/go-git.v4 v4.13.1 // indirect
+	gopkg.in/validator.v2 v2.0.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )

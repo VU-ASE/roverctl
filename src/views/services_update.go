@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/VU-ASE/rover/src/openapi"
-	"github.com/VU-ASE/rover/src/style"
-	"github.com/VU-ASE/rover/src/tui"
+	"github.com/VU-ASE/roverctl/src/openapi"
+	"github.com/VU-ASE/roverctl/src/style"
+	"github.com/VU-ASE/roverctl/src/tui"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"

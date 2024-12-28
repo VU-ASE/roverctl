@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/VU-ASE/rover/src/state"
-	"github.com/VU-ASE/rover/src/style"
+	"github.com/VU-ASE/roverctl/src/state"
+	"github.com/VU-ASE/roverctl/src/style"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -33,6 +33,8 @@ func RootScreen(s *state.AppState) MainModel {
 		case "pipeline":
 			start = NewPipelineOverviewPage()
 		case "info":
+			start = NewInfoPage()
+		case "version":
 			start = NewInfoPage()
 		}
 	}

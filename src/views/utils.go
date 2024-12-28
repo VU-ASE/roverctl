@@ -1,9 +1,9 @@
 package views
 
 import (
-	"github.com/VU-ASE/rover/src/components"
-	"github.com/VU-ASE/rover/src/state"
-	"github.com/VU-ASE/rover/src/style"
+	"github.com/VU-ASE/roverctl/src/components"
+	"github.com/VU-ASE/roverctl/src/state"
+	"github.com/VU-ASE/roverctl/src/style"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -21,7 +21,7 @@ type UtilitiesPage struct {
 func NewUtilitiesPage() UtilitiesPage {
 	d := style.DefaultListDelegate()
 	l := list.New([]list.Item{
-		components.ActionItem{Name: "SSH", Desc: "Open an SSH terminal to your Rover"},
+		// components.ActionItem{Name: "SSH", Desc: "Open an SSH terminal to your Rover"},
 		components.ActionItem{Name: "Info", Desc: "Information about roverctl and roverd installations"},
 	}, d, 0, 0)
 	// If there are connections available, add the connected actions

@@ -7,12 +7,13 @@ Name | Type | Description | Notes
 **BuiltAt** | Pointer to **int64** | The time this version was last built as milliseconds since epoch, not set if the service was never built | [optional] 
 **Inputs** | [**[]ServicesAuthorServiceVersionGet200ResponseInputsInner**](ServicesAuthorServiceVersionGet200ResponseInputsInner.md) | The dependencies/inputs of this service version | 
 **Outputs** | **[]string** | The output streams of this service version | 
+**Configuration** | [**[]ServicesAuthorServiceVersionGet200ResponseConfigurationInner**](ServicesAuthorServiceVersionGet200ResponseConfigurationInner.md) | All configuration values of this service version and their tunability | 
 
 ## Methods
 
 ### NewServicesAuthorServiceVersionGet200Response
 
-`func NewServicesAuthorServiceVersionGet200Response(inputs []ServicesAuthorServiceVersionGet200ResponseInputsInner, outputs []string, ) *ServicesAuthorServiceVersionGet200Response`
+`func NewServicesAuthorServiceVersionGet200Response(inputs []ServicesAuthorServiceVersionGet200ResponseInputsInner, outputs []string, configuration []ServicesAuthorServiceVersionGet200ResponseConfigurationInner, ) *ServicesAuthorServiceVersionGet200Response`
 
 NewServicesAuthorServiceVersionGet200Response instantiates a new ServicesAuthorServiceVersionGet200Response object
 This constructor will assign default values to properties that have it defined,
@@ -90,6 +91,26 @@ and a boolean to check if the value has been set.
 `func (o *ServicesAuthorServiceVersionGet200Response) SetOutputs(v []string)`
 
 SetOutputs sets Outputs field to given value.
+
+
+### GetConfiguration
+
+`func (o *ServicesAuthorServiceVersionGet200Response) GetConfiguration() []ServicesAuthorServiceVersionGet200ResponseConfigurationInner`
+
+GetConfiguration returns the Configuration field if non-nil, zero value otherwise.
+
+### GetConfigurationOk
+
+`func (o *ServicesAuthorServiceVersionGet200Response) GetConfigurationOk() (*[]ServicesAuthorServiceVersionGet200ResponseConfigurationInner, bool)`
+
+GetConfigurationOk returns a tuple with the Configuration field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetConfiguration
+
+`func (o *ServicesAuthorServiceVersionGet200Response) SetConfiguration(v []ServicesAuthorServiceVersionGet200ResponseConfigurationInner)`
+
+SetConfiguration sets Configuration field to given value.
 
 
 

@@ -8,7 +8,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/VU-ASE/rover/src/openapi"
+	"github.com/VU-ASE/roverctl/src/openapi"
 	"github.com/melbahja/goph"
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/yaml.v3"
@@ -177,7 +177,7 @@ func basicAuthClient(username, password string) *http.Client {
 			Password: password,
 			Base:     http.DefaultTransport, // Use the default RoundTripper
 		},
-		Timeout: 2 * time.Second,
+		Timeout: 60 * time.Second,
 	}
 }
 

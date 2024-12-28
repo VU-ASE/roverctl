@@ -516,7 +516,7 @@ import (
 )
 
 func main() {
-	content := os.NewFile(1234, "some_file") // *os.File | The content of the ZIP file to upload
+	content := os.NewFile(1234, "some_file") // *os.File | The content of the ZIP file to upload (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)

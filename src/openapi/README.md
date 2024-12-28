@@ -114,6 +114,8 @@ Class | Method | HTTP request | Description
  - [ServiceStatus](docs/ServiceStatus.md)
  - [ServicesAuthorServiceVersionDelete200Response](docs/ServicesAuthorServiceVersionDelete200Response.md)
  - [ServicesAuthorServiceVersionGet200Response](docs/ServicesAuthorServiceVersionGet200Response.md)
+ - [ServicesAuthorServiceVersionGet200ResponseConfigurationInner](docs/ServicesAuthorServiceVersionGet200ResponseConfigurationInner.md)
+ - [ServicesAuthorServiceVersionGet200ResponseConfigurationInnerValue](docs/ServicesAuthorServiceVersionGet200ResponseConfigurationInnerValue.md)
  - [ServicesAuthorServiceVersionGet200ResponseInputsInner](docs/ServicesAuthorServiceVersionGet200ResponseInputsInner.md)
  - [ServicesAuthorServiceVersionPost400Response](docs/ServicesAuthorServiceVersionPost400Response.md)
  - [StatusGet200Response](docs/StatusGet200Response.md)

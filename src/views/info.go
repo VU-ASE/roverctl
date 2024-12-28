@@ -6,11 +6,11 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/VU-ASE/rover/src/configuration"
-	"github.com/VU-ASE/rover/src/openapi"
-	"github.com/VU-ASE/rover/src/state"
-	"github.com/VU-ASE/rover/src/style"
-	"github.com/VU-ASE/rover/src/tui"
+	"github.com/VU-ASE/roverctl/src/configuration"
+	"github.com/VU-ASE/roverctl/src/openapi"
+	"github.com/VU-ASE/roverctl/src/state"
+	"github.com/VU-ASE/roverctl/src/style"
+	"github.com/VU-ASE/roverctl/src/tui"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 )

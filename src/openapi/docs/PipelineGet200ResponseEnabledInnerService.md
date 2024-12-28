@@ -7,13 +7,14 @@ Name | Type | Description | Notes
 **Name** | **string** | The name of the service | 
 **Version** | **string** | The version of the service | 
 **Author** | **string** | The author of the service | 
-**Faults** | Pointer to **int32** | The number of faults that have occurred (causing the pipeline to restart) since pipeline.last_start | [optional] 
+**Faults** | **int32** | The number of faults that have occurred (causing the pipeline to restart) since pipeline.last_start | 
+**Exit** | **int32** | The most recent exit code returned by the process. | 
 
 ## Methods
 
 ### NewPipelineGet200ResponseEnabledInnerService
 
-`func NewPipelineGet200ResponseEnabledInnerService(name string, version string, author string, ) *PipelineGet200ResponseEnabledInnerService`
+`func NewPipelineGet200ResponseEnabledInnerService(name string, version string, author string, faults int32, exit int32, ) *PipelineGet200ResponseEnabledInnerService`
 
 NewPipelineGet200ResponseEnabledInnerService instantiates a new PipelineGet200ResponseEnabledInnerService object
 This constructor will assign default values to properties that have it defined,
@@ -107,11 +108,26 @@ and a boolean to check if the value has been set.
 
 SetFaults sets Faults field to given value.
 
-### HasFaults
 
-`func (o *PipelineGet200ResponseEnabledInnerService) HasFaults() bool`
+### GetExit
 
-HasFaults returns a boolean if a field has been set.
+`func (o *PipelineGet200ResponseEnabledInnerService) GetExit() int32`
+
+GetExit returns the Exit field if non-nil, zero value otherwise.
+
+### GetExitOk
+
+`func (o *PipelineGet200ResponseEnabledInnerService) GetExitOk() (*int32, bool)`
+
+GetExitOk returns a tuple with the Exit field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetExit
+
+`func (o *PipelineGet200ResponseEnabledInnerService) SetExit(v int32)`
+
+SetExit sets Exit field to given value.
+
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
