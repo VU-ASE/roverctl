@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.7](https://github.com/VU-ASE/roverctl/compare/v1.0.6...v1.0.7) (2024-12-28)
+
+
+### Bug Fixes
+
+* set version in correct package in ldflags ([7808685](https://github.com/VU-ASE/roverctl/commit/780868547625937bd3fccff6a8b88e6303b3620c))
+
 ## [1.0.6](https://github.com/VU-ASE/roverctl/compare/v1.0.5...v1.0.6) (2024-12-28)
 
 
