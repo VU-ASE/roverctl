@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.4](https://github.com/VU-ASE/roverctl/compare/v1.0.3...v1.0.4) (2024-12-28)
+
+
+### Bug Fixes
+
+* upload releases with more flexible action ([3cb0a4d](https://github.com/VU-ASE/roverctl/commit/3cb0a4da54bdf33db339f110a80e9fb68978ccca))
+
 ## [1.0.3](https://github.com/VU-ASE/roverctl/compare/v1.0.2...v1.0.3) (2024-12-28)
 
 
