@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/VU-ASE/roverctl/compare/v1.0.2...v1.0.3) (2024-12-28)
+
+
+### Bug Fixes
+
+* upload binary assets to github directly ([13002d0](https://github.com/VU-ASE/roverctl/commit/13002d05a4871900ffbc94f19ce59309b7261c5f))
+
 ## [1.0.2](https://github.com/VU-ASE/roverctl/compare/v1.0.1...v1.0.2) (2024-12-28)
 
 
