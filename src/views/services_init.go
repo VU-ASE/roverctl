@@ -137,8 +137,8 @@ func NewServiceInitPage() ServiceInitPage {
 					Title("Which programming language do you want to use?").
 					Options(
 						huh.NewOption("Go", "golang"),
-						huh.NewOption("Rust", "rust"),
-						huh.NewOption("Python", "python"),
+						// huh.NewOption("Rust", "rust"),
+						// huh.NewOption("Python", "python"),
 						huh.NewOption("C", "c"),
 						huh.NewOption("I will configure this myself", "none"),
 					).
