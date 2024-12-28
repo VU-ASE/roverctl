@@ -4,6 +4,10 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   build:
     name: Build binaries
@@ -46,6 +50,6 @@ jobs:
       - uses: AButler/upload-release-assets@v3.0
         with:
           files: "bin/*"
-          repo-token: ${{ secrets.GH_PAT }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
           release-tag: ${{ env.VERSION }}
 
