@@ -32,7 +32,7 @@ jobs:
         run: |
           BUILD_DIR=../bin/
           BINARY_NAME=roverctl
-          LDFLAGS="-X 'github.com/VU-ASE/rover/src/views.version=${VERSION}'"
+          LDFLAGS="-X 'github.com/VU-ASE/roverctl/src/views.version=${VERSION}'"
           mkdir -p $BUILD_DIR
 
           # Build for macOS Intel
