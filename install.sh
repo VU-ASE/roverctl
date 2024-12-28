@@ -44,7 +44,7 @@ binary_name="roverctl-${os}-${arch}"
 
 # Get the latest release tag
 echo "Fetching the latest release..."
-latest_release=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")')
+latest_release=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p')
 
 if [ -z "$latest_release" ]; then
   echo "Failed to fetch the latest release from $REPO."
