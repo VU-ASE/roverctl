@@ -46,6 +46,6 @@ jobs:
       - uses: AButler/upload-release-assets@v3.0
         with:
           files: "bin/*"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: ${{ secrets.GH_PAT }}
           release-tag: ${{ env.VERSION }}
 
