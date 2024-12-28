@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/VU-ASE/roverctl/compare/v1.0.1...v1.0.2) (2024-12-28)
+
+
+### Bug Fixes
+
+* build dir for binary output ([78a345c](https://github.com/VU-ASE/roverctl/commit/78a345c7218248c1dcff61fa8c0fef52e5cd88f9))
+
 ## [1.0.1](https://github.com/VU-ASE/roverctl/compare/v1.0.0...v1.0.1) (2024-12-28)
 
 
