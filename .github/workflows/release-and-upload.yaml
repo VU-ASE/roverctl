@@ -1,4 +1,4 @@
-name: Build and Release Binary
+name: build and release binaries
 
 on:
   release:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    name: Build Binaries
+    name: Build binaries
     runs-on: ubuntu-latest
 
     steps:
@@ -21,7 +21,7 @@ jobs:
       - name: Set VERSION from tag
         run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
 
-      - name: Build binaries for all platforms
+      - name: Build binaries for linux and macos (amd64 and arm64)
         env:
           VERSION: ${{ env.VERSION }}
         working-directory: src
@@ -43,30 +43,9 @@ jobs:
           # Build for Linux ARM64
           GOOS=linux GOARCH=arm64 go build -buildvcs=false -ldflags="$LDFLAGS" -o "$BUILD_DIR${BINARY_NAME}-linux-arm64"
 
-      - name: Upload binaries
-        uses: actions/upload-artifact@v3
+      - uses: AButler/upload-release-assets@v3.0
         with:
-          name: binaries
-          path: bin/
+          files: "bin/*"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          release-tag: ${{ env.VERSION }}
 
-  upload-release-assets:
-    name: Upload Release Assets
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: binaries
-
-      - name: Upload individual assets to release
-        run: |
-          for file in bin/*; do
-            filename=$(basename "$file")
-            curl -X POST \
-              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-              -H "Content-Type: $(file --mime-type -b "$file")" \
-              --data-binary "@$file" \
-              "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ github.event.release.id }}/assets?name=$filename"
-          done
