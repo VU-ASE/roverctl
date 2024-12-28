@@ -3,6 +3,7 @@ package views
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -18,13 +19,6 @@ import (
 
 // Persistent global state (ugly, yes) to allow retrying of connection checks by discarding results with an attempt number lower than the current one
 
-type ServiceInitFormValues struct {
-	Name    string
-	Author  string
-	Source  string
-	Version string
-}
-
 type ServiceInitPage struct {
 	serviceAlreadyExists bool
 	form                 *huh.Form
@@ -33,7 +27,11 @@ type ServiceInitPage struct {
 	isInitializing       bool
 	errors               []error // errors that occurred during the process
 	selectedPreset       *string
-	service              ServiceInitFormValues
+	// form values
+	name    *string
+	author  *string
+	source  *string
+	version *string
 }
 
 func NewServiceInitPage() ServiceInitPage {
@@ -51,12 +49,10 @@ func NewServiceInitPage() ServiceInitPage {
 	_, err = os.Stat("./service.yaml")
 	serviceAlreadyExists := err == nil
 
-	service := ServiceInitFormValues{
-		Name:    "",
-		Author:  defaultAuthor,
-		Source:  "github.com/username/repository",
-		Version: "0.0.1",
-	}
+	name := ""
+	author := defaultAuthor
+	source := "github.com/username/repository"
+	version := "0.0.1"
 
 	// We create some files based on the selected preset
 	selectedPreset := "golang"
@@ -67,21 +63,28 @@ func NewServiceInitPage() ServiceInitPage {
 		selectedPreset:       &selectedPreset,
 		errors:               []error{},
 		isInitializing:       false,
+		// form values
+		name:    &name,
+		author:  &author,
+		source:  &source,
+		version: &version,
+
 		form: huh.NewForm(
 			huh.NewGroup(
 				huh.NewInput().
 					Title("What is the name of your service?").
 					CharLimit(255).
 					Prompt("> ").
-					Value(&service.Name).
+					Value(&name).
 					Validate(func(s string) error {
 						if len(s) < 3 {
 							return fmt.Errorf("Service names must be at least 3 characters long")
 						}
 
-						valid := regexp.MustCompile(`^[a-z0-9]*$`).MatchString(s)
+						// Can only contain lowercase letters and hyphens
+						valid := regexp.MustCompile(`^[a-z0-9-]*$`).MatchString(s)
 						if !valid {
-							return fmt.Errorf("Service names can only contain lowercase letters and numbers")
+							return fmt.Errorf("Service names can only contain lowercase letters and hyphens")
 						}
 
 						return nil
@@ -90,23 +93,25 @@ func NewServiceInitPage() ServiceInitPage {
 					Title("Who is the author of this service?").
 					CharLimit(255).
 					Prompt("> ").
-					Value((&service.Author)).
+					Value(&author).
 					Validate(func(s string) error {
 						if len(s) < 3 {
 							return fmt.Errorf("Author names must be at least 3 characters long")
 						}
 
-						valid := regexp.MustCompile(`^[a-zA-Z0-9]*$`).MatchString(s)
+						// Can only contain lowercase letters and hyphens
+						valid := regexp.MustCompile(`^[a-z0-9-]*$`).MatchString(s)
 						if !valid {
-							return fmt.Errorf("Author names can only contain letters and numbers")
+							return fmt.Errorf("Author names can only contain lowercase letters and hyphens")
 						}
+
 						return nil
 					}),
 				huh.NewInput().
 					Title("Where is this service published?").
 					CharLimit(255).
 					Prompt("> ").
-					Value(&service.Source).
+					Value(&source).
 					Validate(func(s string) error {
 						if s == "" {
 							return fmt.Errorf("Enter a valid source URL")
@@ -117,13 +122,14 @@ func NewServiceInitPage() ServiceInitPage {
 						if strings.Contains(s, "https://") || strings.Contains(s, "http://") || strings.Contains(s, "www.") {
 							return fmt.Errorf("Do not include the protocol or 'www.' in the URL")
 						}
+
 						return nil
 					}),
 				huh.NewInput().
 					Title("At what semantic version do you want to start?").
 					CharLimit(255).
 					Prompt("> ").
-					Value(&service.Version).
+					Value(&version).
 					Validate(func(s string) error {
 						// Try to parse the version
 						// _, err := semver.NewVersion(s)
@@ -219,7 +225,7 @@ func (m ServiceInitPage) initializedSuccessView() string {
 func (m ServiceInitPage) initializedFailureView() string {
 	s := lipgloss.NewStyle().Foreground(style.AsePrimary).Render("Could not initialize service")
 
-	s += "\n\nAn error occurred while initializing your service"
+	s += "\n\nAn error occurred while initializing your service: " + m.serviceInitialized.Error.Error()
 	if len(m.errors) > 0 {
 		for _, err := range m.errors {
 			s += lipgloss.NewStyle().Foreground(style.ErrorPrimary).Render("\n - " + err.Error())
@@ -258,31 +264,47 @@ func (m ServiceInitPage) initializeTemplate() tea.Cmd {
 	return tui.PerformAction(&m.serviceInitialized, func() (*bool, error) {
 
 		// Based on the programming language chosen, download a specific template and replace the magic strings in it
-		templateRepo := "unsupported"
+		templateRepo := ""
 		switch *m.selectedPreset {
 		case "golang":
 			templateRepo = "https://github.com/VU-ASE/service-template-go"
-		case "python":
-			templateRepo = "unsupported"
+		case "c":
+			templateRepo = "https://github.com/VU-ASE/service-template-c"
 		}
 
-		err := downloadTemplate(templateRepo, ".")
-		if err != nil {
-			return nil, err
-		}
+		if templateRepo != "" {
+			err := downloadTemplate(templateRepo, ".")
+			if err != nil {
+				return nil, err
+			}
 
-		// Strings to be replaced
-		toreplace := map[string]string{
-			"$SERVICE_NAME":    m.service.Name,
-			"$SERVICE_AUTHOR":  m.service.Author,
-			"$SERVICE_VERSION": m.service.Version,
-			"$SERVICE_SOURCE":  m.service.Source,
-		}
+			// Strings to be replaced
+			toReplace := map[string]string{
+				"SERVICE_NAME":    *m.name,
+				"SERVICE_AUTHOR":  *m.author,
+				"SERVICE_VERSION": *m.version,
+				"SERVICE_SOURCE":  *m.source,
+			}
 
-		// Replace the magic strings in the template
-		_ = replaceMagicStrings("service.yaml", toreplace)
-		_ = replaceMagicStrings("Makefile", toreplace)
-		_ = replaceMagicStrings("go.mod", toreplace)
+			for key, value := range toReplace {
+				// Escape key and value
+				escapedKey := escapeShellString(key)
+				escapedValue := escapeShellString(value)
+
+				// Build the `find` and `sed` command
+				// This replaces `SERVICE_NAME` with `MyService` in all files
+				cmd := exec.Command("bash", "-c", fmt.Sprintf(
+					`find . -type f -exec sed -i.bak 's/%s/%s/g' {} + && find . -type f -name "*.bak" -delete`,
+					escapedKey, escapedValue))
+
+				// Set the current working directory (optional, defaults to where the tool is run)
+				cmd.Dir = "."
+
+				if err := cmd.Run(); err != nil {
+					return nil, fmt.Errorf("Error running replacement command: %v\n", err)
+				}
+			}
+		}
 
 		return nil, nil
 	})
@@ -302,23 +324,12 @@ func downloadTemplate(repository string, destination string) error {
 	return err
 }
 
-func replaceMagicStrings(filepath string, replacements map[string]string) error {
-	// Read the file
-	content, err := os.ReadFile(filepath)
-	// If the file does not exist, we don't return an error, we just skip
-	if err != nil && os.IsNotExist(err) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-
-	// Replace the magic strings
-	for key, value := range replacements {
-		content = []byte(strings.ReplaceAll(string(content), key, value))
-	}
-
-	// Write the file back
-	err = os.WriteFile(filepath, content, 0644)
-	return err
+func escapeShellString(input string) string {
+	// Escape special characters for sed
+	replacer := strings.NewReplacer(
+		`&`, `\&`, // Escape &
+		`/`, `\/`, // Escape /
+		`'`, `'\''`, // Escape single quotes
+	)
+	return replacer.Replace(input)
 }
