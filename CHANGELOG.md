@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.5](https://github.com/VU-ASE/roverctl/compare/v1.0.4...v1.0.5) (2024-12-28)
+
+
+### Bug Fixes
+
+* upload with GH_PAT instead of GITHUB_TOKEN ([e5014c6](https://github.com/VU-ASE/roverctl/commit/e5014c698d8f9648f3717c8c005830e78e777f28))
+
 ## [1.0.4](https://github.com/VU-ASE/roverctl/compare/v1.0.3...v1.0.4) (2024-12-28)
 
 
