@@ -24,8 +24,9 @@ jobs:
       - name: Build binaries for all platforms
         env:
           VERSION: ${{ env.VERSION }}
+        working-directory: src
         run: |
-          BUILD_DIR=bin/
+          BUILD_DIR=../bin/
           BINARY_NAME=roverctl
           LDFLAGS="-X 'github.com/VU-ASE/rover/src/views.version=${VERSION}'"
           mkdir -p $BUILD_DIR
