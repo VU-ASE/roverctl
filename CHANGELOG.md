@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.6](https://github.com/VU-ASE/roverctl/compare/v1.0.5...v1.0.6) (2024-12-28)
+
+
+### Bug Fixes
+
+* upload with GITHUB_TOKEN and correct permissions ([c9470a1](https://github.com/VU-ASE/roverctl/commit/c9470a1d084dbcc1e635ac38034807a7ea6252f2))
+
 ## [1.0.5](https://github.com/VU-ASE/roverctl/compare/v1.0.4...v1.0.5) (2024-12-28)
 
 
