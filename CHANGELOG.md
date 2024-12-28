@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/VU-ASE/roverctl/compare/v1.0.0...v1.0.1) (2024-12-28)
+
+
+### Bug Fixes
+
+* release binary with correct go version ([f0e3b7e](https://github.com/VU-ASE/roverctl/commit/f0e3b7edb32d8608e72c399ec5c253598c2645e6))
+
 ## 1.0.0 (2024-12-28)
 
 
