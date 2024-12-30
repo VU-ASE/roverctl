@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.0](https://github.com/VU-ASE/roverctl/compare/v1.0.7...v1.1.0) (2024-12-30)
+
+
+### Features
+
+* compatible with service-template-go and service-template-c ([9255111](https://github.com/VU-ASE/roverctl/commit/9255111b2a3714c991dc21488bda2e46fe1d528b))
+
+
+### Bug Fixes
+
+* API timeout from 60 -&gt; 600 seconds ([9dee00d](https://github.com/VU-ASE/roverctl/commit/9dee00d7e4615df4478927b8cccb7bfc67c56685))
+* make install script compatible with macOS BSD grep ([6443910](https://github.com/VU-ASE/roverctl/commit/64439108ab140f716b03e566283371890176a2bc))
+
 ## [1.0.7](https://github.com/VU-ASE/roverctl/compare/v1.0.6...v1.0.7) (2024-12-28)
 
 
