@@ -177,7 +177,7 @@ func basicAuthClient(username, password string) *http.Client {
 			Password: password,
 			Base:     http.DefaultTransport, // Use the default RoundTripper
 		},
-		Timeout: 60 * time.Second,
+		Timeout: 600 * time.Second,
 	}
 }
 
